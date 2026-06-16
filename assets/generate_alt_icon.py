@@ -9,7 +9,11 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parent.parent
-OUT_DIR = ROOT / "src/package/appserver/static"
+# Splunk may resolve app icons from either location depending on context.
+ICON_DIRS = [
+    ROOT / "src/package/appserver/static",
+    ROOT / "src/package/static",
+]
 ASSETS = ROOT / "assets"
 
 SIZE = 400
@@ -113,16 +117,25 @@ def main():
     master.save(ASSETS / "listing_icon_alt_400.png")
     print(f"wrote {ASSETS / 'listing_icon_alt_400.png'} (400x400)")
 
-    outputs = {
-        OUT_DIR / "appIcon.png": 36,
-        OUT_DIR / "appIcon_2x.png": 72,
-        OUT_DIR / "appIconAlt.png": 36,
-        OUT_DIR / "appIconAlt_2x.png": 72,
+    icon_outputs = {
+        "appIcon.png": 36,
+        "appIcon_2x.png": 72,
+        "appIconAlt.png": 36,
+        "appIconAlt_2x.png": 72,
+    }
+    for out_dir in ICON_DIRS:
+        out_dir.mkdir(parents=True, exist_ok=True)
+        for name, px in icon_outputs.items():
+            path = out_dir / name
+            master.resize((px, px), Image.Resampling.LANCZOS).save(path)
+            print(f"wrote {path} ({px}x{px})")
+
+    listing_outputs = {
         ASSETS / "listing_icon_200.png": 200,
         ASSETS / "listing_icon_400.png": 400,
         ASSETS / "listing_icon_alt_200.png": 200,
     }
-    for path, px in outputs.items():
+    for path, px in listing_outputs.items():
         master.resize((px, px), Image.Resampling.LANCZOS).save(path)
         print(f"wrote {path} ({px}x{px})")
 

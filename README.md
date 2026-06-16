@@ -167,7 +167,7 @@ Set `SPLUNK_HOST` for deploy targets — copy `deploy.local.mk.example` to `depl
 
 ## App icon
 
-The app icon is a magenta→orange gradient easel with whiteboard doodles (flowchart, sticky note, checklist). Splunk serves icons from `appserver/static/`:
+The app icon is a magenta→orange gradient easel with whiteboard doodles (flowchart, sticky note, checklist). Icons are shipped in **both** `static/` and `appserver/static/` (same files, all sizes) so Splunk picks them up regardless of which path it resolves:
 
 | File | Size | Use |
 |---|---|---|
@@ -206,11 +206,16 @@ whiteboard_app/
     │   │   └── data/ui/
     │   │       ├── nav/default.xml
     │   │       └── views/whiteboard.xml
+    │   ├── static/                     # App icons (mirror — same files as below)
+    │   │   ├── appIcon.png             # 36×36 (transparent)
+    │   │   ├── appIcon_2x.png          # 72×72
+    │   │   ├── appIconAlt.png          # 36×36
+    │   │   └── appIconAlt_2x.png       # 72×72
     │   ├── appserver/
     │   │   ├── static/                 # App icons + compiled JS bundle
     │   │   │   ├── appIcon.png         # 36×36 (transparent)
     │   │   │   ├── appIcon_2x.png      # 72×72
-    │   │   │   ├── appIconAlt.png      # 36×36 dark-theme variant
+    │   │   │   ├── appIconAlt.png      # 36×36
     │   │   │   └── appIconAlt_2x.png   # 72×72
     │   │   └── templates/
     │   │       └── whiteboard.html     # HTML shell loaded by Splunk Web
