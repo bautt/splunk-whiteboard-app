@@ -9,6 +9,10 @@ Collaborative whiteboard embedded inside Splunk — built with React + [Excalidr
 > **Live instance:** `https://your-splunk-host/en-US/app/whiteboard_app/whiteboard`  
 > **GitHub:** `https://github.com/bautt/splunk-whiteboard-app`
 
+<p align="center">
+  <img src="assets/screenshot.png" alt="Splunk Whiteboard App — canvas with Splunk shape library" width="900" />
+</p>
+
 ---
 
 ## Features
@@ -191,7 +195,8 @@ whiteboard_app/
 ├── assets/
 │   ├── generate_alt_icon.py            # Regenerate app icons from 400px master
 │   ├── listing_icon_200.png            # Splunkbase listing (200×200)
-│   └── listing_icon_400.png            # Splunkbase listing (400×400)
+│   ├── listing_icon_400.png            # Splunkbase listing (400×400)
+│   └── screenshot.png                  # README product screenshot
 └── src/
     ├── package/                        # Splunk app skeleton (copied verbatim to dist/)
     │   ├── default/
