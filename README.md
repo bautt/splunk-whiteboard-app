@@ -6,8 +6,7 @@
 
 Collaborative whiteboard embedded inside Splunk — built with React + [Excalidraw](https://github.com/excalidraw/excalidraw), styled with `@splunk/react-ui`, persisted via Splunk KV Store.
 
-> **Live instance:** `https://your-splunk-host/en-US/app/whiteboard_app/whiteboard`  
-> **GitHub:** `https://github.com/bautt/splunk-whiteboard-app`
+**GitHub:** https://github.com/bautt/splunk-whiteboard-app
 
 <p align="center">
   <img src="assets/screenshot.png" alt="Splunk Whiteboard App — canvas with Splunk shape library" width="900" />
@@ -153,14 +152,14 @@ make dev
 # Full production build → whiteboard_app.tar.gz
 make package
 
-# Deploy to your-splunk-host and restart Splunk (required for .conf changes)
+# Deploy to your Splunk server and restart Splunkd (required for .conf changes)
 make deploy
 
 # Deploy without restarting Splunk (JS, icons, static assets)
 make deploy-norestart
 ```
 
-After deploy, the app is available at `https://your-splunk-host/en-US/app/whiteboard_app/whiteboard`.
+Set `SPLUNK_HOST` in the `Makefile` (default: `user@your-splunk-host`). After deploy, open the app under **Apps → Whiteboard App** in Splunk Web.
 
 > **Note:** `make deploy` restarts Splunkd (required when `collections.conf` or `transforms.conf` changes). For JS/CSS/icon-only changes use `make deploy-norestart` and **hard-refresh** the browser (Cmd+Shift+R) to bust Splunk Web's static-asset cache.
 
