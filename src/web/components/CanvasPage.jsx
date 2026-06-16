@@ -27,6 +27,78 @@ const TABS = [
     { label: 'Export', value: 'export' },
 ];
 
+const SIDEBAR_MIN = 240;
+const SIDEBAR_MAX = 600;
+const SIDEBAR_DEFAULT = 320;
+const SIDEBAR_KEY = 'wb_sidebar_width';
+
+/** Drag-to-resize sidebar — drag handle on the left edge. */
+function ResizableSidebar({ children }) {
+    const [width, setWidth] = React.useState(() => {
+        try { return parseInt(localStorage.getItem(SIDEBAR_KEY), 10) || SIDEBAR_DEFAULT; }
+        catch (e) { return SIDEBAR_DEFAULT; }
+    });
+    const dragging = React.useRef(false);
+    const startX = React.useRef(0);
+    const startW = React.useRef(0);
+
+    const onMouseDown = React.useCallback((e) => {
+        dragging.current = true;
+        startX.current = e.clientX;
+        startW.current = width;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    }, [width]);
+
+    React.useEffect(() => {
+        const onMove = (e) => {
+            if (!dragging.current) return;
+            const delta = startX.current - e.clientX;
+            const next = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, startW.current + delta));
+            setWidth(next);
+        };
+        const onUp = () => {
+            if (!dragging.current) return;
+            dragging.current = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            setWidth((w) => {
+                try { localStorage.setItem(SIDEBAR_KEY, w); } catch (e) { /* ignore */ }
+                return w;
+            });
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+        return () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+    }, []);
+
+    return (
+        <div style={{ display: 'flex', flexShrink: 0, width, minWidth: SIDEBAR_MIN, maxWidth: SIDEBAR_MAX }}>
+            {/* Drag handle — hover turns purple, cursor changes to col-resize */}
+            <div
+                onMouseDown={onMouseDown}
+                style={{
+                    width: 5,
+                    flexShrink: 0,
+                    cursor: 'col-resize',
+                    background: 'var(--gray60, #c3cbd4)',
+                    transition: 'background 0.15s',
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#5a4fcf'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--gray60, #c3cbd4)'; }}
+                title="Drag to resize panel"
+            />
+            {/* Scrollable content */}
+            <div style={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+                {children}
+            </div>
+        </div>
+    );
+}
+
 export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const { board, loading, error } = useBoard(boardId);
     const { updateBoard } = useBoardMutations();
@@ -380,14 +452,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                         />
                     )}
                 </div>
-                <div
-                    style={{
-                        width: 320,
-                        flexShrink: 0,
-                        borderLeft: '1px solid var(--gray60, #c3cbd4)',
-                        overflow: 'auto',
-                    }}
-                >
+                <ResizableSidebar>
                     <TabBar
                         activeTabId={activeTab}
                         onChange={(_, data) => {
@@ -402,7 +467,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                         ))}
                     </TabBar>
                     <PanelErrorBoundary key={activeTab}>{renderPanel()}</PanelErrorBoundary>
-                </div>
+                </ResizableSidebar>
             </div>
         </div>
     );
