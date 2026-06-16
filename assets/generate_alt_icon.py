@@ -3,7 +3,6 @@
 
 from __future__ import annotations
 
-import math
 from pathlib import Path
 
 import numpy as np
@@ -66,8 +65,6 @@ def build_mask(size: int = SIZE) -> Image.Image:
 
 def draw_whiteboard_doodles(draw: ImageDraw.ImageDraw, ink=INK):
     sw = 7
-    cap = "round"
-    join = "round"
 
     # Flowchart box
     draw.rounded_rectangle((72, 78, 148, 128), radius=10, outline=ink, width=sw)
@@ -87,19 +84,6 @@ def draw_whiteboard_doodles(draw: ImageDraw.ImageDraw, ink=INK):
     for y in (170, 188, 206):
         draw.line([(156, y), (176, y)], fill=ink, width=sw)
         draw.line([(186, y), (300, y)], fill=ink, width=sw - 1)
-
-    # Handwriting scribbles
-    def scribble(y0, amp=6):
-        pts = []
-        for x in range(156, 306, 8):
-            t = (x - 156) / 150
-            y = y0 + math.sin(t * math.pi * 2.2) * amp * (0.6 + 0.4 * math.sin(t * 5))
-            pts.append((x, y))
-        draw.line(pts, fill=ink, width=sw - 1, joint=join)
-
-    scribble(228, 5)
-    scribble(252, 7)
-    scribble(276, 4)
 
 
 def render_icon(size: int = SIZE) -> Image.Image:
@@ -127,16 +111,20 @@ def render_icon(size: int = SIZE) -> Image.Image:
 def main():
     master = render_icon(400)
     master.save(ASSETS / "listing_icon_alt_400.png")
+    print(f"wrote {ASSETS / 'listing_icon_alt_400.png'} (400x400)")
 
     outputs = {
+        OUT_DIR / "appIcon.png": 36,
+        OUT_DIR / "appIcon_2x.png": 72,
         OUT_DIR / "appIconAlt.png": 36,
         OUT_DIR / "appIconAlt_2x.png": 72,
+        ASSETS / "listing_icon_200.png": 200,
+        ASSETS / "listing_icon_400.png": 400,
         ASSETS / "listing_icon_alt_200.png": 200,
     }
     for path, px in outputs.items():
-        render_icon(px).save(path)
+        master.resize((px, px), Image.Resampling.LANCZOS).save(path)
         print(f"wrote {path} ({px}x{px})")
-    print(f"wrote {ASSETS / 'listing_icon_alt_400.png'} (400x400)")
 
 
 if __name__ == "__main__":
