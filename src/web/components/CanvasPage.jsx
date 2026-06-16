@@ -10,6 +10,7 @@ import TemplatePanel from './TemplatePanel';
 import ShapesPanel from './ShapesPanel';
 import HistoryPanel from './HistoryPanel';
 import ExportPanel from './ExportPanel';
+import LibraryPanel from './LibraryPanel';
 import PresentationMode from './PresentationMode';
 import PanelErrorBoundary from './PanelErrorBoundary';
 
@@ -21,6 +22,7 @@ import { nanoid } from '../lib/nanoid';
 const TABS = [
     { label: 'Shapes', value: 'shapes' },
     { label: 'Templates', value: 'templates' },
+    { label: 'Libraries', value: 'libraries' },
     { label: 'History', value: 'history' },
     { label: 'Export', value: 'export' },
 ];
@@ -135,10 +137,24 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     // Excalidraw requires: (1) register the file via addFiles, (2) add an image
     // element referencing that fileId.
     const handleAddImage = useCallback(
-        ({ id, dataURL }) => {
+        ({ id, svg, color }) => {
             const api = apiRef.current;
             if (!api) return;
-            const fileId = id; // reuse the stable icon id as fileId
+
+            // Apply tint color to the SVG by injecting fill on the root element.
+            const finalColor = color || '#000000';
+            const tinted = svg.replace(
+                /^(<svg\b[^>]*)(>)/i,
+                (_, tag, close) => `${tag} fill="${finalColor}"${close}`,
+            );
+            const dataURL =
+                'data:image/svg+xml;base64,' +
+                btoa(unescape(encodeURIComponent(tinted)));
+
+            // Use a color-specific fileId so different tints are registered as
+            // separate files and don't overwrite each other in Excalidraw's cache.
+            const fileId = `${id}-${finalColor.replace('#', '')}`;
+
             api.addFiles([
                 {
                     id: fileId,
@@ -150,7 +166,6 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
             ]);
             const current = api.getSceneElements();
             const size = 120;
-            // Place roughly in the center of the visible area
             const appState = api.getAppState();
             const cx = appState.width / 2;
             const cy = appState.height / 2;
@@ -272,6 +287,8 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                         getExportable={getExportable}
                     />
                 );
+            case 'libraries':
+                return <LibraryPanel excalidrawAPI={excalidrawAPI} />;
             default:
                 return <div style={{ padding: 12 }}>Unknown tab: {activeTab}</div>;
         }
