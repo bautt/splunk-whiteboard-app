@@ -127,6 +127,185 @@ function title(text, x, y) {
     ];
 }
 
+function txt(x, y, text, fontSize = 13, color = '#1B1B1B', align = 'left', fontFamily = 1) {
+    const approxWidth = Math.max(text.length * fontSize * 0.62, 40);
+    return {
+        id: nanoid(), type: 'text',
+        x, y, width: approxWidth, height: fontSize * 1.4,
+        text, fontSize, fontFamily,
+        textAlign: align, verticalAlign: 'top', baseline: fontSize,
+        angle: 0, strokeColor: color, backgroundColor: 'transparent',
+        fillStyle: 'solid', strokeWidth: 1, strokeStyle: 'solid',
+        roughness: 0, opacity: 100, groupIds: [], frameId: null,
+        roundness: null, seed: 0, versionNonce: 0, isDeleted: false,
+        boundElements: null, updated: 1, link: null, locked: false,
+        containerId: null, originalText: text, lineHeight: 1.3,
+    };
+}
+
+function box(x, y, w, h, label = '', strokeColor = '#1B1B1B', bgColor = 'transparent', sw = 2, fontSize = 13) {
+    const rid = nanoid();
+    const els = [{
+        id: rid, type: 'rectangle',
+        x, y, width: w, height: h,
+        angle: 0, strokeColor, backgroundColor: bgColor,
+        fillStyle: 'solid', strokeWidth: sw, strokeStyle: 'solid',
+        roughness: 0, opacity: 100, groupIds: [], frameId: null,
+        roundness: { type: 3 }, seed: 0, versionNonce: 0, isDeleted: false,
+        boundElements: null, updated: 1, link: null, locked: false,
+    }];
+    if (label) {
+        els.push(txt(
+            x + w / 2 - Math.max(label.length * fontSize * 0.62, 40) / 2,
+            y + (h - fontSize * 1.4) / 2,
+            label, fontSize, strokeColor, 'center', 2
+        ));
+    }
+    return els;
+}
+
+function stageBox(x, y, w, h, heading, subtext) {
+    const els = box(x, y, w, h, '', '#1B1B1B', 'transparent', 2);
+    els.push(txt(x + w / 2 - heading.length * 8, y + 12, heading, 14, '#1B1B1B', 'center', 2));
+    if (subtext) {
+        els.push(txt(x + 8, y + 38, subtext, 11, '#555555', 'center', 1));
+    }
+    return els;
+}
+
+function buildSapE2E() {
+    const els = [];
+
+    // ── Title ─────────────────────────────────────────────────────────────
+    els.push(txt(430, 18, 'End-to-End Visibility for SAP', 22, '#cc0099', 'left', 2));
+
+    // ── Hierarchy (center-top) ─────────────────────────────────────────────
+    // C-LEVEL box
+    els.push(...box(550, 55, 160, 36, 'C-LEVEL', '#1B1B1B', 'transparent', 2, 14));
+    // Line down from C-LEVEL
+    els.push(...arrow(630, 91, 500, 125, ''));
+    els.push(...arrow(630, 91, 630, 125, ''));
+    els.push(...arrow(630, 91, 755, 125, ''));
+    // Second row
+    els.push(...box(400, 125, 140, 34, 'BUSINESS', '#1B1B1B', 'transparent', 2, 13));
+    els.push(...box(555, 125, 80, 34, 'NOC', '#1B1B1B', 'transparent', 2, 13));
+    els.push(...box(650, 125, 80, 34, 'SOC', '#1B1B1B', 'transparent', 2, 13));
+
+    // ── Left column: Initiatives ───────────────────────────────────────────
+    els.push(txt(20, 60, 'Initiatives: shape+', 13, '#1B1B1B', 'left', 2));
+    const initiatives = [
+        '↑ Standardization',
+        '↑ Automation',
+        '↑ HANA consolidation',
+        '↑ Real-time',
+        '↓ Batch processing',
+    ];
+    initiatives.forEach((t, i) => els.push(txt(20, 84 + i * 20, t, 12, '#1B1B1B', 'left', 1)));
+
+    // Actua section
+    els.push(txt(20, 200, 'Actua', 13, '#1B1B1B', 'left', 2));
+    const actua = [
+        '↓ Fragmented view',
+        '  Silos',
+        '  Limited data',
+        '  Too many tools',
+    ];
+    actua.forEach((t, i) => els.push(txt(20, 220 + i * 19, t, 12, '#1B1B1B', 'left', 1)));
+
+    // Arrow down to datalake
+    els.push(...arrow(90, 296, 90, 370, ''));
+    // Datalake (cylinder-ish using two rects)
+    els.push(...box(52, 370, 76, 50, '', '#1B1B1B', 'transparent', 2));
+    els.push(...box(52, 370, 76, 14, '', '#1B1B1B', '#e8e8e8', 1));
+    els.push(txt(38, 428, 'DATALAKE', 11, '#1B1B1B', 'left', 2));
+
+    // Arrow from datalake into main box
+    els.push(...arrow(128, 395, 240, 395, ''));
+
+    // ── Main flow rectangle ────────────────────────────────────────────────
+    els.push(...box(240, 175, 860, 380, '', '#1B1B1B', 'transparent', 2.5));
+
+    // Stage: INVESTIGATE
+    els.push(...stageBox(260, 200, 175, 330, 'INVESTIGATE', 'SCHEMA\nON READ'));
+
+    // Stage: MONITOR
+    els.push(...stageBox(455, 200, 150, 330, 'MONITOR', ''));
+    // mini bar chart icon
+    els.push(...box(480, 250, 14, 30, '', '#888', '#888', 1));
+    els.push(...box(500, 260, 14, 20, '', '#888', '#888', 1));
+    els.push(...box(520, 240, 14, 40, '', '#888', '#888', 1));
+
+    // Stage: ANALYZE
+    els.push(...stageBox(625, 200, 150, 330, 'ANALYZE', ''));
+    // mini table grid icon
+    for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+            els.push(...box(645 + c * 18, 250 + r * 14, 16, 12, '', '#888', 'transparent', 1));
+        }
+    }
+    els.push(txt(650, 300, 'ML', 11, '#1B1B1B', 'left', 2));
+
+    // Stage: ACT
+    els.push(...stageBox(795, 200, 130, 330, 'ACT', ''));
+    // play button icon
+    els.push({
+        id: nanoid(), type: 'ellipse',
+        x: 825, y: 250, width: 50, height: 50,
+        angle: 0, strokeColor: '#1B1B1B', backgroundColor: '#e8e8e8',
+        fillStyle: 'solid', strokeWidth: 2, strokeStyle: 'solid',
+        roughness: 0, opacity: 100, groupIds: [], frameId: null,
+        roundness: { type: 3 }, seed: 0, versionNonce: 0, isDeleted: false,
+        boundElements: null, updated: 1, link: null, locked: false,
+    });
+    els.push(txt(844, 266, '▶', 18, '#1B1B1B', 'center', 1));
+
+    // Stage arrows (between stages inside main box)
+    els.push(...arrow(435, 365, 455, 365, ''));
+    els.push(...arrow(605, 365, 625, 365, ''));
+    els.push(...arrow(775, 365, 795, 365, ''));
+
+    // Arrow out right of main box → SNOW
+    els.push(...arrow(1100, 395, 1155, 395, ''));
+
+    // ── Right side ─────────────────────────────────────────────────────────
+    // PYTHON icon box
+    els.push(...box(1160, 200, 80, 70, '', '#1B1B1B', '#f6f6f6', 1.5));
+    els.push(txt(1170, 215, '🐍', 24, '#1B1B1B', 'center', 1));
+    els.push(txt(1167, 254, 'PYTHON', 10, '#1B1B1B', 'center', 2));
+
+    // SNOW icon box
+    els.push(...box(1160, 380, 80, 70, '', '#1B1B1B', '#f6f6f6', 1.5));
+    els.push(txt(1170, 393, '❄️', 24, '#1B1B1B', 'center', 1));
+    els.push(txt(1175, 432, 'SNOW', 10, '#1B1B1B', 'center', 2));
+
+    // Outcomes section
+    els.push(txt(1160, 60, 'Outcomes:', 13, '#1B1B1B', 'left', 2));
+    const outcomes = [
+        '↑ E2E view',
+        '↑ SLA',
+        '↑ Automation',
+        '↑ MTTR',
+        '↓ Error rate',
+    ];
+    outcomes.forEach((t, i) => els.push(txt(1160, 82 + i * 20, t, 12, '#1B1B1B', 'left', 1)));
+
+    // ── Bottom: Business Data row ──────────────────────────────────────────
+    els.push(txt(20, 590, 'Business Data', 13, '#1B1B1B', 'left', 2));
+    const bizBoxes = ['SCM', 'ERP', 'SRM', 'MDG', 'HCM', 'PI', 'FI', 'BW', 'MM', 'PP', 'FS', 'PM'];
+    bizBoxes.forEach((lbl, i) => {
+        els.push(...box(170 + i * 84, 584, 78, 34, lbl, '#1B1B1B', 'transparent', 2, 13));
+    });
+
+    // ── Bottom: IT Data row ────────────────────────────────────────────────
+    els.push(txt(20, 648, 'IT Data', 13, '#1B1B1B', 'left', 2));
+    const itBoxes = ['SAP R3', 'HANA', 'SCP/HEC', 'KYMA', 'GUI', 'ADAP', 'JAVA', 'AWS', 'Azure', 'GCP', 'VM', 'ADS', 'DB', 'DNS', 'NET'];
+    itBoxes.forEach((lbl, i) => {
+        els.push(...box(170 + i * 68, 642, 62, 34, lbl, '#777777', '#fafafa', 1, 11));
+    });
+
+    return els;
+}
+
 function buildSiem() {
     const els = [];
     els.push(...title('SIEM — Splunk Enterprise Security', 100, 60));
@@ -222,6 +401,12 @@ function buildItOps() {
 }
 
 export const TEMPLATES = [
+    {
+        id: 'sap-e2e',
+        name: 'SAP End-to-End Visibility',
+        description: 'Business & IT data sources → Investigate → Monitor → Analyze → Act, with C-Level hierarchy and outcomes',
+        build: buildSapE2E,
+    },
     {
         id: 'siem',
         name: 'SIEM',
