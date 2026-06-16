@@ -88,7 +88,8 @@ export function clearStep(elements, ids) {
 /**
  * Auto-assign one build step per top-level group, ordered by the chosen axis.
  * Ungrouped elements each become their own step. Returns a new element array.
- *   axis: 'z' (paint order) | 'x' (left→right) | 'y' (top→bottom)
+ *   axis: 'z' (paint order) | 'x' (left→right) | 'y' (top→bottom) |
+ *         'y-rev' (bottom→top) | 'x-rev' (right→left)
  */
 export function autoNumberByGroup(elements, axis = 'z') {
     // Bucket by top-level group id (first groupId) or own id when ungrouped.
@@ -96,18 +97,29 @@ export function autoNumberByGroup(elements, axis = 'z') {
     elements.forEach((el, i) => {
         const key = (el.groupIds && el.groupIds[0]) || `solo:${el.id}`;
         if (!buckets.has(key)) {
-            buckets.set(key, { key, ids: [], minX: Infinity, minY: Infinity, order: i });
+            buckets.set(key, {
+                key, ids: [], minX: Infinity, minY: Infinity,
+                maxY: -Infinity, maxX: -Infinity, order: i,
+            });
         }
         const b = buckets.get(key);
         b.ids.push(el.id);
-        if (el.x != null) b.minX = Math.min(b.minX, el.x);
-        if (el.y != null) b.minY = Math.min(b.minY, el.y);
+        if (el.x != null) {
+            b.minX = Math.min(b.minX, el.x);
+            b.maxX = Math.max(b.maxX, el.x + (el.width || 0));
+        }
+        if (el.y != null) {
+            b.minY = Math.min(b.minY, el.y);
+            b.maxY = Math.max(b.maxY, el.y + (el.height || 0));
+        }
     });
 
     const list = [...buckets.values()];
     list.sort((a, b) => {
         if (axis === 'x') return a.minX - b.minX;
+        if (axis === 'x-rev') return b.maxX - a.maxX;
         if (axis === 'y') return a.minY - b.minY;
+        if (axis === 'y-rev') return b.maxY - a.maxY;
         return a.order - b.order;
     });
 

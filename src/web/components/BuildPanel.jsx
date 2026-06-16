@@ -129,6 +129,9 @@ export default function BuildPanel({ excalidrawAPI, markDirty }) {
                 <Button size="small" disabled={!excalidrawAPI} onClick={() => autoNumber('y')}>
                     Auto: top→bottom
                 </Button>
+                <Button size="small" disabled={!excalidrawAPI} onClick={() => autoNumber('y-rev')}>
+                    Auto: bottom→top
+                </Button>
             </div>
 
             <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', opacity: 0.6 }}>

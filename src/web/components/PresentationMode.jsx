@@ -19,7 +19,10 @@ const FADE_MS = 240;
 export default function PresentationMode({ excalidrawAPI, onExit, suppressSaveRef }) {
     const [index, setIndex] = useState(0);
     const [fade, setFade] = useState(true);
-    const [follow, setFollow] = useState(true);
+    // Camera-follow is off by default: the whole board is framed once on entry
+    // and stays put as steps reveal (like PowerPoint). Toggle on to pan/zoom to
+    // each newly revealed step instead.
+    const [follow, setFollow] = useState(false);
 
     // Immutable snapshot of the scene at entry — never mutated, used to derive
     // every reveal view and to restore the board on exit.
