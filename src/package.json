@@ -1,0 +1,36 @@
+{
+    "name": "whiteboard_app",
+    "version": "0.1.0",
+    "license": "MIT",
+    "dependencies": {
+        "@babel/core": "^7.19.3",
+        "@babel/preset-env": "^7.19.3",
+        "@babel/preset-react": "^7.18.6",
+        "@excalidraw/excalidraw": "^0.17.6",
+        "@splunk/react-icons": "^5.12.0",
+        "@splunk/react-page": "^8.3.1",
+        "@splunk/react-ui": "^5.9.1",
+        "@splunk/themes": "^0.18.0",
+        "html2canvas": "^1.4.1",
+        "jspdf": "^2.5.2",
+        "process": "^0.11.10",
+        "react": "^17",
+        "react-dom": "^17",
+        "styled-components": "^5"
+    },
+    "devDependencies": {
+        "@splunk/babel-preset": "^4.0.0",
+        "@splunk/webpack-configs": "^7.0.3",
+        "babel-loader": "^8.2.5",
+        "copy-webpack-plugin": "^14.0.0",
+        "css-loader": "^6.7.1",
+        "style-loader": "^3.3.1",
+        "webpack": "^5.74.0",
+        "webpack-cli": "^4.10.0",
+        "webpack-merge": "^5.8.0"
+    },
+    "scripts": {
+        "build": "NODE_ENV=production webpack --config webpack.config.mjs",
+        "watch": "webpack --config webpack.config.mjs --watch"
+    }
+}

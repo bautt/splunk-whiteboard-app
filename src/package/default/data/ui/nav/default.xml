@@ -1,0 +1,4 @@
+<nav search_view="whiteboard">
+    <view name="whiteboard" default="true"/>
+    <view name="search" />
+</nav>

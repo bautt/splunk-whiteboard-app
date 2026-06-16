@@ -1,0 +1,22 @@
+# Build output and archives
+dist/
+*.tar.gz
+*.spl
+
+# Node
+src/node_modules/
+src/.cache/
+
+# Secrets / local config
+local/
+*.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp

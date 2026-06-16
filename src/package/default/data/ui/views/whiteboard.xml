@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<view template="whiteboard_app:/templates/whiteboard.html" type="html">
+    <label>Whiteboard</label>
+</view>
