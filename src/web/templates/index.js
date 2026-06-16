@@ -1072,7 +1072,125 @@ function buildEdgeProcessorOverview() {
     return els;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Splunk Platform (whiteboard) — pre-tagged with a 13-step PowerPoint-style build.
+//  Recreated from the "Whiteboard Splunk 2022" deck (one slide, 13 click builds).
+//  Each step is an Excalidraw group carrying customData.build.step so it reveals
+//  one click at a time in Present mode.
+// ─────────────────────────────────────────────────────────────────────────────
+function buildSplunkPlatform() {
+    const els = [];
+
+    // Tag a step's elements with a shared group id + build step, then collect them.
+    function step(n, ...parts) {
+        const gid = nanoid();
+        const flat = parts.flat(Infinity).filter(Boolean);
+        flat.forEach((e) => {
+            e.groupIds = [gid];
+            e.customData = { build: { step: n } };
+        });
+        els.push(...flat);
+    }
+
+    const INK = '#1B1B1B';
+    const SUB = '#555555';
+    const PINK = '#cc0099';
+
+    // ── Step 1: title + Client ───────────────────────────────────────────────
+    step(
+        1,
+        txt(470, 18, 'Splunk Platform', 24, PINK, 'left', 2),
+        box(560, 64, 150, 38, 'Client', INK, 'transparent', 2, 14),
+        arrow(635, 102, 635, 128, '')
+    );
+
+    // ── Step 2: connection ports row ─────────────────────────────────────────
+    step(
+        2,
+        box(432, 128, 96, 34, '8000', INK, '#eaf4ff', 1.5, 12),
+        box(534, 128, 96, 34, '8089', INK, '#eaffea', 1.5, 12),
+        box(636, 128, 96, 34, '9997', INK, '#fff3e0', 1.5, 12),
+        box(738, 128, 96, 34, '8088', INK, '#fdeaff', 1.5, 12),
+        txt(432, 166, 'Web   ·   Mgmt   ·   Forward   ·   HEC', 10, SUB, 'left', 1)
+    );
+
+    // ── Step 3: Apps band ────────────────────────────────────────────────────
+    step(
+        3,
+        box(420, 188, 420, 34, 'Apps', INK, '#f3f0ff', 2, 14),
+        arrow(630, 222, 630, 246, '')
+    );
+
+    // ── Step 4: platform container ───────────────────────────────────────────
+    step(4, box(240, 246, 820, 300, '', INK, 'transparent', 2.5));
+
+    // ── Steps 5–8: the four stages ───────────────────────────────────────────
+    step(5, stageBox(258, 270, 188, 252, 'INVESTIGATE', 'SCHEMA\nON READ'));
+    step(6, stageBox(456, 270, 184, 252, 'MONITOR', ''), arrow(446, 396, 456, 396, ''));
+    step(7, stageBox(650, 270, 184, 252, 'ANALYZE', ''), arrow(640, 396, 650, 396, ''));
+    step(8, stageBox(844, 270, 198, 252, 'ACT', ''), arrow(834, 396, 844, 396, ''));
+
+    // ── Step 9: Machine Data band ────────────────────────────────────────────
+    step(
+        9,
+        box(240, 562, 820, 40, 'Machine Data', INK, '#efefef', 2, 14),
+        arrow(650, 562, 650, 546, '')
+    );
+
+    // ── Step 10: data source icons row ───────────────────────────────────────
+    const sources = ['syslog', 'metrics', 'logs', 'cloud', 'database', 'API', 'mobile', 'IoT'];
+    step(
+        10,
+        ...sources.map((s, i) => box(252 + i * 100, 618, 88, 34, s, INK, '#ffffff', 1.5, 11))
+    );
+
+    // ── Step 11: Dark Data callout ───────────────────────────────────────────
+    step(
+        11,
+        box(120, 330, 110, 56, 'Dark Data', '#7a3cb8', '#f6efff', 2, 12),
+        arrow(230, 358, 258, 380, 'illuminate')
+    );
+
+    // ── Step 12: Initiatives (left) ──────────────────────────────────────────
+    const initiatives = [
+        'Fingerpointing',
+        'Service uptime',
+        'Weniger Incidents',
+        'Azure & AWS',
+        'Schnellere Detektion',
+        'Tools',
+    ];
+    step(
+        12,
+        txt(20, 60, 'Initiatives', 15, PINK, 'left', 2),
+        ...initiatives.map((t, i) => txt(20, 86 + i * 22, '↑ ' + t, 12, INK, 'left', 1))
+    );
+
+    // ── Step 13: Outcomes / Expectations (right) ─────────────────────────────
+    const outcomes = [
+        'Effizienz, weniger',
+        'manuelle Arbeit',
+        'MTTR ↓',
+        'Business Value',
+        'Stabilere Infrastruktur',
+        'End-to-End Visibility',
+    ];
+    step(
+        13,
+        txt(1080, 60, 'Outcomes', 15, PINK, 'left', 2),
+        ...outcomes.map((t, i) => txt(1080, 86 + i * 22, '• ' + t, 12, INK, 'left', 1))
+    );
+
+    return els;
+}
+
 export const TEMPLATES = [
+    {
+        id: 'splunk-platform',
+        name: 'Splunk Platform (13-step build)',
+        description: 'Client → ports → Apps → Investigate/Monitor/Analyze/Act → Machine Data → sources, with Initiatives & Outcomes. Pre-tagged for PowerPoint-style reveal in Present mode.',
+        build: buildSplunkPlatform,
+    },
     {
         id: 'edge-processor',
         name: 'Edge Processor Overview',
