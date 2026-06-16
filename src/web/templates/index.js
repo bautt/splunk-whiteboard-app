@@ -1,8 +1,10 @@
 // Use case templates — each returns a fresh array of Excalidraw element specs.
 // Positions are laid out in absolute coordinates so they render the same on any board.
+// Templates may also return { elements, files } when they include SVG image elements.
 
 import { buildShape } from '../lib/shapes';
 import { nanoid } from '../lib/nanoid';
+import { DRP_ICONS } from '../lib/drpIcons';
 
 function arrow(x1, y1, x2, y2, label) {
     const groupId = nanoid();
@@ -400,7 +402,271 @@ function buildItOps() {
     return els;
 }
 
+// ─── Digital Resilience Platform template ────────────────────────────────────
+
+function imgEl(fileId, x, y, w, h) {
+    return {
+        id: nanoid(), type: 'image', fileId,
+        x, y, width: w, height: h,
+        angle: 0, scale: [1, 1], status: 'saved',
+        strokeColor: 'transparent', backgroundColor: 'transparent',
+        fillStyle: 'solid', strokeWidth: 0, strokeStyle: 'solid',
+        roughness: 0, opacity: 100, groupIds: [], frameId: null,
+        roundness: null, seed: 0, versionNonce: 0, isDeleted: false,
+        boundElements: null, updated: 1, link: null, locked: false,
+    };
+}
+
+// Tint an SVG data URL to a specific fill colour
+function tintURL(dataURL, color) {
+    try {
+        const svgB64 = dataURL.split(',')[1];
+        const svgText = atob(svgB64);
+        const tinted = svgText
+            .replace(/^(<svg\b[^>]*)(>)/i, (_, tag, close) => `${tag} fill="${color}"${close}`)
+            .replace(/fill="currentColor"/g, `fill="${color}"`)
+            .replace(/stroke="currentColor"/g, `stroke="${color}"`);
+        return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(tinted)));
+    } catch (e) {
+        return dataURL;
+    }
+}
+
+function buildDRP() {
+    const els = [];
+    const files = [];
+
+    // Helper: register a tinted SVG and return its fileId
+    function addIcon(key, color = '#1B1B1B') {
+        if (!DRP_ICONS[key]) return null;
+        const fileId = `drp-${key}-${color.replace('#', '')}`;
+        if (!files.find((f) => f.id === fileId)) {
+            files.push({
+                id: fileId,
+                dataURL: tintURL(DRP_ICONS[key], color),
+                mimeType: 'image/svg+xml',
+                created: Date.now(),
+                lastRetrieved: Date.now(),
+            });
+        }
+        return fileId;
+    }
+
+    // ── Title ──────────────────────────────────────────────────────────────
+    els.push(txt(220, 10, 'The Digital Resilience Platform', 28, '#1B1B1B', 'center', 2));
+    els.push(txt(1090, 12, '© 2024 Splunk Inc.', 9, '#999999', 'right', 1));
+
+    // ── Left: Initiatives ─────────────────────────────────────────────────
+    els.push(txt(10, 80, 'Initiatives:', 14, '#1B1B1B', 'left', 2));
+    ['• Digitization', '• Data Driven', '• MTTI / MTTR', '• Cyber Risk',
+        '• Business Focused', '• Apps Better & Faster',
+    ].forEach((t, i) => els.push(txt(10, 100 + i * 19, t, 12, '#1B1B1B', 'left', 1)));
+
+    // ── Right: Expectations ───────────────────────────────────────────────
+    els.push(txt(960, 80, 'Expectation:', 14, '#1B1B1B', 'left', 2));
+    ['• Shorten/Avoid Outages', '• SLA Improvements', '• Proactive / Predictive',
+        '• Increase Visibility', '• Agility Improvements',
+        '• Customer Experiences', '• Top-Down Troubleshooting',
+    ].forEach((t, i) => els.push(txt(960, 100 + i * 19, t, 12, '#1B1B1B', 'left', 1)));
+
+    // ── Stakeholder personas bar ───────────────────────────────────────────
+    // Curved banner — approximate with a rounded rect
+    els.push(...box(160, 65, 770, 46, '', '#cc0099', '#cc0099', 0));
+    // Badge-Pass icons for each stakeholder
+    const personas = [
+        { label: 'SOC', x: 210 },
+        { label: 'NOC', x: 380 },
+        { label: 'BOC', x: 550 },
+        { label: 'OT',  x: 720 },
+    ];
+    personas.forEach(({ label, x }) => {
+        const fid = addIcon('Badge-Pass', '#ffffff');
+        if (fid) els.push(imgEl(fid, x, 32, 40, 40));
+        els.push(txt(x, 72, label, 14, '#ffffff', 'center', 2));
+    });
+    // Notable Events badge
+    els.push(...box(162, 58, 76, 34, '', '#ff66bb', '#ff66bb', 0));
+    els.push(txt(167, 62, 'Notable\nEvents', 9, '#ffffff', 'center', 2));
+
+    // "ANALYZE" label on bar
+    els.push(txt(620, 72, 'ANALYZE', 13, '#ffffff', 'left', 2));
+
+    // Resilience banner (hot pink bar)
+    els.push(...box(160, 111, 770, 28, '', '#cc0099', '#cc0099', 0));
+    els.push(txt(165, 117,
+        'Security Resilience  |  IT Operations Resilience  |  Business Service Resilience',
+        11, '#ffffff', 'left', 1));
+
+    // ── Main platform oval / large rounded rect ────────────────────────────
+    // Outer light oval shape (simulate with very rounded rect)
+    const platEl = {
+        id: nanoid(), type: 'rectangle',
+        x: 155, y: 140, width: 780, height: 260,
+        angle: 0, strokeColor: '#aaaaaa', backgroundColor: '#f9f9f9',
+        fillStyle: 'solid', strokeWidth: 2, strokeStyle: 'solid',
+        roughness: 0, opacity: 100, groupIds: [], frameId: null,
+        roundness: { type: 3 }, seed: 0, versionNonce: 0, isDeleted: false,
+        boundElements: null, updated: 1, link: null, locked: false,
+    };
+    els.push(platEl);
+
+    // "The Splunk Platform" label (orange, centered)
+    els.push(txt(390, 330, 'The Splunk Platform', 18, '#f47c20', 'center', 2));
+
+    // Capabilities strip inside oval
+    const caps = ['Streaming', 'Machine Learning', 'Scalable Index', 'Search and\nVisualization', 'Collaboration and\nOrchestration'];
+    caps.forEach((c, i) => {
+        const cx = 175 + i * 152;
+        els.push({
+            id: nanoid(), type: 'line',
+            x: cx, y: 355, width: 0, height: 30,
+            angle: 0, strokeColor: '#cccccc', backgroundColor: 'transparent',
+            fillStyle: 'solid', strokeWidth: 1, strokeStyle: 'solid',
+            roughness: 0, opacity: 100, groupIds: [], frameId: null,
+            roundness: null, seed: 0, versionNonce: 0, isDeleted: false,
+            boundElements: null, updated: 1, link: null, locked: false,
+            points: [[0, 0], [0, 30]], lastCommittedPoint: null,
+        });
+        els.push(txt(cx + 4, 358, c, 10, '#555555', 'left', 1));
+    });
+
+    // ── Three stages inside the platform ──────────────────────────────────
+    // INVESTIGATE
+    els.push(txt(185, 148, 'INVESTIGATE', 13, '#1B1B1B', 'left', 2));
+    els.push(txt(185, 166, 'ML', 10, '#cc0099', 'left', 2));
+    // IDX box (magenta)
+    els.push(...box(220, 163, 60, 22, 'IDX', '#cc0099', '#cc0099', 0, 11));
+    // Schema of Read with DB icon
+    const dbFid = addIcon('Blank-Database', '#555555');
+    if (dbFid) els.push(imgEl(dbFid, 185, 188, 32, 32));
+    els.push(txt(220, 192, 'Schema of\nRead', 10, '#555555', 'left', 1));
+    // Data model grid icon
+    const dmFid = addIcon('Data-Management', '#555555');
+    if (dmFid) els.push(imgEl(dmFid, 270, 188, 32, 32));
+    // CMDB
+    const cmFid = addIcon('CMDB', '#555555');
+    if (cmFid) els.push(imgEl(cmFid, 315, 188, 32, 32));
+
+    // vertical divider
+    els.push({ id: nanoid(), type: 'line', x: 373, y: 148, width: 0, height: 200,
+        angle: 0, strokeColor: '#cccccc', backgroundColor: 'transparent',
+        fillStyle: 'solid', strokeWidth: 1, strokeStyle: 'dashed', roughness: 0,
+        opacity: 100, groupIds: [], frameId: null, roundness: null, seed: 0,
+        versionNonce: 0, isDeleted: false, boundElements: null, updated: 1,
+        link: null, locked: false, points: [[0, 0], [0, 200]], lastCommittedPoint: null });
+
+    // MONITOR & OBSERVE
+    els.push(txt(395, 148, 'MONITOR &\nOBSERVE', 13, '#1B1B1B', 'left', 2));
+    // Eye / Search & Correlate icon
+    const srchFid = addIcon('Advanced-Search', '#cc0099');
+    if (srchFid) els.push(imgEl(srchFid, 405, 188, 50, 50));
+    els.push(txt(405, 244, 'Search &\nCorrelate', 10, '#555555', 'left', 1));
+    // No Sampling text box (magenta outline)
+    els.push(...box(465, 185, 130, 55, '', '#cc0099', 'transparent', 1.5));
+    els.push(txt(470, 192, 'No Sampling Real-time\n& Historical Data\nPlatform', 9, '#333333', 'left', 1));
+    // Fields / Events labels
+    els.push(txt(480, 163, 'Fields', 9, '#777777', 'left', 1));
+    els.push(txt(530, 163, 'Events', 9, '#777777', 'left', 1));
+
+    // vertical divider
+    els.push({ id: nanoid(), type: 'line', x: 610, y: 148, width: 0, height: 200,
+        angle: 0, strokeColor: '#cccccc', backgroundColor: 'transparent',
+        fillStyle: 'solid', strokeWidth: 1, strokeStyle: 'dashed', roughness: 0,
+        opacity: 100, groupIds: [], frameId: null, roundness: null, seed: 0,
+        versionNonce: 0, isDeleted: false, boundElements: null, updated: 1,
+        link: null, locked: false, points: [[0, 0], [0, 200]], lastCommittedPoint: null });
+
+    // ACT & CONTROL
+    els.push(txt(625, 148, 'ACT &\nCONTROL', 13, '#1B1B1B', 'left', 2));
+    const adapFid = addIcon('Adaptive-Response', '#cc0099');
+    if (adapFid) els.push(imgEl(adapFid, 635, 185, 50, 50));
+    els.push(txt(635, 240, 'Collaborative Automated\nIncident Response', 9, '#555555', 'left', 1));
+    els.push(txt(700, 163, 'OAR', 10, '#777777', 'left', 2));
+    // Dashboard + Alert icons
+    const dashFid = addIcon('Dashboard', '#555555');
+    if (dashFid) els.push(imgEl(dashFid, 720, 185, 36, 36));
+    const alertFid = addIcon('Alert', '#cc0099');
+    if (alertFid) els.push(imgEl(alertFid, 760, 185, 36, 36));
+    const autoFid = addIcon('Automation', '#555555');
+    if (autoFid) els.push(imgEl(autoFid, 800, 185, 36, 36));
+
+    // ── Dark Data (left of platform) ──────────────────────────────────────
+    els.push(txt(25, 280, 'Dark Data', 13, '#1B1B1B', 'center', 2));
+    // Donut chart approximation
+    els.push({ id: nanoid(), type: 'ellipse', x: 30, y: 298, width: 80, height: 80,
+        angle: 0, strokeColor: '#cc0099', backgroundColor: '#cc0099',
+        fillStyle: 'solid', strokeWidth: 0, strokeStyle: 'solid', roughness: 0,
+        opacity: 100, groupIds: [], frameId: null, roundness: { type: 3 }, seed: 0,
+        versionNonce: 0, isDeleted: false, boundElements: null, updated: 1, link: null, locked: false });
+    els.push({ id: nanoid(), type: 'ellipse', x: 46, y: 314, width: 48, height: 48,
+        angle: 0, strokeColor: '#f9f9f9', backgroundColor: '#f9f9f9',
+        fillStyle: 'solid', strokeWidth: 0, strokeStyle: 'solid', roughness: 0,
+        opacity: 100, groupIds: [], frameId: null, roundness: { type: 3 }, seed: 0,
+        versionNonce: 0, isDeleted: false, boundElements: null, updated: 1, link: null, locked: false });
+    els.push(txt(55, 330, '>50%', 10, '#1B1B1B', 'center', 2));
+
+    // Arrow from dark data into platform
+    els.push(...arrow(110, 340, 155, 290, ''));
+
+    // ── Data types row (below platform) ───────────────────────────────────
+    const dtypes = ['Metrics', 'Traces', 'Logs', 'Events'];
+    dtypes.forEach((d, i) => {
+        els.push(txt(265 + i * 145, 415, d, 18, '#1B1B1B', 'center', 2));
+        // Binary icon stub
+        els.push(txt(260 + i * 145, 438, '0101\n1010\n0101', 8, '#999999', 'left', 1));
+    });
+
+    // ── Hot-pink bottom banner ─────────────────────────────────────────────
+    els.push(...box(0, 462, 1140, 32, '', '#cc0099', '#cc0099', 0));
+    els.push(txt(10, 469,
+        'Machine Data  >  Open Standards-based Open Telemetry Collection and Instrumentation',
+        13, '#ffffff', 'left', 2));
+
+    // ── Bottom data-source icons row ──────────────────────────────────────
+    const sources = [
+        { label: 'Transportation', icon: null },
+        { label: 'Production',     icon: null },
+        { label: 'Sensors',        icon: null },
+        { label: 'Security',       icon: 'Badge-Pass' },
+        { label: 'Communications', icon: 'Cell-Phone-Devices' },
+        { label: 'Networks',       icon: 'Datacenter' },
+        { label: 'IT Infrastructure', icon: 'Datacenter' },
+        { label: 'Smartphones\nand Devices', icon: 'Cell-Phone-Devices' },
+        { label: 'Virtual\nMachines', icon: 'Datacenter' },
+        { label: 'Databases',      icon: 'Databases' },
+        { label: 'Web Server',     icon: 'Applications' },
+        { label: 'Custom\nApplications', icon: 'Custom-Applications' },
+        { label: 'Cloud',          icon: 'Cloud' },
+        { label: 'Container',      icon: 'Container' },
+        { label: 'IBM\nOpenWhisk', icon: null },
+        { label: 'AWS\nLambda',    icon: 'Cloud' },
+        { label: 'GCP\nFunctions', icon: 'Cloud' },
+        { label: 'Azure\nFunctions', icon: 'Cloud' },
+    ];
+
+    const colW = 62;
+    sources.forEach(({ label, icon }, i) => {
+        const sx = 4 + i * colW;
+        if (icon) {
+            const fid = addIcon(icon, '#333333');
+            if (fid) els.push(imgEl(fid, sx + 11, 498, 38, 38));
+        } else {
+            // Placeholder box
+            els.push(...box(sx + 8, 498, 42, 38, '', '#cccccc', '#f5f5f5', 1));
+        }
+        els.push(txt(sx, 540, label, 8, '#333333', 'center', 1));
+    });
+
+    return { elements: els, files };
+}
+
 export const TEMPLATES = [
+    {
+        id: 'drp',
+        name: 'Digital Resilience Platform',
+        description: 'SOC/NOC/BOC/OT → Investigate→Monitor→Act on Splunk Platform with data source icons',
+        build: buildDRP,
+    },
     {
         id: 'sap-e2e',
         name: 'SAP End-to-End Visibility',

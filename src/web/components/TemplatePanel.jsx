@@ -10,7 +10,13 @@ export default function TemplatePanel({ onApply }) {
         if (!window.confirm(`Replace the current board with the "${tpl.name}" template?`)) {
             return;
         }
-        onApply(tpl.build());
+        const result = tpl.build();
+        // Template builders may return { elements, files } or a plain elements array
+        if (Array.isArray(result)) {
+            onApply(result, []);
+        } else {
+            onApply(result.elements, result.files || []);
+        }
     };
 
     return (

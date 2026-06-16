@@ -206,8 +206,12 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     );
 
     const handleApplyTemplate = useCallback(
-        (templateElements) => {
+        (templateElements, templateFiles) => {
             if (!excalidrawAPI) return;
+            // Register any image files bundled with the template
+            if (templateFiles && templateFiles.length) {
+                excalidrawAPI.addFiles(templateFiles);
+            }
             excalidrawAPI.updateScene({
                 elements: restoreElements(templateElements, null),
             });
