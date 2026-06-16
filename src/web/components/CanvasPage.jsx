@@ -162,13 +162,14 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
 
     const getElementsAndState = useCallback(() => {
         const api = apiRef.current;
-        if (!api) return { elements: [], appState: {} };
+        if (!api) return { elements: [], appState: {}, files: {} };
         const elements = api.getSceneElements();
         // eslint-disable-next-line no-console
         console.log('[whiteboard_app] getElementsAndState ->', elements.length, 'elements');
         return {
             elements,
             appState: serializableAppState(api.getAppState()),
+            files: api.getFiles ? api.getFiles() : {},
         };
     }, []);
 
@@ -345,7 +346,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
             case 'shapes':
                 return <ShapesPanel onAdd={handleAddShape} onAddImage={handleAddImage} />;
             case 'templates':
-                return <TemplatePanel onApply={handleApplyTemplate} />;
+                return <TemplatePanel onApply={handleApplyTemplate} getElementsAndState={getElementsAndState} />;
             case 'history':
                 return (
                     <HistoryPanel
