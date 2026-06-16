@@ -660,7 +660,431 @@ function buildDRP() {
     return { elements: els, files };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Splunk Network Port Diagram
+// ─────────────────────────────────────────────────────────────────────────────
+function buildNetworkPortDiagram() {
+    const els = [];
+
+    // ── low-level primitives ────────────────────────────────────────────────
+
+    function rect(x, y, w, h, opts = {}) {
+        els.push({
+            id: nanoid(), type: 'rectangle',
+            x, y, width: w, height: h, angle: 0,
+            strokeColor: opts.stroke || '#1B1B1B',
+            backgroundColor: opts.fill || 'transparent',
+            fillStyle: 'solid',
+            strokeWidth: opts.sw || 2,
+            strokeStyle: opts.dash ? 'dashed' : 'solid',
+            roughness: 0, opacity: 100,
+            groupIds: [], frameId: null,
+            roundness: { type: 3 },
+            seed: 0, versionNonce: 0, isDeleted: false,
+            boundElements: null, updated: 1, link: null, locked: false,
+        });
+    }
+
+    function label(x, y, text, size, color, align = 'left', family = 2) {
+        const w = Math.max(text.length * size * 0.62, 40);
+        els.push({
+            id: nanoid(), type: 'text',
+            x, y, width: w, height: size * 1.4,
+            text, fontSize: size, fontFamily: family,
+            textAlign: align, verticalAlign: 'top', baseline: size,
+            angle: 0, strokeColor: color, backgroundColor: 'transparent',
+            fillStyle: 'solid', strokeWidth: 1, strokeStyle: 'solid',
+            roughness: 0, opacity: 100,
+            groupIds: [], frameId: null, roundness: null,
+            seed: 0, versionNonce: 0, isDeleted: false,
+            boundElements: null, updated: 1, link: null, locked: false,
+            containerId: null, originalText: text, lineHeight: 1.25,
+        });
+    }
+
+    // Coloured zone background
+    function zone(x, y, w, h, heading, fillColor, strokeColor) {
+        rect(x, y, w, h, { stroke: strokeColor, fill: fillColor, sw: 2, dash: true });
+        label(x + 10, y + 6, heading, 11, strokeColor, 'left', 2);
+    }
+
+    // Component box with title + optional subtitle
+    function comp(x, y, w, h, title2, sub, fillColor, strokeColor) {
+        rect(x, y, w, h, { stroke: strokeColor, fill: fillColor, sw: 2 });
+        const titleY = sub ? y + 10 : y + (h - 18) / 2;
+        label(x + w / 2 - Math.max(title2.length * 8, 40) / 2, titleY, title2, 13, strokeColor, 'center', 2);
+        if (sub) {
+            label(x + w / 2 - Math.max(sub.length * 6.2, 40) / 2, y + 30, sub, 10, '#666666', 'center', 1);
+        }
+    }
+
+    // Arrow with port-label badge
+    function portArrow(x1, y1, x2, y2, port, color = '#1B1B1B', dashed = false, bidir = false) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        els.push({
+            id: nanoid(), type: 'arrow',
+            x: x1, y: y1, width: dx, height: dy, angle: 0,
+            strokeColor: color, backgroundColor: 'transparent',
+            fillStyle: 'solid', strokeWidth: 2,
+            strokeStyle: dashed ? 'dashed' : 'solid',
+            roughness: 0, opacity: 100,
+            groupIds: [], frameId: null,
+            roundness: { type: 2 },
+            seed: 0, versionNonce: 0, isDeleted: false,
+            boundElements: null, updated: 1, link: null, locked: false,
+            points: [[0, 0], [dx, dy]],
+            lastCommittedPoint: null,
+            startBinding: null, endBinding: null,
+            startArrowhead: bidir ? 'arrow' : null,
+            endArrowhead: 'arrow',
+        });
+        if (port) {
+            const badgeW = port.length * 6.5 + 10;
+            const bx = (x1 + x2) / 2 - badgeW / 2;
+            const by = (y1 + y2) / 2 - 18;
+            rect(bx - 2, by - 1, badgeW + 4, 16, { stroke: color, fill: '#ffffff', sw: 1 });
+            label(bx + 1, by, port, 10, color, 'left', 2);
+        }
+    }
+
+    // ── Title ───────────────────────────────────────────────────────────────
+    label(20, 15, 'Splunk Network Port Diagram', 22, '#1B1B1B', 'left', 2);
+    label(1590, 19, 'Splunk Enterprise v9.x', 12, '#888888', 'left', 1);
+
+    // ── Zone backgrounds ────────────────────────────────────────────────────
+    zone(20,  50, 250, 790, 'DATA SOURCES',            '#e3f2fd', '#1565c0');
+    zone(290, 50, 250, 790, 'FORWARDER LAYER',         '#e8f5e9', '#2e7d32');
+    zone(560, 50,1040, 790, 'SPLUNK CORE INFRASTRUCTURE', '#fff3e0', '#e65100');
+    zone(1620, 50, 200, 790, 'USERS / ANALYSTS',       '#f3e5f5', '#6a1b9a');
+
+    // ── Data Sources ────────────────────────────────────────────────────────
+    comp( 30, 100, 230, 65, 'Linux / Windows Servers', 'UF installed (agent)',      '#e3f2fd', '#1565c0');
+    comp( 30, 240, 230, 65, 'Network Devices',          'Syslog · Netflow · SNMP',  '#e3f2fd', '#1565c0');
+    comp( 30, 380, 230, 65, 'Applications / REST APIs', 'HTTP Event Collector',     '#e3f2fd', '#1565c0');
+    comp( 30, 520, 230, 65, 'Cloud / IoT / Containers', 'AWS S3 · Kinesis · custom','#e3f2fd', '#1565c0');
+    comp( 30, 660, 230, 65, 'Third-Party / Stream', 'Cribl · Kafka · syslog-ng', '#e3f2fd', '#1565c0');
+
+    // ── Forwarders ──────────────────────────────────────────────────────────
+    comp(300, 100, 230, 65, 'Universal Forwarder 1', 'Lightweight — no indexing', '#e8f5e9', '#2e7d32');
+    comp(300, 240, 230, 65, 'Universal Forwarder 2', '(remote site / DMZ)',       '#e8f5e9', '#2e7d32');
+    comp(300, 380, 230, 65, 'Heavy Forwarder',       'Parses · filters · routes', '#e8f5e9', '#2e7d32');
+
+    // ── Splunk Core — Management row ────────────────────────────────────────
+    comp( 575,  65, 195, 55, 'Deployment Server',  'Manages UF/HF configs',    '#fff3e0', '#e65100');
+    comp( 790,  65, 195, 55, 'Cluster Manager',    'Indexer cluster master',   '#fff3e0', '#e65100');
+    comp(1005,  65, 195, 55, 'License Manager',    'License pooling',          '#fff3e0', '#e65100');
+    label(575, 128, '↑ All components listen on TCP/8089  (Management / REST API)', 10, '#888888', 'left', 1);
+
+    // ── Indexer Cluster zone ─────────────────────────────────────────────────
+    rect(575, 155, 620, 130, { stroke: '#e65100', fill: '#fff8f2', sw: 2, dash: true });
+    label(580, 158, 'Indexer Cluster  (replication: TCP/8080 · TCP/9887)', 10, '#e65100', 'left', 2);
+
+    comp( 585, 175, 175, 95, 'Indexer 1', 'recv: TCP/9997  web: TCP/8000', '#fff3e0', '#e65100');
+    comp( 780, 175, 175, 95, 'Indexer 2', 'recv: TCP/9997  web: TCP/8000', '#fff3e0', '#e65100');
+    comp( 975, 175, 175, 95, 'Indexer 3', 'recv: TCP/9997  web: TCP/8000', '#fff3e0', '#e65100');
+
+    // Indexer peer replication (bidirectional)
+    portArrow(760, 222, 780, 222, 'TCP/8080 · 9887', '#cc3300', false, true);
+    portArrow(955, 222, 975, 222, 'TCP/8080 · 9887', '#cc3300', false, true);
+
+    // ── Search Head Cluster zone ─────────────────────────────────────────────
+    rect(575, 340, 620, 130, { stroke: '#6a1b9a', fill: '#f8f0ff', sw: 2, dash: true });
+    label(580, 343, 'Search Head Cluster  (replication: TCP/8181 · TCP/9887  |  KV Store: TCP/8191)', 10, '#6a1b9a', 'left', 2);
+
+    comp( 585, 360, 175, 95, 'Search Head 1', 'web: TCP/8000  KV: TCP/8065', '#f3e5f5', '#6a1b9a');
+    comp( 780, 360, 175, 95, 'Search Head 2', 'web: TCP/8000  KV: TCP/8065', '#f3e5f5', '#6a1b9a');
+    comp( 990, 360, 180, 55, 'SHC Deployer',  'Pushes apps to SH members',   '#ede8ff', '#6a1b9a');
+
+    // SHC replication (bidirectional)
+    portArrow(760, 407, 780, 407, 'TCP/8181 · 9887', '#6a1b9a', false, true);
+    // SH → KV Store note
+    label(990, 425, 'KV Store: TCP/8191\n(internal replication)', 10, '#6a1b9a', 'left', 1);
+
+    // ── HEC receiver box ────────────────────────────────────────────────────
+    comp(575, 530, 240, 55, 'HTTP Event Collector (HEC)', 'Indexer or Heavy Forwarder · TCP/8088', '#fff3e0', '#e65100');
+
+    // ── Reference notes ──────────────────────────────────────────────────────
+    label(575, 605, 'Reference — commonly used ports', 12, '#1B1B1B', 'left', 2);
+    const notes = [
+        '🔵  TCP/9997   Forwarder → Indexer (data forwarding)',
+        '🟠  TCP/8088   HTTP Event Collector (HEC)',
+        '🔑  TCP/8089   Management / REST API (all components)',
+        '🌐  TCP/8000   Splunk Web (browser access)',
+        '🔄  TCP/8080 · 9887  Indexer cluster peer replication',
+        '🔄  TCP/8181 · 9887  Search Head cluster replication',
+        '🗄  TCP/8191   KV Store (SHC internal)',
+        '🔒  TCP/9998   SSL/TLS encrypted forwarding (UF/HF ↔ Indexer)',
+        '📡  UDP/514 · TCP/1514  Syslog ingestion (→ HF or SC4S)',
+    ];
+    notes.forEach((n, i) => label(575, 626 + i * 18, n, 11, '#444444', 'left', 1));
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    comp(1630, 360, 175, 60, 'Browser / Analyst',  'Splunk Web UI',          '#f3e5f5', '#6a1b9a');
+    comp(1630, 450, 175, 60, 'REST API Client',     'curl · SDK · Phantom',   '#f3e5f5', '#6a1b9a');
+    comp(1630, 540, 175, 60, 'Monitoring Console',  'Admin overview',         '#f3e5f5', '#6a1b9a');
+    comp(1630, 630, 175, 60, 'Splunk SOAR / ITSM',  'Automated response',     '#f3e5f5', '#6a1b9a');
+
+    // ── Arrows: Data Sources → Forwarders ────────────────────────────────────
+    // Linux/Windows Servers → UF1 (agent is installed — no network arrow needed, use note)
+    label(262, 122, 'agent', 9, '#2e7d32', 'left', 1);
+    portArrow(260, 132, 300, 132, '',          '#2e7d32');  // Servers → UF1
+    portArrow(260, 272, 300, 272, 'UDP/514',   '#1565c0');  // Network → HF (syslog goes to HF)
+    portArrow(260, 412, 575, 552, 'TCP/8088',  '#e65100');  // Apps → HEC (direct)
+    portArrow(260, 552, 300, 412, 'TCP/9997',  '#2e7d32');  // Cloud → HF
+    portArrow(260, 692, 300, 430, 'TCP/9997',  '#2e7d32');  // 3rd party → HF
+
+    // Redirect network devices syslog to heavy forwarder
+    portArrow(300, 272, 300, 395, '',          '#2e7d32');  // align network device arrow down to HF
+
+    // ── Arrows: Forwarders → Indexers ────────────────────────────────────────
+    portArrow(530, 132, 585, 210, 'TCP/9997',  '#e65100');  // UF1 → Idx1
+    portArrow(530, 272, 672, 210, 'TCP/9997',  '#e65100');  // UF2 → Idx2
+    portArrow(530, 412, 760, 222, 'TCP/9997',  '#e65100');  // HF → Idx2
+
+    // ── Arrows: UF ↔ Deployment Server ───────────────────────────────────────
+    portArrow(530, 120, 575,  92, 'TCP/8089',  '#888888', true, true);  // UF1 ↔ DS
+
+    // ── Arrows: Search Heads → Indexers (distributed search) ─────────────────
+    portArrow(672, 360, 672, 270, 'TCP/8089',  '#6a1b9a');  // SH1 → Idx1
+    portArrow(867, 360, 867, 270, 'TCP/8089',  '#6a1b9a');  // SH2 → Idx2
+
+    // ── Arrows: Users → Splunk ───────────────────────────────────────────────
+    portArrow(1630, 390, 1195, 390, 'TCP/8000',  '#6a1b9a');   // Browser → SH1
+    portArrow(1630, 480, 1195, 407, 'TCP/8089',  '#888888', true); // REST → SH
+    portArrow(1630, 570, 985,   92, 'TCP/8089',  '#888888', true); // MC → Cluster Mgr
+
+    return els;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Edge Processor Overview
+// ─────────────────────────────────────────────────────────────────────────────
+function buildEdgeProcessorOverview() {
+    const els = [];
+
+    // ── primitives ──────────────────────────────────────────────────────────
+    const ORANGE  = '#F96901';
+    const MGENTA  = '#b31c8d';
+    const DARK    = '#1B1B1B';
+    const GRAY    = '#555555';
+    const LGRAY   = '#e8e8e8';
+    const MGRAY   = '#d0d0d0';
+
+    function r(x, y, w, h, opts = {}) {
+        els.push({
+            id: nanoid(), type: 'rectangle',
+            x, y, width: w, height: h, angle: 0,
+            strokeColor: opts.stroke || DARK,
+            backgroundColor: opts.fill || 'transparent',
+            fillStyle: 'solid',
+            strokeWidth: opts.sw !== undefined ? opts.sw : 2,
+            strokeStyle: opts.dash ? 'dashed' : 'solid',
+            roughness: 0, opacity: 100,
+            groupIds: [], frameId: null,
+            roundness: { type: 3 },
+            seed: 0, versionNonce: 0, isDeleted: false,
+            boundElements: null, updated: 1, link: null, locked: false,
+        });
+    }
+
+    function e(x, y, w, h, opts = {}) {
+        els.push({
+            id: nanoid(), type: 'ellipse',
+            x, y, width: w, height: h, angle: 0,
+            strokeColor: opts.stroke || DARK,
+            backgroundColor: opts.fill || 'transparent',
+            fillStyle: 'solid',
+            strokeWidth: opts.sw !== undefined ? opts.sw : 2,
+            strokeStyle: 'solid',
+            roughness: 0, opacity: 100,
+            groupIds: [], frameId: null,
+            roundness: { type: 3 },
+            seed: 0, versionNonce: 0, isDeleted: false,
+            boundElements: null, updated: 1, link: null, locked: false,
+        });
+    }
+
+    function t(x, y, text, size, color = DARK, align = 'left', family = 1) {
+        const w = Math.max(text.length * size * 0.63, 30);
+        els.push({
+            id: nanoid(), type: 'text',
+            x, y, width: w, height: size * 1.4,
+            text, fontSize: size, fontFamily: family,
+            textAlign: align, verticalAlign: 'top', baseline: size,
+            angle: 0, strokeColor: color, backgroundColor: 'transparent',
+            fillStyle: 'solid', strokeWidth: 1, strokeStyle: 'solid',
+            roughness: 0, opacity: 100,
+            groupIds: [], frameId: null, roundness: null,
+            seed: 0, versionNonce: 0, isDeleted: false,
+            boundElements: null, updated: 1, link: null, locked: false,
+            containerId: null, originalText: text, lineHeight: 1.25,
+        });
+    }
+
+    // Arrow with optional mid-label; bidirectional if bidir=true
+    function arr(x1, y1, x2, y2, lbl = '', color = DARK, dashed = false, bidir = false) {
+        const dx = x2 - x1, dy = y2 - y1;
+        els.push({
+            id: nanoid(), type: 'arrow',
+            x: x1, y: y1, width: dx, height: dy, angle: 0,
+            strokeColor: color, backgroundColor: 'transparent',
+            fillStyle: 'solid', strokeWidth: 3,
+            strokeStyle: dashed ? 'dashed' : 'solid',
+            roughness: 0, opacity: 100,
+            groupIds: [], frameId: null,
+            roundness: { type: 2 },
+            seed: 0, versionNonce: 0, isDeleted: false,
+            boundElements: null, updated: 1, link: null, locked: false,
+            points: [[0, 0], [dx, dy]],
+            lastCommittedPoint: null,
+            startBinding: null, endBinding: null,
+            startArrowhead: bidir ? 'arrow' : null,
+            endArrowhead: 'arrow',
+        });
+        if (lbl) {
+            const lw = lbl.length * 7 + 6;
+            t((x1 + x2) / 2 - lw / 2, (y1 + y2) / 2 - 17, lbl, 12, color, 'left', 2);
+        }
+    }
+
+    // Document icon (rectangle body + 3 text lines inside)
+    function doc(x, y) {
+        r(x, y, 56, 68, { stroke: DARK, fill: '#ffffff', sw: 2 });
+        // "folded corner" triangle suggestion via thin lines
+        r(x + 5, y + 12, 46, 4, { stroke: MGRAY, fill: MGRAY, sw: 0 });
+        r(x + 5, y + 22, 46, 4, { stroke: MGRAY, fill: MGRAY, sw: 0 });
+        r(x + 5, y + 32, 46, 4, { stroke: MGRAY, fill: MGRAY, sw: 0 });
+        r(x + 5, y + 42, 30, 4, { stroke: MGRAY, fill: MGRAY, sw: 0 });
+        t(x + 6, y + 4, '≡', 16, DARK, 'left', 1);
+    }
+
+    // Cylinder (database/log barrel)
+    function cylinder(x, y, w, h, lines) {
+        const eh = 18;
+        // body
+        r(x, y + eh / 2, w, h - eh / 2, { stroke: GRAY, fill: LGRAY, sw: 2 });
+        // bottom ellipse cap
+        e(x, y + h - eh / 2, w, eh, { stroke: GRAY, fill: LGRAY, sw: 2 });
+        // top ellipse cap (covers top of body rect)
+        e(x, y, w, eh, { stroke: GRAY, fill: '#c8c8c8', sw: 2 });
+        // text lines
+        lines.forEach((line, i) => t(x + w / 2 - line.length * 5.5, y + eh + 8 + i * 17, line, 11, DARK, 'center', 1));
+    }
+
+    // ── Title ────────────────────────────────────────────────────────────────
+    t(20, 15, 'Edge Processor Overview', 28, DARK, 'left', 2);
+
+    // ── USER (top-left) ───────────────────────────────────────────────────────
+    // Magenta-to-orange gradient circle → approximate with two-tone ring
+    e(22, 148, 108, 108, { stroke: MGENTA, fill: '#fdf0fb', sw: 3 });
+    // person icon (simple shapes)
+    e(60, 164, 30, 28, { stroke: DARK, fill: '#ffffff', sw: 2 });   // head
+    r(48, 194, 52, 38, { stroke: DARK, fill: '#ffffff', sw: 2 });   // body
+    t(52, 168, '👤', 22, DARK, 'left', 1);
+    t(55, 265, 'User', 13, DARK, 'center', 2);
+
+    // ── ARROW: User → Splunk Platform ────────────────────────────────────────
+    arr(130, 202, 220, 202, '', ORANGE);
+
+    // ── SPLUNK PLATFORM BOX ────────────────────────────────────────────────────
+    r(220, 148, 555, 188, { stroke: GRAY, fill: LGRAY, sw: 2 });
+    t(230, 157, 'Splunk Platform', 16, DARK, 'left', 2);
+
+    // UI small box (inside, left)
+    r(305, 180, 52, 112, { stroke: GRAY, fill: MGRAY, sw: 2 });
+    t(314, 232, 'UI', 13, DARK, 'center', 2);
+
+    // Services inner zone
+    r(368, 178, 280, 114, { stroke: GRAY, fill: '#f0f0f0', sw: 1 });
+    // Pipelines Service
+    r(375, 185, 265, 44, { stroke: GRAY, fill: '#ffffff', sw: 2 });
+    t(450, 200, 'Pipelines Service', 13, DARK, 'center', 2);
+    // Edge Processor Service
+    r(375, 237, 265, 44, { stroke: GRAY, fill: '#ffffff', sw: 2 });
+    t(430, 252, 'Edge Processor Service', 13, DARK, 'center', 2);
+
+    // Cylinder — audit / processor logs (right of services)
+    cylinder(658, 178, 100, 114, ['Audit logs', 'Processor logs', 'Pipeline metrics']);
+
+    // ── BULLET POINTS (right of Splunk Platform box) ─────────────────────────
+    t(790, 188, '•  Central pipeline', 13, DARK, 'left', 1);
+    t(798, 206, '   management', 13, DARK, 'left', 1);
+    t(790, 236, '•  Global visibility', 13, DARK, 'left', 1);
+
+    // ── "Cloud or Customer Managed" label ────────────────────────────────────
+    t(268, 348, 'Cloud or Customer Managed', 12, DARK, 'left', 2);
+
+    // ── BIDIRECTIONAL VERTICAL ARROW (Platform ↔ Host Server) ────────────────
+    // Goes from below Splunk Platform down to Customer Host Server top
+    arr(484, 345, 484, 408, '', ORANGE, false, true);
+
+    // ── BOTTOM TIER outer boxes ───────────────────────────────────────────────
+
+    // Customer Agents outer box
+    r(20, 408, 240, 188, { stroke: GRAY, fill: '#f8f8f8', sw: 2 });
+    // 3 document icons
+    doc(30, 420);
+    doc(102, 420);
+    doc(174, 420);
+    t(42, 550, 'Customer Agents', 14, DARK, 'left', 2);
+
+    // DATA arrow 1
+    arr(260, 492, 348, 492, 'Data', ORANGE);
+
+    // Customer Host Server box
+    r(348, 408, 282, 188, { stroke: DARK, fill: '#f8f8f8', sw: 2 });
+    // Edge Processor Node inner box
+    r(362, 440, 254, 70, { stroke: GRAY, fill: '#e0e0e0', sw: 2 });
+    t(405, 467, 'Edge Processor Node', 13, DARK, 'center', 2);
+    t(370, 555, 'Customer Host Server', 14, DARK, 'left', 2);
+
+    // DATA arrow 2
+    arr(630, 492, 718, 492, 'Data', ORANGE);
+
+    // Customer Destinations box
+    r(718, 408, 315, 188, { stroke: GRAY, fill: '#f8f8f8', sw: 2 });
+
+    // Splunk Cloud icon block
+    e(738, 428, 52, 40, { stroke: ORANGE, fill: '#fff3e0', sw: 2 });
+    t(738, 430, '☁', 20, ORANGE, 'left', 1);
+    t(733, 474, 'splunk>', 10, DARK, 'left', 2);
+    t(733, 487, 'Cloud', 10, GRAY, 'left', 1);
+
+    // Splunk Enterprise icon block
+    r(808, 428, 52, 40, { stroke: '#65a637', fill: '#f0fff0', sw: 2 });
+    t(810, 432, '🗄', 20, '#65a637', 'left', 1);
+    t(804, 474, 'splunk>', 10, DARK, 'left', 2);
+    t(804, 487, 'Enterprise', 10, GRAY, 'left', 1);
+
+    // AWS S3 icon block
+    r(878, 428, 52, 40, { stroke: '#FF9900', fill: '#fffbf0', sw: 2 });
+    t(880, 432, '☁', 20, '#FF9900', 'left', 1);
+    t(882, 474, 'aws', 10, '#FF9900', 'left', 2);
+    t(882, 487, 'S3', 10, GRAY, 'left', 1);
+
+    t(730, 553, 'Customer Destinations', 14, DARK, 'left', 2);
+
+    // ── FOOTER link ──────────────────────────────────────────────────────────
+    t(20, 618, 'Link: Edge Processor Validated Architecture | Splunk Docs', 11, '#1a73e8', 'left', 1);
+    t(20, 633, 'https://docs.splunk.com/Documentation/SplunkCloud/latest/Edge/AboutEdgeProcessor', 10, '#888888', 'left', 1);
+
+    return els;
+}
+
 export const TEMPLATES = [
+    {
+        id: 'edge-processor',
+        name: 'Edge Processor Overview',
+        description: 'User → Splunk Platform (UI, Pipelines, EP Service, audit logs) ↕ Edge Processor Node → Customer Destinations (Cloud, Enterprise, S3)',
+        build: buildEdgeProcessorOverview,
+    },
+    {
+        id: 'network-ports',
+        name: 'Splunk Network Port Diagram',
+        description: 'Full port reference: UF/HF → Indexers (9997), HEC (8088), Search Heads (8000/8089), cluster replication, management API',
+        build: buildNetworkPortDiagram,
+    },
     {
         id: 'drp',
         name: 'Digital Resilience Platform',
