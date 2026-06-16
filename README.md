@@ -19,6 +19,7 @@ Collaborative whiteboard embedded inside Splunk — built with React + [Excalidr
 | **Templates (user)** | Save any board state as a named template; load or delete from the Templates panel |
 | **Excalidraw libraries** | Browse and import from [libraries.excalidraw.com](https://libraries.excalidraw.com/) directly in the sidebar |
 | **Persistence** | All boards stored in Splunk KV Store — visible and editable by every Splunk user |
+| **Build / reveal-on-click** | PowerPoint-style progressive reveal — tag elements/groups into ordered steps that appear one click at a time in Present mode, with optional fade-in and camera-follow |
 | **Version history** | Named snapshots per board with single-click restore |
 | **Resizable sidebar** | Drag the left edge of the sidebar to resize; preference saved in `localStorage` |
 | **Export** | PNG, SVG, JSON (Excalidraw native), and a shareable board URL |
@@ -102,6 +103,18 @@ Click the 🗑 icon on a user template card, then confirm with **Delete**.
 ### Excalidraw Libraries
 
 Open the **Libraries** tab. The panel fetches the live catalog from [libraries.excalidraw.com](https://libraries.excalidraw.com/). Click **Import** on any library to load its shapes into Excalidraw's built-in library panel (bottom-left toolbar icon).
+
+### Build (reveal on click)
+
+Open the **Build** tab to set up a PowerPoint-style progressive reveal.
+
+1. Select elements (or a group) on the canvas and click **Add selection as step N**. Repeat to create an ordered sequence. Whole groups are tagged together.
+2. Or click **Auto: by group / left→right / top→bottom** to generate one step per group automatically.
+3. Reorder steps with ↑/↓, focus a step on the canvas with ⊙, or remove a step with 🗑.
+
+Then click **Present**. The presenter automatically enters Build mode: each click (or `→` / `Space`) reveals the next step; `←` steps back; `Esc` exits. Toggle **Fade** (smooth fade-in) and **Follow** (camera pans to each new group) from the presentation bar. The reveal never alters your saved board — the scene is restored on exit.
+
+If a board has no build steps, Present mode falls back to stepping through Excalidraw **frames** as slides.
 
 ### Version History
 

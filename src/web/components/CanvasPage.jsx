@@ -8,6 +8,7 @@ import Message from '@splunk/react-ui/Message';
 
 import TemplatePanel from './TemplatePanel';
 import ShapesPanel from './ShapesPanel';
+import BuildPanel from './BuildPanel';
 import HistoryPanel from './HistoryPanel';
 import ExportPanel from './ExportPanel';
 import LibraryPanel from './LibraryPanel';
@@ -23,6 +24,7 @@ import { debug } from '../lib/log';
 const TABS = [
     { label: 'Shapes', value: 'shapes' },
     { label: 'Templates', value: 'templates' },
+    { label: 'Build', value: 'build' },
     { label: 'Libraries', value: 'libraries' },
     { label: 'History', value: 'history' },
     { label: 'Export', value: 'export' },
@@ -120,6 +122,8 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const apiRef = useRef(null);
     // Track last insert position for cascading smart placement
     const lastInsertRef = useRef({ time: 0, x: 0, y: 0 });
+    // When true, scene changes are not persisted (used during presentation reveal).
+    const suppressSaveRef = useRef(false);
 
     useEffect(() => {
         apiRef.current = excalidrawAPI;
@@ -210,7 +214,9 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const { markDirty } = useAutoSave(boardId, getElementsAndState);
 
     const onChange = useCallback((elements, appState) => {
-        markDirty();
+        // While presenting, the build reveal mutates the live scene (opacity);
+        // those transient changes must never be persisted.
+        if (!suppressSaveRef.current) markDirty();
         if (appState) setSelectedIds(appState.selectedElementIds ?? {});
     }, [markDirty]);
 
@@ -415,6 +421,8 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                         getExportable={getExportable}
                     />
                 );
+            case 'build':
+                return <BuildPanel excalidrawAPI={excalidrawAPI} markDirty={markDirty} />;
             case 'libraries':
                 return <LibraryPanel excalidrawAPI={excalidrawAPI} />;
             default:
@@ -508,6 +516,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                         <PresentationMode
                             excalidrawAPI={excalidrawAPI}
                             onExit={exitPresentation}
+                            suppressSaveRef={suppressSaveRef}
                         />
                     )}
                     {/* Floating alignment / group toolbar — visible when elements are selected */}
