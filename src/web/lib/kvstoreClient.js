@@ -3,6 +3,7 @@
 
 import { createRESTURL } from '@splunk/splunk-utils/url';
 import { createFetchInit } from '@splunk/splunk-utils/fetch';
+import { debug } from './log';
 
 const APP = 'whiteboard_app';
 
@@ -23,21 +24,13 @@ async function send(url, init = {}, expectedStatus = [200, 201]) {
         },
     });
     if (init.method && init.method !== 'GET') {
-        // eslint-disable-next-line no-console
-        console.log(
-            `[whiteboard_app] kv ${init.method} ${url} body=${
-                init.body ? init.body.length : 0
-            } bytes`
-        );
+        debug(`kv ${init.method} ${url} body=${init.body ? init.body.length : 0} bytes`);
     }
     const res = await fetch(url, fetchInit);
     const ok = [].concat(expectedStatus).includes(res.status);
     const text = await res.text();
     if (init.method && init.method !== 'GET') {
-        // eslint-disable-next-line no-console
-        console.log(
-            `[whiteboard_app] kv ${init.method} -> ${res.status} (${text.length} bytes)`
-        );
+        debug(`kv ${init.method} -> ${res.status} (${text.length} bytes)`);
     }
     if (!ok) {
         throw new Error(`KV Store ${res.status}: ${text.slice(0, 200)}`);

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { kv, COLLECTIONS } from '../lib/kvstoreClient';
+import { debug, logWarn } from '../lib/log';
 
 function getCurrentUser() {
     try {
@@ -118,9 +119,8 @@ export function useBoardMutations() {
                     ? serialize({ elements: elementsArg, appState: appStateArg })
                     : existing.elements_json,
         };
-        // eslint-disable-next-line no-console
-        console.log(
-            `[whiteboard_app] updateBoard(${id}) -> ${
+        debug(
+            `updateBoard(${id}) -> ${
                 Array.isArray(elementsArg) ? elementsArg.length : '(unchanged)'
             } elements, elements_json=${next.elements_json.length} bytes`
         );
@@ -152,18 +152,15 @@ export function useAutoSave(boardId, getElementsAndState, intervalMs = 30_000) {
                 // Defensive: if the API returned no elements (e.g. mid-mount / stale ref),
                 // skip this autosave tick rather than overwriting a real saved board with [].
                 if (!elements || elements.length === 0) {
-                    // eslint-disable-next-line no-console
-                    console.log('[whiteboard_app] autosave skipped (0 elements)');
+                    debug('autosave skipped (0 elements)');
                     return;
                 }
-                // eslint-disable-next-line no-console
-                console.log(`[whiteboard_app] autosave firing with ${elements.length} elements`);
+                debug(`autosave firing with ${elements.length} elements`);
                 await updateBoard(boardId, { elements, appState });
                 dirtyRef.current = false;
             } catch (e) {
-                // surface autosave failures to the console; UI will show stale state until next manual save
-                // eslint-disable-next-line no-console
-                console.warn('Autosave failed', e);
+                // surface autosave failures; UI will show stale state until next manual save
+                logWarn('Autosave failed', e);
             }
         }, intervalMs);
         return () => clearInterval(timerRef.current);

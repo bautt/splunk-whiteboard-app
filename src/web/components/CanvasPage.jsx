@@ -18,6 +18,7 @@ import { useBoard, useBoardMutations, useAutoSave } from '../hooks/useKVStore';
 import { useVersions } from '../hooks/useVersions';
 import { detectSplunkColorScheme } from '../lib/splunkTheme';
 import { nanoid } from '../lib/nanoid';
+import { debug } from '../lib/log';
 
 const TABS = [
     { label: 'Shapes', value: 'shapes' },
@@ -180,9 +181,8 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         if (!board) return null;
         const incoming = board.elements || [];
         const restored = restoreElements(incoming, null);
-        // eslint-disable-next-line no-console
-        console.log(
-            `[whiteboard_app] initialData for board ${board.id}: ${incoming.length} incoming -> ${restored.length} restored`
+        debug(
+            `initialData for board ${board.id}: ${incoming.length} incoming -> ${restored.length} restored`
         );
         return {
             elements: restored,
@@ -199,8 +199,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         const api = apiRef.current;
         if (!api) return { elements: [], appState: {}, files: {} };
         const elements = api.getSceneElements();
-        // eslint-disable-next-line no-console
-        console.log('[whiteboard_app] getElementsAndState ->', elements.length, 'elements');
+        debug('getElementsAndState ->', elements.length, 'elements');
         return {
             elements,
             appState: serializableAppState(api.getAppState()),
@@ -218,8 +217,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const handleSaveNow = useCallback(async () => {
         if (!boardId) return;
         const { elements, appState } = getElementsAndState();
-        // eslint-disable-next-line no-console
-        console.log('[whiteboard_app] saving', elements.length, 'elements');
+        debug('saving', elements.length, 'elements');
         try {
             await updateBoard(boardId, { name, tags, elements, appState });
             setSaveStatus({ type: 'success', text: `Saved ${elements.length} elements.` });
@@ -394,8 +392,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const exitPresentation = () => setPresenting(false);
 
     const renderPanel = () => {
-        // eslint-disable-next-line no-console
-        console.log('[whiteboard_app] renderPanel for tab:', activeTab);
+        debug('renderPanel for tab:', activeTab);
         switch (activeTab) {
             case 'shapes':
                 return <ShapesPanel onAdd={handleAddShape} onAddImage={handleAddImage} />;

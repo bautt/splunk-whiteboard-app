@@ -1,4 +1,5 @@
 import React from 'react';
+import { logError } from '../lib/log';
 
 // Catches rendering errors inside a side panel so a single broken panel
 // doesn't blank the whole sidebar. Resets when its key/children prop changes
@@ -16,8 +17,7 @@ export default class PanelErrorBoundary extends React.Component {
     }
 
     componentDidCatch(error, info) {
-        // eslint-disable-next-line no-console
-        console.error('[whiteboard_app] panel render error:', error, info);
+        logError('panel render error:', error, info);
     }
 
     render() {

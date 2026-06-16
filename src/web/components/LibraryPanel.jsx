@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Heading from '@splunk/react-ui/Heading';
+import { debug, logWarn, logError } from '../lib/log';
 
 const BASE = 'https://libraries.excalidraw.com';
 const CATALOG_URL = `${BASE}/libraries.json`;
@@ -36,16 +37,25 @@ function parseLibFile(data) {
     });
 }
 
+const CONSENT_KEY = 'wb_libraries_consent';
+
 export default function LibraryPanel({ excalidrawAPI }) {
     const [catalog, setCatalog] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
     const [importing, setImporting] = useState({}); // id → 'loading'|'done'|'error'
+    // Opt-in: this panel makes requests to a third-party site (libraries.excalidraw.com),
+    // which exposes the user's IP. We do not contact it until the user explicitly enables it.
+    const [enabled, setEnabled] = useState(() => {
+        try { return localStorage.getItem(CONSENT_KEY) === '1'; } catch (e) { return false; }
+    });
     const abortRef = useRef(null);
 
     useEffect(() => {
+        if (!enabled) return undefined;
         setLoading(true);
+        setError(null);
         const ctrl = new AbortController();
         abortRef.current = ctrl;
         fetch(CATALOG_URL, { signal: ctrl.signal })
@@ -66,12 +76,24 @@ export default function LibraryPanel({ excalidrawAPI }) {
                 }
             });
         return () => ctrl.abort();
-    }, []);
+    }, [enabled]);
+
+    const enable = () => {
+        try { localStorage.setItem(CONSENT_KEY, '1'); } catch (e) { /* ignore */ }
+        setEnabled(true);
+    };
+    const disable = () => {
+        try { localStorage.removeItem(CONSENT_KEY); } catch (e) { /* ignore */ }
+        if (abortRef.current) abortRef.current.abort();
+        setEnabled(false);
+        setCatalog([]);
+        setError(null);
+    };
 
     const handleImport = useCallback(
         async (lib) => {
             if (!excalidrawAPI) {
-                console.warn('[whiteboard_app] LibraryPanel: excalidrawAPI not ready');
+                logWarn('LibraryPanel: excalidrawAPI not ready');
                 return;
             }
             const url = `${BASE}/libraries/${lib.source}`;
@@ -80,10 +102,9 @@ export default function LibraryPanel({ excalidrawAPI }) {
                 const resp = await fetch(url);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const data = await resp.json();
-                console.log('[whiteboard_app] Library raw data version:', data.version,
-                    'keys:', Object.keys(data));
+                debug('Library raw data version:', data.version, 'keys:', Object.keys(data));
                 const items = parseLibFile(data);
-                console.log('[whiteboard_app] Parsed library items:', items.length,
+                debug('Parsed library items:', items.length,
                     items[0] ? `first: "${items[0].name}" elems=${items[0].elements.length}` : '');
                 if (!items.length) throw new Error('Library contains no items');
 
@@ -92,10 +113,10 @@ export default function LibraryPanel({ excalidrawAPI }) {
                     libraryItems: (existing) => [...existing, ...items],
                     openLibraryMenu: true,   // auto-open the library panel
                 });
-                console.log('[whiteboard_app] Library imported OK:', lib.name);
+                debug('Library imported OK:', lib.name);
                 setImporting((p) => ({ ...p, [lib.id]: 'done' }));
             } catch (e) {
-                console.error('[whiteboard_app] Library import failed:', e);
+                logError('Library import failed:', e);
                 setImporting((p) => ({ ...p, [lib.id]: 'error' }));
             }
         },
@@ -112,9 +133,46 @@ export default function LibraryPanel({ excalidrawAPI }) {
         );
     });
 
+    if (!enabled) {
+        return (
+            <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <Heading level={3}>Excalidraw Libraries</Heading>
+                <div
+                    style={{
+                        padding: 12,
+                        border: '1px solid var(--gray60, #c3cbd4)',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        lineHeight: 1.5,
+                        background: 'var(--gray98, #fafbfc)',
+                    }}
+                >
+                    <strong>Third-party content</strong>
+                    <p style={{ margin: '6px 0 10px' }}>
+                        This feature loads community shape libraries directly from{' '}
+                        <a href="https://libraries.excalidraw.com" target="_blank" rel="noreferrer">
+                            libraries.excalidraw.com
+                        </a>
+                        . Enabling it sends requests from your browser to that external
+                        site, which will expose your IP address to a third party. No board
+                        data ever leaves Splunk.
+                    </p>
+                    <Button appearance="primary" onClick={enable}>
+                        Enable external libraries
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12, height: '100%' }}>
-            <Heading level={3}>Excalidraw Libraries</Heading>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Heading level={3}>Excalidraw Libraries</Heading>
+                <Button size="small" appearance="secondary" onClick={disable}>
+                    Disable
+                </Button>
+            </div>
             <p style={{ margin: 0, fontSize: 12, opacity: 0.7 }}>
                 Browse {catalog.length} community libraries from{' '}
                 <a href="https://libraries.excalidraw.com" target="_blank" rel="noreferrer">
