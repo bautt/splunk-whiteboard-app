@@ -5,25 +5,35 @@ import Heading from '@splunk/react-ui/Heading';
 const BASE = 'https://libraries.excalidraw.com';
 const CATALOG_URL = `${BASE}/libraries.json`;
 
-/** Normalize a library file regardless of v1/v2 format. */
+/** Normalize a library file regardless of v1/v2 format.
+ *  Excalidraw's LibraryItem requires: id, status, elements, created (epoch ms).
+ */
 function parseLibFile(data) {
+    const now = Date.now();
     // v2: { version: 2, libraryItems: [{id, name, elements, status, created}] }
-    // v1: { version: 1, library: [[...elements], [...elements]] }
     if (data.version === 2) {
         return (data.libraryItems || []).map((item) => ({
-            id: item.id,
+            id: item.id || String(Math.random()),
             name: item.name || 'Item',
             status: 'published',
             elements: item.elements || [],
+            created: item.created || now,
         }));
     }
-    // v1: each entry in "library" is a flat elements array
-    return (data.library || []).map((elements, i) => ({
-        id: `lib-v1-${i}-${Date.now()}`,
-        name: `Item ${i + 1}`,
-        status: 'published',
-        elements,
-    }));
+    // v1: { version: 1, library: [[...elements], [...elements]] }
+    // Each entry is a flat array of elements (not an object).
+    const libArray = data.library || data.libraryItems || [];
+    return libArray.map((entry, i) => {
+        // v1 entry is an array; v2 entry is an object — handle both
+        const elements = Array.isArray(entry) ? entry : (entry.elements || []);
+        return {
+            id: `lib-v1-${now}-${i}`,
+            name: Array.isArray(entry) ? `Item ${i + 1}` : (entry.name || `Item ${i + 1}`),
+            status: 'published',
+            elements,
+            created: now + i,
+        };
+    });
 }
 
 export default function LibraryPanel({ excalidrawAPI }) {
@@ -60,21 +70,29 @@ export default function LibraryPanel({ excalidrawAPI }) {
 
     const handleImport = useCallback(
         async (lib) => {
-            if (!excalidrawAPI) return;
+            if (!excalidrawAPI) {
+                console.warn('[whiteboard_app] LibraryPanel: excalidrawAPI not ready');
+                return;
+            }
             const url = `${BASE}/libraries/${lib.source}`;
             setImporting((p) => ({ ...p, [lib.id]: 'loading' }));
             try {
                 const resp = await fetch(url);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const data = await resp.json();
+                console.log('[whiteboard_app] Library raw data version:', data.version,
+                    'keys:', Object.keys(data));
                 const items = parseLibFile(data);
+                console.log('[whiteboard_app] Parsed library items:', items.length,
+                    items[0] ? `first: "${items[0].name}" elems=${items[0].elements.length}` : '');
                 if (!items.length) throw new Error('Library contains no items');
 
+                // Pass items as a function so Excalidraw merges with existing library
                 await excalidrawAPI.updateLibrary({
-                    libraryItems: items,
-                    merge: true,
-                    openLibraryMenu: false,
+                    libraryItems: (existing) => [...existing, ...items],
+                    openLibraryMenu: true,   // auto-open the library panel
                 });
+                console.log('[whiteboard_app] Library imported OK:', lib.name);
                 setImporting((p) => ({ ...p, [lib.id]: 'done' }));
             } catch (e) {
                 console.error('[whiteboard_app] Library import failed:', e);
