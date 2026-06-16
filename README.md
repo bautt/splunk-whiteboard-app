@@ -1,5 +1,9 @@
 # Splunk Whiteboard App
 
+<p align="center">
+  <img src="assets/listing_icon_400.png" alt="Splunk Whiteboard App icon" width="160" />
+</p>
+
 Collaborative whiteboard embedded inside Splunk — built with React + [Excalidraw](https://github.com/excalidraw/excalidraw), styled with `@splunk/react-ui`, persisted via Splunk KV Store.
 
 > **Live instance:** `https://your-splunk-host/en-US/app/whiteboard_app/whiteboard`  
@@ -15,7 +19,7 @@ Collaborative whiteboard embedded inside Splunk — built with React + [Excalidr
 | **Splunk shapes** | Forwarder (UF/HF), Indexer, Search Head, Deployment Server, Cluster Manager, License Manager, Edge Processor, Ingest Processor, SplunkCloud, and more |
 | **SVG icon mode** | All Splunk infrastructure shapes can be inserted as colourable SVG images instead of vector elements |
 | **Marketing icons** | 50 Splunk Marketing Icons — searchable, individually colourable, inserted as SVG images onto the canvas |
-| **Templates (built-in)** | Digital Resilience Platform, SAP E2E Visibility, Network Port Diagram, SIEM, Observability, IT Ops, and more |
+| **Templates (built-in)** | Splunk Platform (13-step build), Edge Processor, Network Port Diagram, Digital Resilience Platform, SAP E2E Visibility, SIEM, Observability, IT Ops, and more |
 | **Templates (user)** | Save any board state as a named template; load or delete from the Templates panel |
 | **Excalidraw libraries** | Browse and import from [libraries.excalidraw.com](https://libraries.excalidraw.com/) directly in the sidebar |
 | **Persistence** | All boards stored in Splunk KV Store — visible and editable by every Splunk user |
@@ -81,7 +85,9 @@ Open the **Templates** tab.
 
 | Template | Description |
 |---|---|
+| Splunk Platform (13-step build) | Client → ports → Apps → Investigate/Monitor/Analyze/Act → Machine Data; pre-tagged for PowerPoint-style Present mode |
 | Splunk Network Port Diagram | Full port reference: UF/HF → Indexers (9997), HEC (8088), SH (8000/8089), cluster replication |
+| Edge Processor Overview | Edge Processor pipeline: sources → EP → Splunk Cloud / on-prem indexers |
 | Digital Resilience Platform | SOC/NOC/BOC/OT → Investigate → Monitor → Act, with data-source icons |
 | SAP End-to-End Visibility | Business & IT sources → Investigate → Monitor → Analyze → Act |
 | SIEM | Log sources → forwarders → indexers → search heads → analyst |
@@ -109,10 +115,10 @@ Open the **Libraries** tab. The panel fetches the live catalog from [libraries.e
 Open the **Build** tab to set up a PowerPoint-style progressive reveal.
 
 1. Select elements (or a group) on the canvas and click **Add selection as step N**. Repeat to create an ordered sequence. Whole groups are tagged together.
-2. Or click **Auto: by group / left→right / top→bottom** to generate one step per group automatically.
+2. Or click **Auto: by group / left→right / top→bottom / bottom→top** to generate one step per group automatically.
 3. Reorder steps with ↑/↓, focus a step on the canvas with ⊙, or remove a step with 🗑.
 
-Then click **Present**. The presenter automatically enters Build mode: each click (or `→` / `Space`) reveals the next step; `←` steps back; `Esc` exits. Toggle **Fade** (smooth fade-in) and **Follow** (camera pans to each new group) from the presentation bar. The reveal never alters your saved board — the scene is restored on exit.
+Then click **Present**. The presenter automatically enters Build mode: each click (or `→` / `Space`) reveals the next step; `←` steps back; `Esc` exits. Toggle **Fade** (smooth fade-in) and **Follow** (camera pans to each new group — off by default) from the presentation bar. The reveal never alters your saved board — the scene is restored on exit.
 
 If a board has no build steps, Present mode falls back to stepping through Excalidraw **frames** as slides.
 
@@ -143,18 +149,38 @@ make dev
 # Full production build → whiteboard_app.tar.gz
 make package
 
-# Deploy to your-splunk-host and restart Splunk
+# Deploy to your-splunk-host and restart Splunk (required for .conf changes)
 make deploy
 
-# Deploy static assets only — no Splunk restart
+# Deploy without restarting Splunk (JS, icons, static assets)
 make deploy-norestart
 ```
 
-After `make deploy`, the app is available immediately at `https://your-splunk-host/en-US/app/whiteboard_app/whiteboard`.
+After deploy, the app is available at `https://your-splunk-host/en-US/app/whiteboard_app/whiteboard`.
 
-> **Note:** `make deploy` restarts Splunkd (required when `collections.conf` or `transforms.conf` changes). For JS/CSS-only changes use `make deploy-norestart`.
+> **Note:** `make deploy` restarts Splunkd (required when `collections.conf` or `transforms.conf` changes). For JS/CSS/icon-only changes use `make deploy-norestart` and **hard-refresh** the browser (Cmd+Shift+R) to bust Splunk Web's static-asset cache.
 
 ---
+
+## App icon
+
+The app icon is a magenta→orange gradient easel with whiteboard doodles (flowchart, sticky note, checklist). Splunk serves icons from `appserver/static/`:
+
+| File | Size | Use |
+|---|---|---|
+| `appIcon.png` | 36×36 | App listing / launcher (light theme) |
+| `appIcon_2x.png` | 72×72 | Retina launcher |
+| `appIconAlt.png` | 36×36 | Dark-theme contexts |
+| `appIconAlt_2x.png` | 72×72 | Retina dark theme |
+
+Listing / Splunkbase masters live in `assets/listing_icon_200.png` and `assets/listing_icon_400.png`.
+
+Regenerate all sizes from the 400px master:
+
+```bash
+python3 assets/generate_alt_icon.py   # requires Pillow + numpy
+make package && make deploy-norestart
+```
 
 ## App structure
 
@@ -162,6 +188,10 @@ After `make deploy`, the app is available immediately at `https://your-splunk-ho
 whiteboard_app/
 ├── Makefile
 ├── README.md
+├── assets/
+│   ├── generate_alt_icon.py            # Regenerate app icons from 400px master
+│   ├── listing_icon_200.png            # Splunkbase listing (200×200)
+│   └── listing_icon_400.png            # Splunkbase listing (400×400)
 └── src/
     ├── package/                        # Splunk app skeleton (copied verbatim to dist/)
     │   ├── default/
@@ -171,10 +201,16 @@ whiteboard_app/
     │   │   └── data/ui/
     │   │       ├── nav/default.xml
     │   │       └── views/whiteboard.xml
-    │   ├── appserver/templates/
-    │   │   └── whiteboard.html         # HTML shell loaded by Splunk Web
+    │   ├── appserver/
+    │   │   ├── static/                 # App icons + compiled JS bundle
+    │   │   │   ├── appIcon.png         # 36×36 (transparent)
+    │   │   │   ├── appIcon_2x.png      # 72×72
+    │   │   │   ├── appIconAlt.png      # 36×36 dark-theme variant
+    │   │   │   └── appIconAlt_2x.png   # 72×72
+    │   │   └── templates/
+    │   │       └── whiteboard.html     # HTML shell loaded by Splunk Web
     │   ├── metadata/default.meta       # ACLs — all collections world-readable/writable
-    │   └── static/                     # App icons (appIcon.png, appIcon_2x.png)
+    │   └── app.manifest                # Splunkbase package manifest
     └── web/                            # React frontend (compiled → dist/appserver/static/)
         ├── index.jsx                   # Entry point
         ├── webpack.config.mjs
