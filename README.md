@@ -159,7 +159,7 @@ make deploy
 make deploy-norestart
 ```
 
-Set `SPLUNK_HOST` in the `Makefile` (default: `user@your-splunk-host`). After deploy, open the app under **Apps → Whiteboard App** in Splunk Web.
+Set `SPLUNK_HOST` for deploy targets — copy `deploy.local.mk.example` to `deploy.local.mk` (gitignored), or pass on the command line: `make deploy SPLUNK_HOST=user@host`.
 
 > **Note:** `make deploy` restarts Splunkd (required when `collections.conf` or `transforms.conf` changes). For JS/CSS/icon-only changes use `make deploy-norestart` and **hard-refresh** the browser (Cmd+Shift+R) to bust Splunk Web's static-asset cache.
 
@@ -189,6 +189,7 @@ make package && make deploy-norestart
 
 ```
 whiteboard_app/
+├── deploy.local.mk.example           # Copy → deploy.local.mk for local deploy host
 ├── Makefile
 ├── README.md
 ├── assets/

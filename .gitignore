@@ -9,6 +9,7 @@ src/.cache/
 
 # Secrets / local config
 local/
+deploy.local.mk
 *.env
 *.env.local
 

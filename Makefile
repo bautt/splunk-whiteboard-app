@@ -1,7 +1,14 @@
 .PHONY: deps dev build package deploy deploy-norestart clean
 
 APP_ID := whiteboard_app
-SPLUNK_HOST := user@your-splunk-host
+
+# Override in deploy.local.mk (gitignored) or: make deploy SPLUNK_HOST=user@host
+-include deploy.local.mk
+SPLUNK_HOST ?=
+
+ifeq ($(strip $(SPLUNK_HOST)),)
+$(error Set SPLUNK_HOST — copy deploy.local.mk.example to deploy.local.mk, or run: make deploy SPLUNK_HOST=user@host)
+endif
 
 deps:
 	cd src/ && yarn install

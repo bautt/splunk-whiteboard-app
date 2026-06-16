@@ -1,0 +1,3 @@
+# Copy to deploy.local.mk (gitignored) and set your Splunk SSH target.
+#   cp deploy.local.mk.example deploy.local.mk
+SPLUNK_HOST := user@your-splunk-host
