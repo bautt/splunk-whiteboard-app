@@ -1,5 +1,9 @@
 import React from 'react';
 import { MainMenu } from '@excalidraw/excalidraw';
+import {
+    defaultBackgroundForTheme,
+    normalizeTheme,
+} from '../lib/canvasAppearance';
 
 /** Matches Excalidraw 0.17.6 actionToggleGridMode (constants.GRID_SIZE). */
 export const EXCALIDRAW_GRID_SIZE = 20;
@@ -73,19 +77,27 @@ export default function ExcalidrawPreferences({ excalidrawAPI, appState }) {
 
 /** Defaults for new boards / missing persisted fields. */
 export function defaultCanvasAppState(overrides = {}) {
+    const theme = normalizeTheme(overrides);
+    const fallbackBg = defaultBackgroundForTheme(theme);
     return {
         gridSize: null,
         objectsSnapModeEnabled: true,
         isBindingEnabled: true,
+        viewBackgroundColor: fallbackBg,
+        theme,
         ...overrides,
+        theme,
+        viewBackgroundColor: overrides.viewBackgroundColor || fallbackBg,
     };
 }
 
 /** Subset of appState persisted to KV store. */
 export function serializableCanvasAppState(appState) {
     if (!appState) return defaultCanvasAppState();
+    const theme = normalizeTheme(appState);
     return {
-        viewBackgroundColor: appState.viewBackgroundColor || '#ffffff',
+        viewBackgroundColor: appState.viewBackgroundColor || defaultBackgroundForTheme(theme),
+        theme,
         gridSize: appState.gridSize ?? null,
         objectsSnapModeEnabled: appState.objectsSnapModeEnabled ?? true,
         isBindingEnabled: appState.isBindingEnabled ?? true,

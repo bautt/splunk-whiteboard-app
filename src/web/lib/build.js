@@ -35,25 +35,76 @@ export function hasBuild(elements) {
     return getMaxStep(elements) > 0;
 }
 
+const CONTAINER_TYPES = new Set(['rectangle', 'ellipse', 'diamond']);
+
 /**
- * Expand a set of selected element ids to include every element that shares a
- * groupId with any selected element, so whole groups are tagged together.
+ * Expand a set of selected element ids to include linked elements so build
+ * steps treat a shape and its label as one unit:
+ *   - shared groupIds (app stencils)
+ *   - containerId / boundElements (Excalidraw text-in-shape)
  */
 export function expandToGroups(elements, selectedIds) {
     const sel = new Set(
         Object.keys(selectedIds || {}).filter((k) => selectedIds[k])
     );
     if (sel.size === 0) return sel;
-    const groupIds = new Set();
-    elements.forEach((el) => {
-        if (sel.has(el.id)) (el.groupIds || []).forEach((g) => groupIds.add(g));
-    });
-    if (groupIds.size) {
-        elements.forEach((el) => {
-            if ((el.groupIds || []).some((g) => groupIds.has(g))) sel.add(el.id);
-        });
+
+    const live = (elements || []).filter((el) => el && !el.isDeleted);
+    const byId = new Map(live.map((el) => [el.id, el]));
+
+    let changed = true;
+    while (changed) {
+        changed = false;
+        const toAdd = [];
+
+        for (const id of sel) {
+            const el = byId.get(id);
+            if (!el) continue;
+
+            for (const gid of el.groupIds || []) {
+                live.forEach((other) => {
+                    if ((other.groupIds || []).includes(gid)) toAdd.push(other.id);
+                });
+            }
+
+            if (el.containerId) toAdd.push(el.containerId);
+
+            for (const bound of el.boundElements || []) {
+                if (bound?.id) toAdd.push(bound.id);
+            }
+
+            if (CONTAINER_TYPES.has(el.type)) {
+                live.forEach((other) => {
+                    if (other.type === 'text' && other.containerId === el.id) {
+                        toAdd.push(other.id);
+                    }
+                });
+            }
+        }
+
+        for (const id of toAdd) {
+            if (!sel.has(id)) {
+                sel.add(id);
+                changed = true;
+            }
+        }
     }
+
     return sel;
+}
+
+/** Bucket key for auto-numbering: one step per visual unit (group, box+label, or solo). */
+function autoNumberBucketKey(el, byId) {
+    if (el.groupIds?.[0]) return `grp:${el.groupIds[0]}`;
+    if (el.containerId) return `ctr:${el.containerId}`;
+    if (CONTAINER_TYPES.has(el.type)) {
+        const hasLabel = (el.boundElements || []).some((b) => b.type === 'text');
+        const hasBoundText = [...byId.values()].some(
+            (other) => other.type === 'text' && other.containerId === el.id
+        );
+        if (hasLabel || hasBoundText) return `box:${el.id}`;
+    }
+    return `solo:${el.id}`;
 }
 
 /** Return a new element array with build.step set on the given ids. */
@@ -92,10 +143,11 @@ export function clearStep(elements, ids) {
  *         'y-rev' (bottom→top) | 'x-rev' (right→left)
  */
 export function autoNumberByGroup(elements, axis = 'z') {
-    // Bucket by top-level group id (first groupId) or own id when ungrouped.
+    const live = (elements || []).filter((el) => el && !el.isDeleted);
+    const byId = new Map(live.map((el) => [el.id, el]));
     const buckets = new Map();
-    elements.forEach((el, i) => {
-        const key = (el.groupIds && el.groupIds[0]) || `solo:${el.id}`;
+    live.forEach((el, i) => {
+        const key = autoNumberBucketKey(el, byId);
         if (!buckets.has(key)) {
             buckets.set(key, {
                 key, ids: [], minX: Infinity, minY: Infinity,
@@ -153,6 +205,46 @@ export function swapSteps(elements, a, b) {
 }
 
 /**
+ * Move one build step to a new position in the reveal order.
+ * @param {object[]} elements
+ * @param {number} draggedStep - step number being moved
+ * @param {number|null} insertBeforeStep - step to insert before, or null to append
+ */
+export function reorderSteps(elements, draggedStep, insertBeforeStep) {
+    const ordered = summarizeSteps(elements).map(({ step }) => step);
+    const fromIdx = ordered.indexOf(draggedStep);
+    if (fromIdx < 0) return elements;
+
+    let toIdx;
+    if (insertBeforeStep == null) {
+        toIdx = ordered.length;
+    } else {
+        toIdx = ordered.indexOf(insertBeforeStep);
+        if (toIdx < 0) return elements;
+    }
+    if (fromIdx < toIdx) toIdx -= 1;
+    if (fromIdx === toIdx) return elements;
+
+    const nextOrder = [...ordered];
+    const [removed] = nextOrder.splice(fromIdx, 1);
+    nextOrder.splice(toIdx, 0, removed);
+
+    const stepMap = new Map(nextOrder.map((oldStep, i) => [oldStep, i + 1]));
+
+    return elements.map((el) => {
+        const s = getStep(el);
+        if (s <= 0) return el;
+        const newStep = stepMap.get(s);
+        if (!newStep || newStep === s) return el;
+        return {
+            ...el,
+            customData: { ...(el.customData || {}), build: { step: newStep } },
+            version: (el.version || 1) + 1,
+        };
+    });
+}
+
+/**
  * Compute the element array to show at a given build step.
  *  - step <= current  → visible at base opacity (original locked state restored)
  *  - step  > current  → hidden (opacity 0, locked so it can't be clicked)
@@ -180,6 +272,26 @@ export function computeReveal(snapshot, current, opts = {}) {
 /** Restore the original scene (used on presentation exit). */
 export function restoreSnapshot(snapshot) {
     return snapshot.map((el) => bumpVersion({ ...el }));
+}
+
+/**
+ * Strip transient reveal/preview mutations before persisting or after loading.
+ * computeReveal hides future steps with opacity 0 + locked; if that state is
+ * saved, elements re-open invisible on the canvas.
+ */
+export function sanitizeElementsForPersistence(elements) {
+    return (elements || []).map((el) => {
+        if (!el || el.isDeleted) return el;
+        if (el.opacity === 0 && el.locked) {
+            return {
+                ...el,
+                opacity: 100,
+                locked: false,
+                version: (el.version || 1) + 1,
+            };
+        }
+        return el;
+    });
 }
 
 /** Group elements by build step for the authoring UI. Returns [{step, count}]. */
@@ -249,13 +361,15 @@ export function getStepMemberIds(elements, step) {
     return LIVE(elements).filter((el) => getStep(el) === step).map((el) => el.id);
 }
 
-/** True when canvas selection matches exactly the members of a step. */
+/** True when canvas selection matches the members of a step (including linked labels). */
 export function selectionMatchesStep(elements, selectedIds, step) {
-    const memberIds = new Set(getStepMemberIds(elements, step));
-    const selIds = new Set(Object.keys(selectedIds || {}).filter((k) => selectedIds[k]));
-    if (memberIds.size === 0 || memberIds.size !== selIds.size) return false;
-    for (const id of memberIds) {
-        if (!selIds.has(id)) return false;
+    const memberIds = getStepMemberIds(elements, step);
+    const expandedMembers = expandToGroups(elements, idsToSelection(memberIds));
+    const expandedSel = expandToGroups(elements, selectedIds);
+    if (expandedMembers.size === 0) return false;
+    if (expandedMembers.size !== expandedSel.size) return false;
+    for (const id of expandedMembers) {
+        if (!expandedSel.has(id)) return false;
     }
     return true;
 }

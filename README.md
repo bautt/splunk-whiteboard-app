@@ -9,7 +9,7 @@ Collaborative whiteboard embedded inside Splunk — built with React + [Excalidr
 **GitHub:** https://github.com/bautt/splunk-whiteboard-app
 
 <p align="center">
-  <img src="assets/screenshot.png" alt="Splunk Whiteboard App — canvas with Splunk shape library" width="900" />
+  <img src="assets/screenshot.png" alt="Splunk Whiteboard App — dark canvas with architecture diagram and Splunk shape library" width="900" />
 </p>
 
 ---

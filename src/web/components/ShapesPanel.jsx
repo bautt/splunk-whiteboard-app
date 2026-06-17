@@ -1,59 +1,10 @@
-import React, { useMemo, useState } from 'react';
-import ReactDOMServer from 'react-dom/server';
+import React, { useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Heading from '@splunk/react-ui/Heading';
 
-// Splunk react-icons for shape buttons
-import ForwarderUniversal from '@splunk/react-icons/ForwarderUniversal';
-import ForwarderHeavy from '@splunk/react-icons/ForwarderHeavy';
-import CylinderIndex from '@splunk/react-icons/CylinderIndex';
-import Indexes from '@splunk/react-icons/Indexes';
-import MonitorUser from '@splunk/react-icons/MonitorUser';
-import Servers from '@splunk/react-icons/Servers';
-import ServerLicense from '@splunk/react-icons/ServerLicense';
-import StorageMonitor from '@splunk/react-icons/StorageMonitor';
-import NetworkDevice from '@splunk/react-icons/NetworkDevice';
-import Processor from '@splunk/react-icons/Processor';
-import ServersCloud from '@splunk/react-icons/ServersCloud';
-import CloudArrowInRight from '@splunk/react-icons/CloudArrowInRight';
-import Bucket from '@splunk/react-icons/Bucket';
-import NetworkConnector from '@splunk/react-icons/NetworkConnector';
-import NetworkDevices from '@splunk/react-icons/NetworkDevices';
-import CellularGateway from '@splunk/react-icons/CellularGateway';
-import DeviceEdgeHub from '@splunk/react-icons/DeviceEdgeHub';
-import DataType from '@splunk/react-icons/DataType';
-import Shield from '@splunk/react-icons/Shield';
-import Cloud from '@splunk/react-icons/Cloud';
-import DriveIndexes from '@splunk/react-icons/DriveIndexes';
-
 import { SHAPE_CATEGORIES, buildShape } from '../lib/shapes';
 import MARKETING_ICONS from '../lib/marketingIcons';
-
-// Map shape id → icon component
-const SHAPE_ICONS = {
-    uf:                 ForwarderUniversal,
-    hf:                 ForwarderHeavy,
-    indexer:            CylinderIndex,
-    indexerCluster:     Indexes,
-    sh:                 MonitorUser,
-    shc:                Servers,
-    ds:                 NetworkDevice,
-    lm:                 ServerLicense,
-    mc:                 StorageMonitor,
-    cm:                 NetworkConnector,
-    ep:                 Processor,
-    ip:                 Processor,
-    splunkCloud:        ServersCloud,
-    hec:                CloudArrowInRight,
-    s3:                 Bucket,
-    server:             NetworkDevices,
-    db:                 DriveIndexes,
-    syslog:             DataType,
-    cloudSvc:           Cloud,
-    firewall:           Shield,
-    router:             CellularGateway,
-    internet:           DeviceEdgeHub,
-};
+import { SHAPE_ICONS, getShapeSvgMarkup } from '../lib/shapeIcons';
 
 export default function ShapesPanel({ onAdd, onAddImage }) {
     const [mktgExpanded, setMktgExpanded] = useState(false);
@@ -77,27 +28,6 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
             .replace(/stroke="currentColor"/g, `stroke="${color}"`);
         return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(tinted)));
     };
-
-    // Pre-render each react-icon to an SVG string once.
-    const shapeSvgs = useMemo(() => {
-        const map = {};
-        for (const [id, IconComp] of Object.entries(SHAPE_ICONS)) {
-            if (!IconComp) continue;
-            try {
-                // Render the icon at 128px; icons output <svg> with width/height attrs
-                const markup = ReactDOMServer.renderToStaticMarkup(
-                    React.createElement(IconComp, { size: 3 })
-                );
-                // Ensure it looks like an SVG element
-                if (markup.startsWith('<svg')) {
-                    map[id] = markup;
-                }
-            } catch (e) {
-                // skip icons that fail to render
-            }
-        }
-        return map;
-    }, []);
 
     const COLOR_PRESETS = ['#000000', '#ef4444', '#f97316', '#3b82f6', '#22c55e', '#9333ea', '#65737e'];
 
@@ -186,12 +116,12 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {cat.shapes.map((s) => {
                             const Icon = SHAPE_ICONS[s.id];
-                            const hasSvg = !!shapeSvgs[s.id];
-                            const isSvgMode = shapeMode === 'svg' && hasSvg;
+                            const svgMarkup = getShapeSvgMarkup(s.id);
+                            const isSvgMode = shapeMode === 'svg' && !!svgMarkup;
 
                             const handleClick = () => {
                                 if (isSvgMode) {
-                                    onAddImage({ id: `shape-${s.id}`, svg: shapeSvgs[s.id], color: iconColor });
+                                    onAddImage({ id: `shape-${s.id}`, svg: svgMarkup, color: iconColor });
                                 } else {
                                     handle(s.id);
                                 }

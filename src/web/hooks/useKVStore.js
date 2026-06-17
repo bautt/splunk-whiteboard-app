@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { kv, COLLECTIONS } from '../lib/kvstoreClient';
 import { debug, logWarn } from '../lib/log';
 import { filesToArray, rehydrateMissingFiles } from '../lib/boardFiles';
+import { sanitizeElementsForPersistence } from '../lib/build';
+import { revisionBeforeBoardWrite } from '../lib/historyStore';
 
 function getCurrentUser() {
     try {
@@ -24,6 +26,7 @@ function deserialize(row) {
         // tolerate corrupt rows
     }
     files = rehydrateMissingFiles(elements, files);
+    elements = sanitizeElementsForPersistence(elements);
     return {
         id: row._key,
         name: row.name || 'Untitled',
@@ -38,7 +41,7 @@ function deserialize(row) {
 
 function serialize({ elements, appState, files }) {
     return JSON.stringify({
-        elements: elements || [],
+        elements: sanitizeElementsForPersistence(elements || []),
         appState: appState || {},
         files: filesToArray(files),
     });
@@ -125,6 +128,7 @@ export function useBoardMutations() {
             } catch {
                 // keep defaults
             }
+            await revisionBeforeBoardWrite(id, parsed, patch.saveSource);
         }
         const next = {
             name: patch.name ?? existing.name,
@@ -171,7 +175,12 @@ export function useAutoSave(boardId, getElementsAndState, intervalMs = 30_000) {
                     return;
                 }
                 debug(`autosave firing with ${elements.length} elements`);
-                await updateBoard(boardId, { elements, appState, files });
+                await updateBoard(boardId, {
+                    elements,
+                    appState,
+                    files,
+                    saveSource: 'autosave',
+                });
                 dirtyRef.current = false;
             } catch (e) {
                 // surface autosave failures; UI will show stale state until next manual save

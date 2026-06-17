@@ -43,12 +43,13 @@ function textHeight(label, fontSize = FONT_SIZE) {
     return Math.ceil(lines * fontSize * LINE_HEIGHT);
 }
 
-function makeLabel(groupId, { x, y, w, h, label, fontSize = FONT_SIZE }) {
+function makeLabel(groupId, { x, y, w, h, label, fontSize = FONT_SIZE, id, containerId }) {
     const lines = (label || '').split('\n').length;
     const th = Math.ceil(lines * fontSize * LINE_HEIGHT);
+    const textId = id || nanoid();
     return {
         ...COMMON,
-        id: nanoid(),
+        id: textId,
         type: 'text',
         // Center vertically inside the shape
         x: x + 8,
@@ -64,71 +65,55 @@ function makeLabel(groupId, { x, y, w, h, label, fontSize = FONT_SIZE }) {
         strokeColor: '#1B1B1B',
         backgroundColor: 'transparent',
         roundness: null,
-        containerId: null,
+        containerId: containerId || null,
         originalText: label,
         lineHeight: LINE_HEIGHT,
         groupIds: [groupId],
     };
 }
 
-function rect({ x, y, w, h, color, fill, label }) {
+function labeledShape(type, { x, y, w, h, color, fill, label, fontSize }) {
     const groupId = nanoid();
-    const elements = [
-        {
-            ...COMMON,
-            id: nanoid(),
-            type: 'rectangle',
-            x,
-            y,
-            width: w,
-            height: h,
-            strokeColor: color,
-            backgroundColor: fill,
-            groupIds: [groupId],
-        },
-    ];
-    if (label) elements.push(makeLabel(groupId, { x, y, w, h, label }));
-    return elements;
+    const shapeId = nanoid();
+    const shape = {
+        ...COMMON,
+        id: shapeId,
+        type,
+        x,
+        y,
+        width: w,
+        height: h,
+        strokeColor: color,
+        backgroundColor: fill,
+        groupIds: [groupId],
+        boundElements: null,
+    };
+    if (!label) return [shape];
+    const textId = nanoid();
+    shape.boundElements = [{ type: 'text', id: textId }];
+    const text = makeLabel(groupId, {
+        x,
+        y,
+        w,
+        h,
+        label,
+        fontSize,
+        id: textId,
+        containerId: shapeId,
+    });
+    return [shape, text];
+}
+
+function rect({ x, y, w, h, color, fill, label }) {
+    return labeledShape('rectangle', { x, y, w, h, color, fill, label });
 }
 
 function ellipse({ x, y, w, h, color, fill, label }) {
-    const groupId = nanoid();
-    const elements = [
-        {
-            ...COMMON,
-            id: nanoid(),
-            type: 'ellipse',
-            x,
-            y,
-            width: w,
-            height: h,
-            strokeColor: color,
-            backgroundColor: fill,
-            groupIds: [groupId],
-        },
-    ];
-    if (label) elements.push(makeLabel(groupId, { x, y, w, h, label }));
-    return elements;
+    return labeledShape('ellipse', { x, y, w, h, color, fill, label });
 }
 
 function diamond({ x, y, w, h, color, fill, label }) {
-    const groupId = nanoid();
-    const elements = [
-        {
-            ...COMMON,
-            id: nanoid(),
-            type: 'diamond',
-            x,
-            y,
-            width: w,
-            height: h,
-            strokeColor: color,
-            backgroundColor: fill,
-            groupIds: [groupId],
-        },
-    ];
-    if (label) elements.push(makeLabel(groupId, { x, y, w, h, label, fontSize: 13 }));
-    return elements;
+    return labeledShape('diamond', { x, y, w, h, color, fill, label, fontSize: 13 });
 }
 
 function lighten(hex, amount = 0.85) {

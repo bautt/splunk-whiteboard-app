@@ -7,3 +7,7 @@
 .excalidraw .App-toolbar__extra-tools-dropdown .dropdown-menu-item:last-child {
     display: none !important;
 }
+
+.excalidraw-app-surface {
+    height: 100%;
+}

@@ -1,5 +1,6 @@
 import { DRP_ICONS } from './drpIcons';
-import { MARKETING_ICONS } from './marketingIcons';
+import MARKETING_ICONS from './marketingIcons';
+import { getShapeSvgMarkup } from './shapeIcons';
 
 /** Normalize Excalidraw getFiles() map → array for KV storage. */
 export function filesToArray(files) {
@@ -60,6 +61,17 @@ export function rehydrateMissingFiles(elements, files) {
 
     needed.forEach((fileId) => {
         if (byId.has(fileId)) return;
+
+        // shape-uf-RRGGBB (Splunk react-icon SVG inserts)
+        const shapeMatch = fileId.match(/^shape-([^-]+)-([0-9a-fA-F]{6})$/);
+        if (shapeMatch) {
+            const svg = getShapeSvgMarkup(shapeMatch[1]);
+            if (svg) {
+                const color = `#${shapeMatch[2]}`;
+                byId.set(fileId, makeFile(fileId, tintSvgString(svg, color)));
+            }
+            return;
+        }
 
         // drp-Key-RRGGBB
         const drpMatch = fileId.match(/^drp-(.+)-([0-9a-fA-F]{6})$/);

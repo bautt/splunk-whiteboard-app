@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Heading from '@splunk/react-ui/Heading';
 import Message from '@splunk/react-ui/Message';
@@ -11,6 +11,7 @@ import {
     clearStep,
     autoNumberByGroup,
     swapSteps,
+    reorderSteps,
     summarizeSteps,
     getStep,
     computeReveal,
@@ -36,6 +37,9 @@ export default function BuildPanel({
     const refresh = useCallback(() => setTick((t) => t + 1), []);
 
     const [previewStep, setPreviewStep] = useState(null);
+    const [dragStep, setDragStep] = useState(null);
+    const [dropBefore, setDropBefore] = useState(null);
+    const dragRef = useRef({ step: null, dropBefore: null, pointerId: null });
     const canonicalRef = useRef(null);
     const apiRef = useRef(excalidrawAPI);
     apiRef.current = excalidrawAPI;
@@ -46,7 +50,10 @@ export default function BuildPanel({
     const maxStep = getMaxStep(canonical);
     const untagged = getUntaggedMembers(canonical);
 
-    const selectedCount = Object.values(selectedIds || {}).filter(Boolean).length;
+    const selectedCount = useMemo(
+        () => expandToGroups(canonical, selectedIds).size,
+        [canonical, selectedIds]
+    );
 
     const activeStep = steps.find(({ step }) =>
         selectionMatchesStep(canonical, selectedIds, step)
@@ -167,7 +174,8 @@ export default function BuildPanel({
     const selectStep = useCallback(
         (step) => {
             const ids = getStepMemberIds(canonical, step);
-            selectIds(ids);
+            const expanded = expandToGroups(canonical, idsToSelection(ids));
+            selectIds([...expanded]);
         },
         [canonical, selectIds]
     );
@@ -206,6 +214,62 @@ export default function BuildPanel({
             commit(swapSteps(els, step, other));
         },
         [excalidrawAPI, commit, maxStep]
+    );
+
+    const reorder = useCallback(
+        (draggedStep, insertBeforeStep) => {
+            if (!excalidrawAPI || draggedStep == null) return;
+            const els = canonicalRef.current || excalidrawAPI.getSceneElements();
+            commit(reorderSteps(els, draggedStep, insertBeforeStep));
+        },
+        [excalidrawAPI, commit]
+    );
+
+    const hitDropTarget = useCallback((clientX, clientY) => {
+        const hit = document.elementFromPoint(clientX, clientY);
+        if (!hit) return null;
+        const row = hit.closest('[data-build-step]');
+        if (row) return Number(row.dataset.buildStep);
+        if (hit.closest('[data-build-drop-end]')) return 'end';
+        return null;
+    }, []);
+
+    const beginStepDrag = useCallback(
+        (step, e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dragRef.current = { step, dropBefore: null, pointerId: e.pointerId };
+            setDragStep(step);
+
+            const onMove = (ev) => {
+                if (ev.pointerId !== dragRef.current.pointerId) return;
+                const target = hitDropTarget(ev.clientX, ev.clientY);
+                if (target != null && target !== dragRef.current.step) {
+                    dragRef.current.dropBefore = target;
+                    setDropBefore(target);
+                }
+            };
+
+            const onUp = (ev) => {
+                if (ev.pointerId !== dragRef.current.pointerId) return;
+                window.removeEventListener('pointermove', onMove);
+                window.removeEventListener('pointerup', onUp);
+                window.removeEventListener('pointercancel', onUp);
+                const { step: from, dropBefore: to } = dragRef.current;
+                if (from != null && to != null && to !== from) {
+                    if (to === 'end') reorder(from, null);
+                    else reorder(from, to);
+                }
+                dragRef.current = { step: null, dropBefore: null, pointerId: null };
+                setDragStep(null);
+                setDropBefore(null);
+            };
+
+            window.addEventListener('pointermove', onMove);
+            window.addEventListener('pointerup', onUp);
+            window.addEventListener('pointercancel', onUp);
+        },
+        [hitDropTarget, reorder]
     );
 
     const togglePreview = useCallback(() => {
@@ -366,115 +430,49 @@ export default function BuildPanel({
             </div>
 
             <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', opacity: 0.6 }}>
-                {steps.length > 0 ? `${steps.length} reveal step${steps.length !== 1 ? 's' : ''}` : 'No reveal steps yet'}
+                {steps.length > 0
+                    ? `${steps.length} reveal step${steps.length !== 1 ? 's' : ''} — drag ⋮⋮ to reorder`
+                    : 'No reveal steps yet'}
             </div>
 
-            {steps.map(({ step, count }) => {
-                const detail = describeStep(canonical, step);
-                const isActive = activeStep === step;
-                return (
-                    <div
-                        key={step}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => selectStep(step)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                selectStep(step);
-                            }
-                        }}
-                        style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 4,
-                            border: isActive
-                                ? '2px solid #5a4fcf'
-                                : '1px solid var(--gray60, #c3cbd4)',
-                            borderRadius: 6,
-                            padding: '6px 8px',
-                            cursor: 'pointer',
-                            background: isActive ? 'rgba(90, 79, 207, 0.08)' : 'transparent',
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span
-                                style={{
-                                    flexShrink: 0,
-                                    width: 22,
-                                    height: 22,
-                                    borderRadius: '50%',
-                                    background: '#5a4fcf',
-                                    color: '#fff',
-                                    fontSize: 12,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                }}
-                            >
-                                {step}
-                            </span>
-                            <span style={{ flex: 1, fontSize: 12, fontWeight: isActive ? 600 : 400 }}>
-                                {count} element{count !== 1 ? 's' : ''}
-                                {isActive ? ' · selected' : ''}
-                            </span>
-                            <button
-                                type="button"
-                                title="Move earlier"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    move(step, -1);
-                                }}
-                                style={iconBtn}
-                            >
-                                ↑
-                            </button>
-                            <button
-                                type="button"
-                                title="Move later"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    move(step, +1);
-                                }}
-                                style={iconBtn}
-                            >
-                                ↓
-                            </button>
-                            <button
-                                type="button"
-                                title="Remove step"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeStep(step);
-                                }}
-                                style={iconBtn}
-                            >
-                                🗑
-                            </button>
-                        </div>
-                        {detail.labels.length > 0 && (
-                            <ul
-                                style={{
-                                    margin: '0 0 0 28px',
-                                    padding: 0,
-                                    listStyle: 'disc',
-                                    fontSize: 11,
-                                    opacity: 0.85,
-                                }}
-                            >
-                                {detail.labels.map((label, i) => (
-                                    <li key={`${step}-${i}-${label}`}>{label}</li>
-                                ))}
-                                {detail.more > 0 && (
-                                    <li style={{ listStyle: 'none', opacity: 0.6 }}>
-                                        +{detail.more} more…
-                                    </li>
-                                )}
-                            </ul>
-                        )}
-                    </div>
-                );
-            })}
+            {steps.map(({ step, count }) => (
+                <BuildStepRow
+                    key={step}
+                    step={step}
+                    count={count}
+                    detail={describeStep(canonical, step)}
+                    isActive={activeStep === step}
+                    isDragging={dragStep === step}
+                    showDropIndicator={dropBefore === step}
+                    onSelect={() => selectStep(step)}
+                    onRemove={() => removeStep(step)}
+                    onMoveEarlier={() => move(step, -1)}
+                    onMoveLater={() => move(step, +1)}
+                    onHandlePointerDown={(e) => beginStepDrag(step, e)}
+                />
+            ))}
+
+            {steps.length > 0 && dragStep != null && (
+                <div
+                    data-build-drop-end="1"
+                    style={{
+                        minHeight: 24,
+                        borderRadius: 6,
+                        border: dropBefore === 'end'
+                            ? '2px dashed #5a4fcf'
+                            : '2px dashed var(--gray60, #c3cbd4)',
+                        background: dropBefore === 'end' ? 'rgba(90, 79, 207, 0.06)' : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 10,
+                        opacity: 0.55,
+                    }}
+                    title="Drop here to move to end"
+                >
+                    Drop at end
+                </div>
+            )}
 
             {steps.length > 0 && (
                 <Button size="small" appearance="secondary" onClick={clearAll}>
@@ -493,3 +491,159 @@ const iconBtn = {
     borderRadius: 4,
     lineHeight: 1.2,
 };
+
+const dragHandleStyle = {
+    cursor: 'grab',
+    fontSize: 14,
+    lineHeight: 1,
+    padding: '4px 6px',
+    borderRadius: 4,
+    color: 'var(--gray50, #8b949e)',
+    userSelect: 'none',
+    touchAction: 'none',
+    flexShrink: 0,
+};
+
+function BuildStepRow({
+    step,
+    count,
+    detail,
+    isActive,
+    isDragging,
+    showDropIndicator,
+    onSelect,
+    onRemove,
+    onMoveEarlier,
+    onMoveLater,
+    onHandlePointerDown,
+}) {
+    return (
+        <div
+            data-build-step={step}
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+                borderTop: showDropIndicator ? '3px solid #5a4fcf' : '3px solid transparent',
+                borderRight: isActive
+                    ? '2px solid #5a4fcf'
+                    : '1px solid var(--gray60, #c3cbd4)',
+                borderBottom: isActive
+                    ? '2px solid #5a4fcf'
+                    : '1px solid var(--gray60, #c3cbd4)',
+                borderLeft: isActive
+                    ? '2px solid #5a4fcf'
+                    : '1px solid var(--gray60, #c3cbd4)',
+                borderRadius: 6,
+                padding: '6px 8px',
+                opacity: isDragging ? 0.45 : 1,
+                background: isActive ? 'rgba(90, 79, 207, 0.08)' : 'transparent',
+                transition: 'opacity 0.12s',
+            }}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span
+                    role="img"
+                    aria-label={`Drag step ${step} to reorder`}
+                    title="Drag to reorder"
+                    style={{
+                        ...dragHandleStyle,
+                        cursor: isDragging ? 'grabbing' : 'grab',
+                    }}
+                    onPointerDown={onHandlePointerDown}
+                >
+                    ⋮⋮
+                </span>
+                <span
+                    style={{
+                        flexShrink: 0,
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        background: '#5a4fcf',
+                        color: '#fff',
+                        fontSize: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}
+                >
+                    {step}
+                </span>
+                <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={onSelect}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onSelect();
+                        }
+                    }}
+                    style={{
+                        flex: 1,
+                        fontSize: 12,
+                        fontWeight: isActive ? 600 : 400,
+                        cursor: 'pointer',
+                    }}
+                >
+                    {count} element{count !== 1 ? 's' : ''}
+                    {isActive ? ' · selected' : ''}
+                </span>
+                <button
+                    type="button"
+                    title="Move earlier"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onMoveEarlier();
+                    }}
+                    style={iconBtn}
+                >
+                    ↑
+                </button>
+                <button
+                    type="button"
+                    title="Move later"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onMoveLater();
+                    }}
+                    style={iconBtn}
+                >
+                    ↓
+                </button>
+                <button
+                    type="button"
+                    title="Remove step"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onRemove();
+                    }}
+                    style={iconBtn}
+                >
+                    🗑
+                </button>
+            </div>
+            {detail.labels.length > 0 && (
+                <ul
+                    style={{
+                        margin: '0 0 0 28px',
+                        padding: 0,
+                        listStyle: 'disc',
+                        fontSize: 11,
+                        opacity: 0.85,
+                    }}
+                >
+                    {detail.labels.map((label, i) => (
+                        <li key={`${step}-${i}-${label}`}>{label}</li>
+                    ))}
+                    {detail.more > 0 && (
+                        <li style={{ listStyle: 'none', opacity: 0.6 }}>
+                            +{detail.more} more…
+                        </li>
+                    )}
+                </ul>
+            )}
+        </div>
+    );
+}

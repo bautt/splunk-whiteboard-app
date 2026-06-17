@@ -15,6 +15,7 @@ const distFolder = path.resolve(__dirname, '..', 'dist');
 const config = merge(baseConfig.default, {
     entry: {
         whiteboard: './web/index.jsx',
+        about: './web/about.jsx',
     },
     output: {
         filename: '[name].bundle.js',

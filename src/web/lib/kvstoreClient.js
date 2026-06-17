@@ -86,4 +86,5 @@ export const kv = {
 export const COLLECTIONS = {
     boards: 'whiteboards',
     versions: 'whiteboard_versions',
+    revisions: 'whiteboard_revisions',
 };

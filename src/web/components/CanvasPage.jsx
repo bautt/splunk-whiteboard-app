@@ -1,11 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Excalidraw, exportToBlob, restoreElements } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToBlob, restoreElements, restoreAppState } from '@excalidraw/excalidraw';
 import '../excalidraw-overrides.css';
 
 import Button from '@splunk/react-ui/Button';
-import TabBar from '@splunk/react-ui/TabBar';
 import Text from '@splunk/react-ui/Text';
 import Message from '@splunk/react-ui/Message';
+
+import LayoutPanels from '@splunk/react-icons/LayoutPanels';
+import FloppyDisk from '@splunk/react-icons/FloppyDisk';
+import ListNumbered from '@splunk/react-icons/ListNumbered';
+import Bookshelf from '@splunk/react-icons/Bookshelf';
+import Clock from '@splunk/react-icons/Clock';
+import CloudArrowUp from '@splunk/react-icons/CloudArrowUp';
+import Paintbrush from '@splunk/react-icons/Paintbrush';
+
+import AppearancePanel from './AppearancePanel';
 
 import TemplatePanel from './TemplatePanel';
 import ShapesPanel from './ShapesPanel';
@@ -15,6 +24,7 @@ import ExportPanel from './ExportPanel';
 import LibraryPanel from './LibraryPanel';
 import PresentationMode from './PresentationMode';
 import PanelErrorBoundary from './PanelErrorBoundary';
+import SidebarIconTabs from './SidebarIconTabs';
 import ExcalidrawPreferences, {
     defaultCanvasAppState,
     serializableCanvasAppState,
@@ -22,23 +32,38 @@ import ExcalidrawPreferences, {
 
 import { useBoard, useBoardMutations, useAutoSave } from '../hooks/useKVStore';
 import { useVersions } from '../hooks/useVersions';
-import { detectSplunkColorScheme } from '../lib/splunkTheme';
+import { useRevisions } from '../hooks/useRevisions';
 import { nanoid } from '../lib/nanoid';
+import {
+    applyCanvasAppearance,
+    boardAppearanceState,
+    normalizeHexColor,
+    normalizeTheme,
+    resolveAppearancePatch,
+} from '../lib/canvasAppearance';
 import { debug } from '../lib/log';
 import { filesToMap } from '../lib/boardFiles';
+import { sanitizeElementsForPersistence } from '../lib/build';
+import {
+    insertRevision,
+    MAX_REVISIONS_PER_BOARD,
+    REVISION_SOURCES,
+} from '../lib/historyStore';
+import { APP_VERSION } from '../lib/version';
 
 const TABS = [
-    { label: 'Shapes', value: 'shapes' },
-    { label: 'Templates', value: 'templates' },
-    { label: 'Build', value: 'build' },
-    { label: 'Libraries', value: 'libraries' },
-    { label: 'History', value: 'history' },
-    { label: 'Export', value: 'export' },
+    { label: 'Shapes', value: 'shapes', Icon: LayoutPanels },
+    { label: 'Templates', value: 'templates', Icon: FloppyDisk },
+    { label: 'Build', value: 'build', Icon: ListNumbered },
+    { label: 'Canvas', value: 'appearance', Icon: Paintbrush },
+    { label: 'Libraries', value: 'libraries', Icon: Bookshelf },
+    { label: 'History', value: 'history', Icon: Clock },
+    { label: 'Export', value: 'export', Icon: CloudArrowUp },
 ];
 
 const SIDEBAR_MIN = 240;
 const SIDEBAR_MAX = 600;
-const SIDEBAR_DEFAULT = 320;
+const SIDEBAR_DEFAULT = 280;
 const SIDEBAR_KEY = 'wb_sidebar_width';
 
 /** Drag-to-resize sidebar — drag handle on the left edge. */
@@ -108,18 +133,19 @@ function ResizableSidebar({ children }) {
     );
 }
 
-export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
+export default function CanvasPage({ boardId, onClose }) {
     const { board, loading, error } = useBoard(boardId);
     const { updateBoard } = useBoardMutations();
-    const { versions, saveSnapshot, deleteVersion } = useVersions(boardId);
+    const { versions, saveSnapshot, deleteVersion, maxSnapshots } = useVersions(boardId);
+    const { revisions, deleteRevision, refresh: refreshRevisions } = useRevisions(boardId);
 
     const [excalidrawAPI, setExcalidrawAPI] = useState(null);
     const [activeTab, setActiveTab] = useState('shapes');
     const [name, setName] = useState('');
     const [tags, setTags] = useState('');
+    const [restoring, setRestoring] = useState(false);
     const [presenting, setPresenting] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null);
-    const [colorScheme, setColorScheme] = useState(initialColorScheme || detectSplunkColorScheme());
     const [selectedIds, setSelectedIds] = useState({});
     const [canvasAppState, setCanvasAppState] = useState(() => defaultCanvasAppState());
 
@@ -131,6 +157,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     // When true, scene changes are not persisted (used during presentation reveal).
     const suppressSaveRef = useRef(false);
     const closingMermaidRef = useRef(false);
+    const appearanceSyncRef = useRef(false);
 
     const handleExcalidrawAPI = useCallback((api) => {
         apiRef.current = api;
@@ -177,46 +204,40 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         }
     }, [board]);
 
-    // Re-detect Splunk theme when it might have changed (lightweight poll); only
-    // call setColorScheme when the value actually changes so we don't trigger
-    // unnecessary re-renders that can interfere with downstream panels.
     useEffect(() => {
-        const t = setInterval(() => {
-            const next = detectSplunkColorScheme();
-            setColorScheme((prev) => (prev === next ? prev : next));
-        }, 5000);
-        return () => clearInterval(t);
-    }, []);
+        if (!board) return;
+        setCanvasAppState(defaultCanvasAppState(board.appState || {}));
+    }, [board?.id]);
 
-    // Build Excalidraw's initialData from the loaded board. We compute this once
-    // per board (memoized on board.id) and remount Excalidraw via key={board.id}
-    // when the board changes. This sidesteps updateScene reconciliation issues
-    // we hit when pushing previously-saved elements back into a live scene.
+    const canvasTheme = normalizeTheme(canvasAppState);
+
+    // Build Excalidraw initialData once per board; theme/background come from saved appState.
     const initialData = useMemo(() => {
         if (!board) return null;
         const incoming = board.elements || [];
         const restored = restoreElements(incoming, null);
+        const appearance = boardAppearanceState(board.appState || {});
         debug(
             `initialData for board ${board.id}: ${incoming.length} incoming -> ${restored.length} restored`
         );
         return {
             elements: restored,
             files: filesToMap(board.files),
-            appState: defaultCanvasAppState({
-                viewBackgroundColor: board.appState?.viewBackgroundColor || '#ffffff',
-                gridSize: board.appState?.gridSize ?? null,
-                objectsSnapModeEnabled: board.appState?.objectsSnapModeEnabled ?? true,
-                isBindingEnabled: board.appState?.isBindingEnabled ?? true,
-            }),
+            appState: restoreAppState(
+                defaultCanvasAppState({
+                    ...(board.appState || {}),
+                    ...appearance,
+                }),
+                null
+            ),
             scrollToContent: restored.length > 0,
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [board?.id]);
 
     const getElementsAndState = useCallback(() => {
         const api = apiRef.current;
         if (!api) return { elements: [], appState: {}, files: {} };
-        const elements = api.getSceneElements();
+        const elements = sanitizeElementsForPersistence(api.getSceneElements());
         debug('getElementsAndState ->', elements.length, 'elements');
         return {
             elements,
@@ -226,6 +247,37 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     }, []);
 
     const { markDirty } = useAutoSave(boardId, getElementsAndState);
+
+    // One-shot sync after Excalidraw mounts — ensures saved theme/bg apply to the live scene.
+    useEffect(() => {
+        const api = apiRef.current;
+        if (!api || !board) return;
+        const appearance = boardAppearanceState(board.appState || {});
+        const timer = window.setTimeout(() => {
+            const cur = api.getAppState();
+            if (
+                cur.theme === appearance.theme &&
+                normalizeHexColor(cur.viewBackgroundColor) ===
+                    normalizeHexColor(appearance.viewBackgroundColor)
+            ) {
+                return;
+            }
+            applyCanvasAppearance(api, appearance);
+        }, 0);
+        return () => window.clearTimeout(timer);
+    }, [excalidrawAPI, board?.id]);
+
+    const handleAppearanceChange = useCallback(
+        (patch) => {
+            setCanvasAppState((prev) => {
+                const resolved = resolveAppearancePatch(patch, prev);
+                applyCanvasAppearance(apiRef.current, resolved, prev);
+                return { ...prev, ...resolved };
+            });
+            markDirty();
+        },
+        [markDirty]
+    );
 
     const onChange = useCallback((elements, appState) => {
         // Mermaid dialog crashes on React 17 (useDeferredValue); close if opened anyway.
@@ -245,14 +297,30 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         if (appState) {
             const nextSel = appState.selectedElementIds ?? {};
             setSelectedIds((prev) => (sameSelection(prev, nextSel) ? prev : nextSel));
-            const nextPrefs = {
-                gridSize: appState.gridSize ?? null,
-                objectsSnapModeEnabled: appState.objectsSnapModeEnabled ?? true,
-                isBindingEnabled: appState.isBindingEnabled ?? true,
-            };
-            setCanvasAppState((prev) =>
-                sameCanvasPrefs(prev, nextPrefs) ? prev : nextPrefs
-            );
+            setCanvasAppState((prev) => {
+                let nextPrefs = {
+                    gridSize: appState.gridSize ?? null,
+                    objectsSnapModeEnabled: appState.objectsSnapModeEnabled ?? true,
+                    isBindingEnabled: appState.isBindingEnabled ?? true,
+                    theme: appState.theme,
+                    viewBackgroundColor: appState.viewBackgroundColor,
+                };
+
+                if (appearanceSyncRef.current) {
+                    appearanceSyncRef.current = false;
+                    return sameCanvasPrefs(prev, nextPrefs) ? prev : { ...prev, ...nextPrefs };
+                }
+
+                const themeChanged = normalizeTheme(prev) !== normalizeTheme(appState);
+                if (themeChanged && apiRef.current) {
+                    const resolved = resolveAppearancePatch({ theme: appState.theme }, prev);
+                    appearanceSyncRef.current = true;
+                    applyCanvasAppearance(apiRef.current, resolved, prev);
+                    nextPrefs = { ...nextPrefs, ...resolved };
+                }
+
+                return sameCanvasPrefs(prev, nextPrefs) ? prev : { ...prev, ...nextPrefs };
+            });
         }
     }, [markDirty]);
 
@@ -261,13 +329,21 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         const { elements, appState, files } = getElementsAndState();
         debug('saving', elements.length, 'elements');
         try {
-            await updateBoard(boardId, { name, tags, elements, appState, files });
+            await updateBoard(boardId, {
+                name,
+                tags,
+                elements,
+                appState,
+                files,
+                saveSource: REVISION_SOURCES.MANUAL_SAVE,
+            });
             setSaveStatus({ type: 'success', text: `Saved ${elements.length} elements.` });
+            refreshRevisions();
             setTimeout(() => setSaveStatus(null), 2000);
         } catch (e) {
             setSaveStatus({ type: 'error', text: e.message });
         }
-    }, [boardId, getElementsAndState, name, tags, updateBoard]);
+    }, [boardId, getElementsAndState, name, tags, updateBoard, refreshRevisions]);
 
     const handleAddShape = useCallback(
         (newElements) => {
@@ -396,27 +472,50 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     );
 
     const handleRestore = useCallback(
-        (version) => {
-            if (!excalidrawAPI) return;
-            // eslint-disable-next-line no-alert
-            if (!window.confirm('Restore this snapshot? The current canvas will be replaced.')) {
-                return;
+        async (entry, { checkpointFirst = true } = {}) => {
+            if (!excalidrawAPI || !boardId) return;
+            setRestoring(true);
+            try {
+                if (checkpointFirst) {
+                    const current = getElementsAndState();
+                    await insertRevision(boardId, {
+                        ...current,
+                        source: REVISION_SOURCES.PRE_RESTORE,
+                        label: 'Before restore',
+                    });
+                }
+                if (entry.files?.length) {
+                    excalidrawAPI.addFiles(entry.files);
+                }
+                const appState = defaultCanvasAppState({
+                    ...(entry.appState || {}),
+                    gridSize: entry.appState?.gridSize ?? null,
+                    objectsSnapModeEnabled: entry.appState?.objectsSnapModeEnabled ?? true,
+                    isBindingEnabled: entry.appState?.isBindingEnabled ?? true,
+                });
+                excalidrawAPI.updateScene({
+                    elements: restoreElements(entry.elements, null),
+                    appState,
+                });
+                await updateBoard(boardId, {
+                    elements: entry.elements,
+                    appState: serializableCanvasAppState(appState),
+                    files: entry.files,
+                    saveSource: REVISION_SOURCES.MANUAL_SAVE,
+                });
+                await refreshRevisions();
+                setSaveStatus({
+                    type: 'success',
+                    text: `Restored ${entry.elementCount} elements.`,
+                });
+                setTimeout(() => setSaveStatus(null), 3000);
+            } catch (e) {
+                setSaveStatus({ type: 'error', text: e.message });
+            } finally {
+                setRestoring(false);
             }
-            if (version.files?.length) {
-                excalidrawAPI.addFiles(version.files);
-            }
-            excalidrawAPI.updateScene({
-                elements: restoreElements(version.elements, null),
-                appState: defaultCanvasAppState({
-                    ...(version.appState || {}),
-                    gridSize: version.appState?.gridSize ?? null,
-                    objectsSnapModeEnabled: version.appState?.objectsSnapModeEnabled ?? true,
-                    isBindingEnabled: version.appState?.isBindingEnabled ?? true,
-                }),
-            });
-            markDirty();
         },
-        [excalidrawAPI, markDirty]
+        [excalidrawAPI, boardId, getElementsAndState, updateBoard, refreshRevisions]
     );
 
     const getExportable = useCallback(async () => {
@@ -425,7 +524,11 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         const appState = excalidrawAPI.getAppState();
         const blob = await exportToBlob({
             elements,
-            appState: { ...appState, exportBackground: true, viewBackgroundColor: '#ffffff' },
+            appState: {
+                ...appState,
+                exportBackground: true,
+                viewBackgroundColor: appState.viewBackgroundColor,
+            },
             files: excalidrawAPI.getFiles(),
             mimeType: 'image/png',
             quality: 0.95,
@@ -441,6 +544,40 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
 
     const exitPresentation = () => setPresenting(false);
 
+    const handleImportBoard = useCallback(
+        async (parsed) => {
+            if (!excalidrawAPI || !boardId) return;
+            if (parsed.files?.length) {
+                excalidrawAPI.addFiles(parsed.files);
+            }
+            const appState = defaultCanvasAppState({
+                ...(parsed.appState || {}),
+                gridSize: parsed.appState?.gridSize ?? null,
+                objectsSnapModeEnabled: parsed.appState?.objectsSnapModeEnabled ?? true,
+                isBindingEnabled: parsed.appState?.isBindingEnabled ?? true,
+            });
+            excalidrawAPI.updateScene({
+                elements: restoreElements(parsed.elements, null),
+                appState,
+            });
+            if (parsed.name) setName(parsed.name);
+            await updateBoard(boardId, {
+                name: parsed.name || name,
+                elements: parsed.elements,
+                appState: serializableCanvasAppState(appState),
+                files: parsed.files,
+                saveSource: REVISION_SOURCES.MANUAL_SAVE,
+            });
+            await refreshRevisions();
+            setSaveStatus({
+                type: 'success',
+                text: `Imported ${parsed.elements.length} elements.`,
+            });
+            setTimeout(() => setSaveStatus(null), 3000);
+        },
+        [excalidrawAPI, boardId, name, updateBoard, refreshRevisions]
+    );
+
     const renderPanel = () => {
         debug('renderPanel for tab:', activeTab);
         switch (activeTab) {
@@ -451,10 +588,15 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
             case 'history':
                 return (
                     <HistoryPanel
-                        versions={versions}
+                        revisions={revisions}
+                        snapshots={versions}
+                        maxRevisions={MAX_REVISIONS_PER_BOARD}
+                        maxSnapshots={maxSnapshots}
                         onSnapshot={handleSnapshot}
                         onRestore={handleRestore}
-                        onDelete={deleteVersion}
+                        onDeleteRevision={deleteRevision}
+                        onDeleteSnapshot={deleteVersion}
+                        restoring={restoring}
                     />
                 );
             case 'export':
@@ -462,7 +604,10 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                     <ExportPanel
                         boardId={boardId}
                         boardName={name}
+                        appVersion={APP_VERSION}
                         getExportable={getExportable}
+                        getBoardState={getElementsAndState}
+                        onImportBoard={handleImportBoard}
                     />
                 );
             case 'build':
@@ -472,6 +617,13 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                         markDirty={markDirty}
                         selectedIds={selectedIds}
                         suppressSaveRef={suppressSaveRef}
+                    />
+                );
+            case 'appearance':
+                return (
+                    <AppearancePanel
+                        canvasAppState={canvasAppState}
+                        onAppearanceChange={handleAppearanceChange}
                     />
                 );
             case 'libraries':
@@ -545,14 +697,28 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
             </div>
 
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-                <div style={{ flex: 1, minWidth: 0, position: 'relative' }}>
+                <div
+                    className="excalidraw-app-surface"
+                    style={{
+                        flex: 1,
+                        minWidth: 0,
+                        minHeight: 0,
+                        position: 'relative',
+                    }}
+                >
                     {initialData && (
                         <Excalidraw
                             key={board.id}
                             excalidrawAPI={handleExcalidrawAPI}
                             onChange={onChange}
-                            theme={colorScheme === 'dark' ? 'dark' : 'light'}
+                            theme={canvasTheme}
                             initialData={initialData}
+                            UIOptions={{
+                                canvasActions: {
+                                    toggleTheme: true,
+                                    changeViewBackgroundColor: true,
+                                },
+                            }}
                         >
                             <ExcalidrawPreferences
                                 excalidrawAPI={excalidrawAPI}
@@ -571,20 +737,13 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                     <SelectionToolbar api={excalidrawAPI} selectedIds={selectedIds} />
                 </div>
                 <ResizableSidebar>
-                    <TabBar
-                        activeTabId={activeTab}
-                        onChange={(_, data) => {
-                            // Splunk's TabBar passes { selectedTabId }; older builds may pass
-                            // { activeTabId }. Accept either to be defensive.
-                            const next = (data && (data.selectedTabId || data.activeTabId)) || activeTab;
-                            setActiveTab(next);
-                        }}
+                    <SidebarIconTabs
+                        tabs={TABS}
+                        activeTab={activeTab}
+                        onChange={setActiveTab}
                     >
-                        {TABS.map((t) => (
-                            <TabBar.Tab key={t.value} label={t.label} tabId={t.value} />
-                        ))}
-                    </TabBar>
-                    <PanelErrorBoundary key={activeTab}>{renderPanel()}</PanelErrorBoundary>
+                        <PanelErrorBoundary key={activeTab}>{renderPanel()}</PanelErrorBoundary>
+                    </SidebarIconTabs>
                 </ResizableSidebar>
             </div>
         </div>
@@ -627,7 +786,9 @@ function sameCanvasPrefs(a, b) {
     return (
         a.gridSize === b.gridSize &&
         a.objectsSnapModeEnabled === b.objectsSnapModeEnabled &&
-        a.isBindingEnabled === b.isBindingEnabled
+        a.isBindingEnabled === b.isBindingEnabled &&
+        a.theme === b.theme &&
+        a.viewBackgroundColor === b.viewBackgroundColor
     );
 }
 

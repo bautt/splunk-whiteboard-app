@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Heading from '@splunk/react-ui/Heading';
 import P from '@splunk/react-ui/Paragraph';
-import { TEMPLATES } from '../templates';
 import { useTemplates } from '../hooks/useTemplates';
+import { sanitizeElementsForPersistence } from '../lib/build';
+import { rehydrateMissingFiles } from '../lib/boardFiles';
 
-// ── Save-as-template form ──────────────────────────────────────────────────
 function SaveForm({ onSave, onCancel }) {
     const [name, setName] = useState('');
     const [desc, setDesc] = useState('');
@@ -70,8 +70,7 @@ function SaveForm({ onSave, onCancel }) {
     );
 }
 
-// ── Template card ──────────────────────────────────────────────────────────
-function TemplateCard({ name, description, onApply, onDelete, isBuiltin }) {
+function TemplateCard({ name, description, onApply, onDelete }) {
     const [confirming, setConfirming] = useState(false);
 
     return (
@@ -94,43 +93,44 @@ function TemplateCard({ name, description, onApply, onDelete, isBuiltin }) {
                         </span>
                     )}
                 </div>
-                {!isBuiltin && (
-                    confirming ? (
-                        <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                            <button
-                                onClick={onDelete}
-                                style={{
-                                    all: 'unset', cursor: 'pointer', fontSize: 11,
-                                    color: '#fff', background: '#dc2626',
-                                    padding: '2px 6px', borderRadius: 4,
-                                }}
-                            >
-                                Delete
-                            </button>
-                            <button
-                                onClick={() => setConfirming(false)}
-                                style={{
-                                    all: 'unset', cursor: 'pointer', fontSize: 11,
-                                    color: 'inherit', background: 'var(--gray90, #e2e6ea)',
-                                    padding: '2px 6px', borderRadius: 4,
-                                }}
-                            >
-                                Keep
-                            </button>
-                        </div>
-                    ) : (
+                {confirming ? (
+                    <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
                         <button
-                            onClick={() => setConfirming(true)}
-                            title="Delete template"
+                            type="button"
+                            onClick={onDelete}
                             style={{
-                                all: 'unset', cursor: 'pointer', flexShrink: 0,
-                                color: 'var(--gray40, #888)', fontSize: 14, lineHeight: 1,
-                                padding: '0 2px',
+                                all: 'unset', cursor: 'pointer', fontSize: 11,
+                                color: '#fff', background: '#dc2626',
+                                padding: '2px 6px', borderRadius: 4,
                             }}
                         >
-                            🗑
+                            Delete
                         </button>
-                    )
+                        <button
+                            type="button"
+                            onClick={() => setConfirming(false)}
+                            style={{
+                                all: 'unset', cursor: 'pointer', fontSize: 11,
+                                color: 'inherit', background: 'var(--gray90, #e2e6ea)',
+                                padding: '2px 6px', borderRadius: 4,
+                            }}
+                        >
+                            Keep
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => setConfirming(true)}
+                        title="Delete template"
+                        style={{
+                            all: 'unset', cursor: 'pointer', flexShrink: 0,
+                            color: 'var(--gray40, #888)', fontSize: 14, lineHeight: 1,
+                            padding: '0 2px',
+                        }}
+                    >
+                        🗑
+                    </button>
                 )}
             </div>
             <Button appearance="primary" size="small" onClick={onApply}>
@@ -140,26 +140,18 @@ function TemplateCard({ name, description, onApply, onDelete, isBuiltin }) {
     );
 }
 
-// ── Main panel ─────────────────────────────────────────────────────────────
 export default function TemplatePanel({ onApply, getElementsAndState }) {
     const { templates, loading, saveTemplate, deleteTemplate } = useTemplates();
     const [showSaveForm, setShowSaveForm] = useState(false);
 
-    const applyBuiltin = (tpl) => {
-        if (!window.confirm(`Replace the current board with the "${tpl.name}" template?`)) return;
-        const result = tpl.build();
-        if (Array.isArray(result)) {
-            onApply(result, []);
-        } else {
-            onApply(result.elements, result.files || []);
-        }
-    };
-
     const applyCustom = (tpl) => {
         if (!window.confirm(`Replace the current board with the "${tpl.name}" template?`)) return;
         try {
-            const elements = JSON.parse(tpl.elements_json || '[]');
-            const files = JSON.parse(tpl.files_json || '[]');
+            const elements = sanitizeElementsForPersistence(
+                JSON.parse(tpl.elements_json || '[]')
+            );
+            const storedFiles = JSON.parse(tpl.files_json || '[]');
+            const files = rehydrateMissingFiles(elements, storedFiles);
             onApply(elements, files);
         } catch (e) {
             window.alert('Failed to load template: ' + e.message);
@@ -168,24 +160,25 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
 
     const handleSave = async ({ name, description }) => {
         if (!getElementsAndState) return;
-        const { elements, appState, files } = getElementsAndState();
-        // Convert Excalidraw BinaryFiles map to an array for storage
-        const fileArr = Object.values(files || {});
-        await saveTemplate({ name, description, elements, files: fileArr });
+        const { elements, files } = getElementsAndState();
+        const sanitized = sanitizeElementsForPersistence(elements);
+        const fileArr = rehydrateMissingFiles(sanitized, Object.values(files || {}));
+        await saveTemplate({ name, description, elements: sanitized, files: fileArr });
         setShowSaveForm(false);
     };
 
     return (
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Heading level={3}>Templates</Heading>
+            <P style={{ fontSize: 12, margin: 0, opacity: 0.75 }}>
+                Save boards you reuse as templates, or apply templates others have saved.
+            </P>
 
-            {/* Save-as-template button / form */}
             {showSaveForm ? (
                 <SaveForm onSave={handleSave} onCancel={() => setShowSaveForm(false)} />
             ) : (
                 <Button
                     appearance="secondary"
-                    icon={<span>💾</span>}
                     onClick={() => setShowSaveForm(true)}
                     disabled={!getElementsAndState}
                 >
@@ -193,43 +186,32 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
                 </Button>
             )}
 
-            {/* User templates */}
+            {loading && (
+                <P style={{ fontSize: 12, margin: 0, opacity: 0.7 }}>Loading templates…</P>
+            )}
+
+            {!loading && templates.length === 0 && (
+                <P style={{ fontSize: 12, margin: 0, opacity: 0.7 }}>
+                    No saved templates yet.
+                </P>
+            )}
+
             {!loading && templates.length > 0 && (
                 <>
                     <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', opacity: 0.6 }}>
-                        My Templates ({templates.length})
+                        Saved templates ({templates.length})
                     </div>
                     {templates.map((tpl) => (
                         <TemplateCard
                             key={tpl._key}
                             name={tpl.name}
                             description={tpl.description}
-                            isBuiltin={false}
                             onApply={() => applyCustom(tpl)}
                             onDelete={() => deleteTemplate(tpl._key)}
                         />
                     ))}
                 </>
             )}
-
-            {/* Divider */}
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', opacity: 0.6 }}>
-                Built-in Templates
-            </div>
-            <P style={{ fontSize: 11, margin: 0, opacity: 0.7 }}>
-                Replaces the current canvas — save your work first.
-            </P>
-
-            {/* Built-in templates */}
-            {TEMPLATES.map((tpl) => (
-                <TemplateCard
-                    key={tpl.id}
-                    name={tpl.name}
-                    description={tpl.description}
-                    isBuiltin
-                    onApply={() => applyBuiltin(tpl)}
-                />
-            ))}
         </div>
     );
 }
