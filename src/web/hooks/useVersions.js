@@ -1,22 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
 import { kv, COLLECTIONS } from '../lib/kvstoreClient';
+import { filesToArray, rehydrateMissingFiles } from '../lib/boardFiles';
 
 const MAX_VERSIONS_PER_BOARD = 20;
 
 function deserialize(row) {
-    let snapshot = { elements: [], appState: {} };
+    let snapshot = { elements: [], appState: {}, files: [] };
     try {
         snapshot = JSON.parse(row.snapshot_json || '{}');
     } catch {
         // ignore
     }
+    const elements = snapshot.elements || [];
+    const files = rehydrateMissingFiles(elements, snapshot.files || []);
     return {
         id: row._key,
         boardId: row.board_id,
         label: row.label || '',
         createdAt: Number(row.created_at) || 0,
-        elements: snapshot.elements || [],
+        elements,
         appState: snapshot.appState || {},
+        files,
     };
 }
 
@@ -47,12 +51,16 @@ export function useVersions(boardId) {
     }, [refresh]);
 
     const saveSnapshot = useCallback(
-        async (label, elements, appState) => {
+        async (label, elements, appState, files) => {
             if (!boardId) return;
             const doc = {
                 board_id: boardId,
                 label: label || '',
-                snapshot_json: JSON.stringify({ elements, appState }),
+                snapshot_json: JSON.stringify({
+                    elements,
+                    appState,
+                    files: filesToArray(files),
+                }),
                 created_at: Date.now(),
             };
             await kv.insert(COLLECTIONS.versions, doc);

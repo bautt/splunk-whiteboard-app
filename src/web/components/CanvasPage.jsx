@@ -20,6 +20,7 @@ import { useVersions } from '../hooks/useVersions';
 import { detectSplunkColorScheme } from '../lib/splunkTheme';
 import { nanoid } from '../lib/nanoid';
 import { debug } from '../lib/log';
+import { filesToMap } from '../lib/boardFiles';
 
 const TABS = [
     { label: 'Shapes', value: 'shapes' },
@@ -190,6 +191,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         );
         return {
             elements: restored,
+            files: filesToMap(board.files),
             appState: {
                 gridSize: 20,
                 viewBackgroundColor: board.appState?.viewBackgroundColor || '#ffffff',
@@ -222,10 +224,10 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
 
     const handleSaveNow = useCallback(async () => {
         if (!boardId) return;
-        const { elements, appState } = getElementsAndState();
+        const { elements, appState, files } = getElementsAndState();
         debug('saving', elements.length, 'elements');
         try {
-            await updateBoard(boardId, { name, tags, elements, appState });
+            await updateBoard(boardId, { name, tags, elements, appState, files });
             setSaveStatus({ type: 'success', text: `Saved ${elements.length} elements.` });
             setTimeout(() => setSaveStatus(null), 2000);
         } catch (e) {
@@ -353,8 +355,8 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
 
     const handleSnapshot = useCallback(
         async (label) => {
-            const { elements, appState } = getElementsAndState();
-            await saveSnapshot(label, elements, appState);
+            const { elements, appState, files } = getElementsAndState();
+            await saveSnapshot(label, elements, appState, files);
         },
         [getElementsAndState, saveSnapshot]
     );
@@ -365,6 +367,9 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
             // eslint-disable-next-line no-alert
             if (!window.confirm('Restore this snapshot? The current canvas will be replaced.')) {
                 return;
+            }
+            if (version.files?.length) {
+                excalidrawAPI.addFiles(version.files);
             }
             excalidrawAPI.updateScene({
                 elements: restoreElements(version.elements, null),

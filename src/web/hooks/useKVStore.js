@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { kv, COLLECTIONS } from '../lib/kvstoreClient';
 import { debug, logWarn } from '../lib/log';
+import { filesToArray, rehydrateMissingFiles } from '../lib/boardFiles';
 
 function getCurrentUser() {
     try {
@@ -13,13 +14,16 @@ function getCurrentUser() {
 function deserialize(row) {
     let elements = [];
     let appState = {};
+    let files = [];
     try {
         const parsed = JSON.parse(row.elements_json || '{}');
         elements = parsed.elements || [];
         appState = parsed.appState || {};
+        files = parsed.files || [];
     } catch {
         // tolerate corrupt rows
     }
+    files = rehydrateMissingFiles(elements, files);
     return {
         id: row._key,
         name: row.name || 'Untitled',
@@ -28,11 +32,16 @@ function deserialize(row) {
         updatedAt: Number(row.updated_at) || 0,
         elements,
         appState,
+        files,
     };
 }
 
-function serialize({ elements, appState }) {
-    return JSON.stringify({ elements: elements || [], appState: appState || {} });
+function serialize({ elements, appState, files }) {
+    return JSON.stringify({
+        elements: elements || [],
+        appState: appState || {},
+        files: filesToArray(files),
+    });
 }
 
 export function useBoards() {
@@ -98,7 +107,7 @@ export function useBoardMutations() {
             tags,
             owner: getCurrentUser(),
             updated_at: Date.now(),
-            elements_json: serialize({ elements: [], appState: {} }),
+            elements_json: serialize({ elements: [], appState: {}, files: [] }),
         };
         const result = await kv.insert(COLLECTIONS.boards, doc);
         return result?._key;
@@ -107,23 +116,29 @@ export function useBoardMutations() {
     const updateBoard = useCallback(async (id, patch) => {
         const existing = await kv.get(COLLECTIONS.boards, id);
         if (!existing) throw new Error(`Board ${id} not found`);
-        const elementsArg = patch.elements;
-        const appStateArg = patch.appState;
+        const hasCanvasPatch =
+            patch.elements !== undefined || patch.appState !== undefined || patch.files !== undefined;
+        let parsed = { elements: [], appState: {}, files: [] };
+        if (hasCanvasPatch) {
+            try {
+                parsed = JSON.parse(existing.elements_json || '{}');
+            } catch {
+                // keep defaults
+            }
+        }
         const next = {
             name: patch.name ?? existing.name,
             tags: patch.tags ?? existing.tags,
             owner: existing.owner,
             updated_at: Date.now(),
-            elements_json:
-                elementsArg !== undefined || appStateArg !== undefined
-                    ? serialize({ elements: elementsArg, appState: appStateArg })
-                    : existing.elements_json,
+            elements_json: hasCanvasPatch
+                ? serialize({
+                      elements: patch.elements ?? parsed.elements,
+                      appState: patch.appState ?? parsed.appState,
+                      files: patch.files ?? parsed.files,
+                  })
+                : existing.elements_json,
         };
-        debug(
-            `updateBoard(${id}) -> ${
-                Array.isArray(elementsArg) ? elementsArg.length : '(unchanged)'
-            } elements, elements_json=${next.elements_json.length} bytes`
-        );
         await kv.update(COLLECTIONS.boards, id, next);
     }, []);
 
@@ -148,7 +163,7 @@ export function useAutoSave(boardId, getElementsAndState, intervalMs = 30_000) {
         timerRef.current = setInterval(async () => {
             if (!dirtyRef.current) return;
             try {
-                const { elements, appState } = getElementsAndState();
+                const { elements, appState, files } = getElementsAndState();
                 // Defensive: if the API returned no elements (e.g. mid-mount / stale ref),
                 // skip this autosave tick rather than overwriting a real saved board with [].
                 if (!elements || elements.length === 0) {
@@ -156,7 +171,7 @@ export function useAutoSave(boardId, getElementsAndState, intervalMs = 30_000) {
                     return;
                 }
                 debug(`autosave firing with ${elements.length} elements`);
-                await updateBoard(boardId, { elements, appState });
+                await updateBoard(boardId, { elements, appState, files });
                 dirtyRef.current = false;
             } catch (e) {
                 // surface autosave failures; UI will show stale state until next manual save
