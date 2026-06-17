@@ -454,7 +454,14 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                     />
                 );
             case 'build':
-                return <BuildPanel excalidrawAPI={excalidrawAPI} markDirty={markDirty} />;
+                return (
+                    <BuildPanel
+                        excalidrawAPI={excalidrawAPI}
+                        markDirty={markDirty}
+                        selectedIds={selectedIds}
+                        suppressSaveRef={suppressSaveRef}
+                    />
+                );
             case 'libraries':
                 return <LibraryPanel excalidrawAPI={excalidrawAPI} />;
             default:

@@ -193,3 +193,73 @@ export function summarizeSteps(elements) {
         .sort((a, b) => a[0] - b[0])
         .map(([step, count]) => ({ step, count }));
 }
+
+const LIVE = (elements) => (elements || []).filter((el) => !el.isDeleted);
+
+/** Short label for an element in the Build panel step list. */
+export function elementLabel(el) {
+    if (!el || el.isDeleted) return null;
+    if (el.type === 'text' && el.text) {
+        const line = el.text.split('\n')[0].trim();
+        if (line) return line.length > 42 ? `${line.slice(0, 39)}…` : line;
+    }
+    if (el.type === 'frame' && el.name) return el.name;
+    const typeNames = {
+        rectangle: 'Rectangle',
+        diamond: 'Diamond',
+        ellipse: 'Ellipse',
+        arrow: 'Arrow',
+        line: 'Line',
+        image: 'Image',
+        freedraw: 'Drawing',
+        text: 'Text',
+    };
+    return typeNames[el.type] || el.type;
+}
+
+/** Members of a build step with display labels (deduped, capped). */
+export function describeStep(elements, step) {
+    const members = LIVE(elements).filter((el) => getStep(el) === step);
+    const seen = new Set();
+    const labels = [];
+    for (const el of members) {
+        const label = elementLabel(el);
+        if (!label || seen.has(label)) continue;
+        seen.add(label);
+        labels.push(label);
+    }
+    return {
+        count: members.length,
+        labels: labels.slice(0, 4),
+        more: Math.max(0, labels.length - 4),
+        ids: members.map((el) => el.id),
+    };
+}
+
+/** Elements on the always-visible base layer (no build step). */
+export function getUntaggedMembers(elements) {
+    return LIVE(elements).filter((el) => getStep(el) === BASE_STEP);
+}
+
+export function getUntaggedIds(elements) {
+    return getUntaggedMembers(elements).map((el) => el.id);
+}
+
+export function getStepMemberIds(elements, step) {
+    return LIVE(elements).filter((el) => getStep(el) === step).map((el) => el.id);
+}
+
+/** True when canvas selection matches exactly the members of a step. */
+export function selectionMatchesStep(elements, selectedIds, step) {
+    const memberIds = new Set(getStepMemberIds(elements, step));
+    const selIds = new Set(Object.keys(selectedIds || {}).filter((k) => selectedIds[k]));
+    if (memberIds.size === 0 || memberIds.size !== selIds.size) return false;
+    for (const id of memberIds) {
+        if (!selIds.has(id)) return false;
+    }
+    return true;
+}
+
+export function idsToSelection(ids) {
+    return Object.fromEntries(ids.map((id) => [id, true]));
+}

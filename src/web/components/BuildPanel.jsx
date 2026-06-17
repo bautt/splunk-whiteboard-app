@@ -1,7 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Heading from '@splunk/react-ui/Heading';
+import Message from '@splunk/react-ui/Message';
 import P from '@splunk/react-ui/Paragraph';
+import Switch from '@splunk/react-ui/Switch';
 import {
     getMaxStep,
     expandToGroups,
@@ -11,45 +13,138 @@ import {
     swapSteps,
     summarizeSteps,
     getStep,
+    computeReveal,
+    restoreSnapshot,
+    describeStep,
+    getUntaggedMembers,
+    getUntaggedIds,
+    getStepMemberIds,
+    selectionMatchesStep,
+    idsToSelection,
 } from '../lib/build';
 
 // Authoring UI for PowerPoint-style "build" reveal. Lets the presenter assign
 // canvas elements/groups to ordered steps that appear one click at a time in
 // presentation mode.
-export default function BuildPanel({ excalidrawAPI, markDirty }) {
-    // Local tick to force a re-read of the scene after each mutation.
+export default function BuildPanel({
+    excalidrawAPI,
+    markDirty,
+    selectedIds,
+    suppressSaveRef,
+}) {
     const [, setTick] = useState(0);
     const refresh = useCallback(() => setTick((t) => t + 1), []);
 
-    const elements = excalidrawAPI ? excalidrawAPI.getSceneElements() : [];
-    const steps = summarizeSteps(elements);
-    const maxStep = getMaxStep(elements);
+    const [previewStep, setPreviewStep] = useState(null);
+    const canonicalRef = useRef(null);
 
-    const selectedCount = excalidrawAPI
-        ? Object.values(excalidrawAPI.getAppState().selectedElementIds || {}).filter(Boolean).length
-        : 0;
+    const elements = excalidrawAPI ? excalidrawAPI.getSceneElements() : [];
+    const canonical = canonicalRef.current || elements;
+    const steps = summarizeSteps(canonical);
+    const maxStep = getMaxStep(canonical);
+    const untagged = getUntaggedMembers(canonical);
+
+    const selectedCount = Object.values(selectedIds || {}).filter(Boolean).length;
+
+    const activeStep = steps.find(({ step }) =>
+        selectionMatchesStep(canonical, selectedIds, step)
+    )?.step;
+
+    const applyPreview = useCallback(
+        (step, snapshot) => {
+            if (!excalidrawAPI || !snapshot) return;
+            if (step == null) {
+                excalidrawAPI.updateScene({ elements: restoreSnapshot(snapshot) });
+                if (suppressSaveRef) suppressSaveRef.current = false;
+            } else {
+                if (suppressSaveRef) suppressSaveRef.current = true;
+                excalidrawAPI.updateScene({
+                    elements: computeReveal(snapshot, step),
+                });
+            }
+        },
+        [excalidrawAPI, suppressSaveRef]
+    );
+
+    const exitPreview = useCallback(() => {
+        if (canonicalRef.current && excalidrawAPI) {
+            applyPreview(null, canonicalRef.current);
+        }
+        canonicalRef.current = null;
+        setPreviewStep(null);
+    }, [excalidrawAPI, applyPreview]);
+
+    const enterPreview = useCallback(
+        (step) => {
+            if (!excalidrawAPI) return;
+            if (!canonicalRef.current) {
+                canonicalRef.current = excalidrawAPI.getSceneElements();
+            }
+            setPreviewStep(step);
+            applyPreview(step, canonicalRef.current);
+        },
+        [excalidrawAPI, applyPreview]
+    );
+
+    useEffect(() => {
+        if (previewStep == null) return;
+        if (canonicalRef.current) {
+            applyPreview(previewStep, canonicalRef.current);
+        }
+    }, [previewStep, applyPreview]);
+
+    useEffect(() => () => exitPreview(), [exitPreview]);
 
     const commit = useCallback(
         (next) => {
-            excalidrawAPI.updateScene({ elements: next });
+            if (!excalidrawAPI) return;
+            if (previewStep != null) {
+                canonicalRef.current = next;
+                applyPreview(previewStep, next);
+            } else {
+                excalidrawAPI.updateScene({ elements: next });
+            }
             if (markDirty) markDirty();
             refresh();
         },
-        [excalidrawAPI, markDirty, refresh]
+        [excalidrawAPI, markDirty, refresh, previewStep, applyPreview]
+    );
+
+    const selectIds = useCallback(
+        (ids) => {
+            if (!excalidrawAPI || ids.length === 0) return;
+            const members = canonical.filter((el) => ids.includes(el.id));
+            excalidrawAPI.updateScene({
+                appState: { selectedElementIds: idsToSelection(ids) },
+            });
+            if (members.length) {
+                excalidrawAPI.scrollToContent(members, { fitToContent: true });
+            }
+        },
+        [excalidrawAPI, canonical]
     );
 
     const addSelectedAsStep = useCallback(() => {
         if (!excalidrawAPI) return;
-        const els = excalidrawAPI.getSceneElements();
-        const sel = expandToGroups(els, excalidrawAPI.getAppState().selectedElementIds);
+        const els = canonicalRef.current || excalidrawAPI.getSceneElements();
+        const sel = expandToGroups(els, selectedIds);
         if (sel.size === 0) return;
         commit(tagStep(els, sel, getMaxStep(els) + 1));
-    }, [excalidrawAPI, commit]);
+    }, [excalidrawAPI, commit, selectedIds]);
+
+    const removeSelectionFromSteps = useCallback(() => {
+        if (!excalidrawAPI) return;
+        const els = canonicalRef.current || excalidrawAPI.getSceneElements();
+        const sel = expandToGroups(els, selectedIds);
+        if (sel.size === 0) return;
+        commit(clearStep(els, [...sel]));
+    }, [excalidrawAPI, commit, selectedIds]);
 
     const autoNumber = useCallback(
         (axis) => {
             if (!excalidrawAPI) return;
-            commit(autoNumberByGroup(excalidrawAPI.getSceneElements(), axis));
+            const els = canonicalRef.current || excalidrawAPI.getSceneElements();
+            commit(autoNumberByGroup(els, axis));
         },
         [excalidrawAPI, commit]
     );
@@ -57,24 +152,27 @@ export default function BuildPanel({ excalidrawAPI, markDirty }) {
     const clearAll = useCallback(() => {
         if (!excalidrawAPI) return;
         if (!window.confirm('Remove all build steps? Elements stay on the canvas.')) return;
-        commit(clearStep(excalidrawAPI.getSceneElements()));
+        const els = canonicalRef.current || excalidrawAPI.getSceneElements();
+        commit(clearStep(els));
     }, [excalidrawAPI, commit]);
 
-    const focusStep = useCallback(
+    const selectStep = useCallback(
         (step) => {
-            if (!excalidrawAPI) return;
-            const targets = excalidrawAPI.getSceneElements().filter((el) => getStep(el) === step);
-            if (targets.length) excalidrawAPI.scrollToContent(targets, { fitToContent: true });
+            const ids = getStepMemberIds(canonical, step);
+            selectIds(ids);
         },
-        [excalidrawAPI]
+        [canonical, selectIds]
     );
+
+    const selectUntagged = useCallback(() => {
+        selectIds(getUntaggedIds(canonical));
+    }, [canonical, selectIds]);
 
     const removeStep = useCallback(
         (step) => {
             if (!excalidrawAPI) return;
-            const els = excalidrawAPI.getSceneElements();
+            const els = canonicalRef.current || excalidrawAPI.getSceneElements();
             const ids = els.filter((el) => getStep(el) === step).map((el) => el.id);
-            // Untag this step, then renumber the steps above it down by one.
             let next = clearStep(els, ids);
             next = next.map((el) => {
                 const s = getStep(el);
@@ -96,18 +194,90 @@ export default function BuildPanel({ excalidrawAPI, markDirty }) {
         (step, dir) => {
             const other = step + dir;
             if (other < 1 || other > maxStep) return;
-            commit(swapSteps(excalidrawAPI.getSceneElements(), step, other));
+            const els = canonicalRef.current || excalidrawAPI.getSceneElements();
+            commit(swapSteps(els, step, other));
         },
         [excalidrawAPI, commit, maxStep]
     );
+
+    const togglePreview = useCallback(() => {
+        if (previewStep != null) {
+            exitPreview();
+        } else {
+            enterPreview(maxStep > 0 ? maxStep : 0);
+        }
+    }, [previewStep, exitPreview, enterPreview, maxStep]);
 
     return (
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Heading level={3}>Build (reveal on click)</Heading>
             <P style={{ fontSize: 12, margin: 0, opacity: 0.75 }}>
-                Assign elements to ordered steps. In <strong>Present</strong> mode each
-                click reveals the next step, like PowerPoint build animations.
+                <strong>Base layer</strong> (no step) is always visible in Present.
+                Tag elements as steps 1, 2, 3… to reveal them click-by-click.
             </P>
+
+            {untagged.length > 0 && steps.length > 0 && (
+                <Message type="warning">
+                    <span style={{ fontSize: 12 }}>
+                        {untagged.length} element{untagged.length !== 1 ? 's' : ''} not in any step
+                        — always visible during Present.
+                    </span>
+                    <div style={{ marginTop: 6 }}>
+                        <Button size="small" onClick={selectUntagged}>
+                            Select untagged
+                        </Button>
+                    </div>
+                </Message>
+            )}
+
+            <div
+                style={{
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    border: '1px solid var(--gray60, #c3cbd4)',
+                    background: 'var(--gray95, #f2f4f5)',
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <Switch
+                        value="preview"
+                        selected={previewStep != null}
+                        onClick={togglePreview}
+                        appearance="toggle"
+                        disabled={!excalidrawAPI}
+                    >
+                        Preview reveal
+                    </Switch>
+                    {previewStep != null && (
+                        <span style={{ fontSize: 11, opacity: 0.7 }}>
+                            Showing through step {previewStep}
+                        </span>
+                    )}
+                </div>
+                {previewStep != null && maxStep > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                        <input
+                            type="range"
+                            min={0}
+                            max={maxStep}
+                            value={previewStep}
+                            onChange={(e) => enterPreview(Number(e.target.value))}
+                            style={{ width: '100%' }}
+                        />
+                        <div
+                            style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                fontSize: 10,
+                                opacity: 0.6,
+                            }}
+                        >
+                            <span>Base only</span>
+                            <span>Step {maxStep}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             <Button
                 appearance="primary"
@@ -118,6 +288,17 @@ export default function BuildPanel({ excalidrawAPI, markDirty }) {
                     ? `Add selection as step ${maxStep + 1} (${selectedCount})`
                     : 'Select elements to add a step'}
             </Button>
+
+            {selectedCount > 0 && (
+                <Button
+                    size="small"
+                    appearance="secondary"
+                    disabled={!excalidrawAPI}
+                    onClick={removeSelectionFromSteps}
+                >
+                    Remove selection from steps (→ base layer)
+                </Button>
+            )}
 
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 <Button size="small" disabled={!excalidrawAPI} onClick={() => autoNumber('z')}>
@@ -134,47 +315,158 @@ export default function BuildPanel({ excalidrawAPI, markDirty }) {
                 </Button>
             </div>
 
-            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', opacity: 0.6 }}>
-                {steps.length > 0 ? `${steps.length} step${steps.length !== 1 ? 's' : ''}` : 'No steps yet'}
-            </div>
-
-            {steps.map(({ step, count }) => (
-                <div
-                    key={step}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    border: '1px dashed var(--gray60, #c3cbd4)',
+                    borderRadius: 6,
+                    padding: '6px 8px',
+                    fontSize: 12,
+                }}
+            >
+                <span
                     style={{
+                        flexShrink: 0,
+                        width: 22,
+                        height: 22,
+                        borderRadius: '50%',
+                        background: 'var(--gray70, #a8b0b8)',
+                        color: '#fff',
+                        fontSize: 11,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: 6,
-                        border: '1px solid var(--gray60, #c3cbd4)',
-                        borderRadius: 6,
-                        padding: '6px 8px',
+                        justifyContent: 'center',
                     }}
+                    title="Always visible in Present"
                 >
-                    <span
+                    0
+                </span>
+                <span style={{ flex: 1 }}>
+                    Base layer — {untagged.length} element{untagged.length !== 1 ? 's' : ''}
+                </span>
+                <button
+                    type="button"
+                    title="Select base layer on canvas"
+                    onClick={selectUntagged}
+                    style={iconBtn}
+                    disabled={untagged.length === 0}
+                >
+                    Select
+                </button>
+            </div>
+
+            <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', opacity: 0.6 }}>
+                {steps.length > 0 ? `${steps.length} reveal step${steps.length !== 1 ? 's' : ''}` : 'No reveal steps yet'}
+            </div>
+
+            {steps.map(({ step, count }) => {
+                const detail = describeStep(canonical, step);
+                const isActive = activeStep === step;
+                return (
+                    <div
+                        key={step}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => selectStep(step)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                selectStep(step);
+                            }
+                        }}
                         style={{
-                            flexShrink: 0,
-                            width: 22,
-                            height: 22,
-                            borderRadius: '50%',
-                            background: '#5a4fcf',
-                            color: '#fff',
-                            fontSize: 12,
                             display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
+                            flexDirection: 'column',
+                            gap: 4,
+                            border: isActive
+                                ? '2px solid #5a4fcf'
+                                : '1px solid var(--gray60, #c3cbd4)',
+                            borderRadius: 6,
+                            padding: '6px 8px',
+                            cursor: 'pointer',
+                            background: isActive ? 'rgba(90, 79, 207, 0.08)' : 'transparent',
                         }}
                     >
-                        {step}
-                    </span>
-                    <span style={{ flex: 1, fontSize: 12 }}>
-                        {count} element{count !== 1 ? 's' : ''}
-                    </span>
-                    <button title="Move earlier" onClick={() => move(step, -1)} style={iconBtn}>↑</button>
-                    <button title="Move later" onClick={() => move(step, +1)} style={iconBtn}>↓</button>
-                    <button title="Focus on canvas" onClick={() => focusStep(step)} style={iconBtn}>⊙</button>
-                    <button title="Remove step" onClick={() => removeStep(step)} style={iconBtn}>🗑</button>
-                </div>
-            ))}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span
+                                style={{
+                                    flexShrink: 0,
+                                    width: 22,
+                                    height: 22,
+                                    borderRadius: '50%',
+                                    background: '#5a4fcf',
+                                    color: '#fff',
+                                    fontSize: 12,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                {step}
+                            </span>
+                            <span style={{ flex: 1, fontSize: 12, fontWeight: isActive ? 600 : 400 }}>
+                                {count} element{count !== 1 ? 's' : ''}
+                                {isActive ? ' · selected' : ''}
+                            </span>
+                            <button
+                                type="button"
+                                title="Move earlier"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    move(step, -1);
+                                }}
+                                style={iconBtn}
+                            >
+                                ↑
+                            </button>
+                            <button
+                                type="button"
+                                title="Move later"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    move(step, +1);
+                                }}
+                                style={iconBtn}
+                            >
+                                ↓
+                            </button>
+                            <button
+                                type="button"
+                                title="Remove step"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeStep(step);
+                                }}
+                                style={iconBtn}
+                            >
+                                🗑
+                            </button>
+                        </div>
+                        {detail.labels.length > 0 && (
+                            <ul
+                                style={{
+                                    margin: '0 0 0 28px',
+                                    padding: 0,
+                                    listStyle: 'disc',
+                                    fontSize: 11,
+                                    opacity: 0.85,
+                                }}
+                            >
+                                {detail.labels.map((label) => (
+                                    <li key={label}>{label}</li>
+                                ))}
+                                {detail.more > 0 && (
+                                    <li style={{ listStyle: 'none', opacity: 0.6 }}>
+                                        +{detail.more} more…
+                                    </li>
+                                )}
+                            </ul>
+                        )}
+                    </div>
+                );
+            })}
 
             {steps.length > 0 && (
                 <Button size="small" appearance="secondary" onClick={clearAll}>
