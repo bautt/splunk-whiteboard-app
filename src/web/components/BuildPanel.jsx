@@ -37,6 +37,8 @@ export default function BuildPanel({
 
     const [previewStep, setPreviewStep] = useState(null);
     const canonicalRef = useRef(null);
+    const apiRef = useRef(excalidrawAPI);
+    apiRef.current = excalidrawAPI;
 
     const elements = excalidrawAPI ? excalidrawAPI.getSceneElements() : [];
     const canonical = canonicalRef.current || elements;
@@ -52,48 +54,54 @@ export default function BuildPanel({
 
     const applyPreview = useCallback(
         (step, snapshot) => {
-            if (!excalidrawAPI || !snapshot) return;
+            const api = apiRef.current;
+            if (!api || !snapshot) return;
             if (step == null) {
-                excalidrawAPI.updateScene({ elements: restoreSnapshot(snapshot) });
+                api.updateScene({ elements: restoreSnapshot(snapshot) });
                 if (suppressSaveRef) suppressSaveRef.current = false;
             } else {
                 if (suppressSaveRef) suppressSaveRef.current = true;
-                excalidrawAPI.updateScene({
-                    elements: computeReveal(snapshot, step),
-                });
+                api.updateScene({ elements: computeReveal(snapshot, step) });
             }
         },
-        [excalidrawAPI, suppressSaveRef]
+        [suppressSaveRef]
     );
 
     const exitPreview = useCallback(() => {
-        if (canonicalRef.current && excalidrawAPI) {
-            applyPreview(null, canonicalRef.current);
+        const snap = canonicalRef.current;
+        if (snap) {
+            applyPreview(null, snap);
         }
         canonicalRef.current = null;
-        setPreviewStep(null);
-    }, [excalidrawAPI, applyPreview]);
+        setPreviewStep((prev) => (prev == null ? prev : null));
+    }, [applyPreview]);
 
     const enterPreview = useCallback(
         (step) => {
-            if (!excalidrawAPI) return;
+            const api = apiRef.current;
+            if (!api) return;
             if (!canonicalRef.current) {
-                canonicalRef.current = excalidrawAPI.getSceneElements();
+                canonicalRef.current = api.getSceneElements();
             }
             setPreviewStep(step);
             applyPreview(step, canonicalRef.current);
         },
-        [excalidrawAPI, applyPreview]
+        [applyPreview]
     );
 
+    // Restore the canvas when leaving the Build tab — unmount only (no deps).
     useEffect(() => {
-        if (previewStep == null) return;
-        if (canonicalRef.current) {
-            applyPreview(previewStep, canonicalRef.current);
-        }
-    }, [previewStep, applyPreview]);
-
-    useEffect(() => () => exitPreview(), [exitPreview]);
+        return () => {
+            const snap = canonicalRef.current;
+            const api = apiRef.current;
+            if (snap && api) {
+                api.updateScene({ elements: restoreSnapshot(snap) });
+            }
+            canonicalRef.current = null;
+            if (suppressSaveRef) suppressSaveRef.current = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const commit = useCallback(
         (next) => {
@@ -454,8 +462,8 @@ export default function BuildPanel({
                                     opacity: 0.85,
                                 }}
                             >
-                                {detail.labels.map((label) => (
-                                    <li key={label}>{label}</li>
+                                {detail.labels.map((label, i) => (
+                                    <li key={`${step}-${i}-${label}`}>{label}</li>
                                 ))}
                                 {detail.more > 0 && (
                                     <li style={{ listStyle: 'none', opacity: 0.6 }}>

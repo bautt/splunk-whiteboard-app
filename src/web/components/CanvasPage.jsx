@@ -130,10 +130,12 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const lastInsertRef = useRef({ time: 0, x: 0, y: 0 });
     // When true, scene changes are not persisted (used during presentation reveal).
     const suppressSaveRef = useRef(false);
+    const closingMermaidRef = useRef(false);
 
-    useEffect(() => {
-        apiRef.current = excalidrawAPI;
-    }, [excalidrawAPI]);
+    const handleExcalidrawAPI = useCallback((api) => {
+        apiRef.current = api;
+        setExcalidrawAPI((prev) => (prev === api ? prev : api));
+    }, []);
 
     /**
      * Compute the scene-space insert position for a new element of size (w × h).
@@ -228,19 +230,29 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const onChange = useCallback((elements, appState) => {
         // Mermaid dialog crashes on React 17 (useDeferredValue); close if opened anyway.
         if (appState?.openDialog === 'mermaid') {
-            apiRef.current?.updateScene({ appState: { openDialog: null } });
+            if (!closingMermaidRef.current && apiRef.current) {
+                closingMermaidRef.current = true;
+                apiRef.current.updateScene({ appState: { openDialog: null } });
+                requestAnimationFrame(() => {
+                    closingMermaidRef.current = false;
+                });
+            }
             return;
         }
         // While presenting, the build reveal mutates the live scene (opacity);
         // those transient changes must never be persisted.
         if (!suppressSaveRef.current) markDirty();
         if (appState) {
-            setSelectedIds(appState.selectedElementIds ?? {});
-            setCanvasAppState({
+            const nextSel = appState.selectedElementIds ?? {};
+            setSelectedIds((prev) => (sameSelection(prev, nextSel) ? prev : nextSel));
+            const nextPrefs = {
                 gridSize: appState.gridSize ?? null,
                 objectsSnapModeEnabled: appState.objectsSnapModeEnabled ?? true,
                 isBindingEnabled: appState.isBindingEnabled ?? true,
-            });
+            };
+            setCanvasAppState((prev) =>
+                sameCanvasPrefs(prev, nextPrefs) ? prev : nextPrefs
+            );
         }
     }, [markDirty]);
 
@@ -537,7 +549,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                     {initialData && (
                         <Excalidraw
                             key={board.id}
-                            excalidrawAPI={setExcalidrawAPI}
+                            excalidrawAPI={handleExcalidrawAPI}
                             onChange={onChange}
                             theme={colorScheme === 'dark' ? 'dark' : 'light'}
                             initialData={initialData}
@@ -597,6 +609,26 @@ function getViewportSceneCenter(api) {
 
 function snapGrid(v, grid) {
     return grid ? Math.round(v / grid) * grid : v;
+}
+
+function sameSelection(a, b) {
+    if (a === b) return true;
+    const aKeys = Object.keys(a || {});
+    const bKeys = Object.keys(b || {});
+    if (aKeys.length !== bKeys.length) return false;
+    for (let i = 0; i < aKeys.length; i += 1) {
+        const k = aKeys[i];
+        if (a[k] !== b[k]) return false;
+    }
+    return true;
+}
+
+function sameCanvasPrefs(a, b) {
+    return (
+        a.gridSize === b.gridSize &&
+        a.objectsSnapModeEnabled === b.objectsSnapModeEnabled &&
+        a.isBindingEnabled === b.isBindingEnabled
+    );
 }
 
 // ── Tiny button used in SelectionToolbar ─────────────────────────────────────
