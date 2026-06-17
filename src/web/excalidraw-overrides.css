@@ -1,0 +1,9 @@
+/*
+ * Excalidraw 0.17.6 "Mermaid to Excalidraw" is incompatible with this embed:
+ * - MermaidToExcalidraw uses React 18 useDeferredValue (app is React 17)
+ * - @excalidraw/mermaid-to-excalidraw loads via a webpack chunk that is not emitted
+ * Hide the toolbar entry until we upgrade React + bundle the mermaid dependency.
+ */
+.excalidraw .App-toolbar__extra-tools-dropdown .dropdown-menu-item:last-child {
+    display: none !important;
+}

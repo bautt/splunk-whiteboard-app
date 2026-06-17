@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Excalidraw, exportToBlob, restoreElements } from '@excalidraw/excalidraw';
+import '../excalidraw-overrides.css';
 
 import Button from '@splunk/react-ui/Button';
 import TabBar from '@splunk/react-ui/TabBar';
@@ -14,6 +15,10 @@ import ExportPanel from './ExportPanel';
 import LibraryPanel from './LibraryPanel';
 import PresentationMode from './PresentationMode';
 import PanelErrorBoundary from './PanelErrorBoundary';
+import ExcalidrawPreferences, {
+    defaultCanvasAppState,
+    serializableCanvasAppState,
+} from './ExcalidrawPreferences';
 
 import { useBoard, useBoardMutations, useAutoSave } from '../hooks/useKVStore';
 import { useVersions } from '../hooks/useVersions';
@@ -116,7 +121,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const [saveStatus, setSaveStatus] = useState(null);
     const [colorScheme, setColorScheme] = useState(initialColorScheme || detectSplunkColorScheme());
     const [selectedIds, setSelectedIds] = useState({});
-    const [gridEnabled, setGridEnabled] = useState(true);
+    const [canvasAppState, setCanvasAppState] = useState(() => defaultCanvasAppState());
 
     // Mirror the Excalidraw API into a ref so callbacks always see the live API
     // even if a stale closure captured an older state value.
@@ -132,8 +137,8 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
 
     /**
      * Compute the scene-space insert position for a new element of size (w × h).
-     * - First insert (or after >4 s pause): snapped to viewport center.
-     * - Subsequent quick inserts: cascade diagonally by 2 grid cells.
+     * - First insert (or after >4 s pause): viewport center.
+     * - Subsequent quick inserts: cascade diagonally (grid-aligned only when grid snap is on).
      * - Wraps back toward center if the cascade drifts too far.
      */
     const computeInsertPos = useCallback((api, w = 0, h = 0) => {
@@ -148,10 +153,13 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
             ix = snap(cx);
             iy = snap(cy);
         } else {
-            ix = snap(last.x + grid * 3);
-            iy = snap(last.y + grid * 2);
-            // Wrap if cascaded more than ~6 grid cells from center
-            if (Math.abs(ix - cx) > grid * 7 || Math.abs(iy - cy) > grid * 7) {
+            const stepX = grid ? grid * 3 : 40;
+            const stepY = grid ? grid * 2 : 28;
+            ix = snap(last.x + stepX);
+            iy = snap(last.y + stepY);
+            // Wrap if cascaded too far from center
+            const limit = grid ? grid * 7 : 280;
+            if (Math.abs(ix - cx) > limit || Math.abs(iy - cy) > limit) {
                 ix = snap(cx);
                 iy = snap(cy);
             }
@@ -192,10 +200,12 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         return {
             elements: restored,
             files: filesToMap(board.files),
-            appState: {
-                gridSize: 20,
+            appState: defaultCanvasAppState({
                 viewBackgroundColor: board.appState?.viewBackgroundColor || '#ffffff',
-            },
+                gridSize: board.appState?.gridSize ?? null,
+                objectsSnapModeEnabled: board.appState?.objectsSnapModeEnabled ?? true,
+                isBindingEnabled: board.appState?.isBindingEnabled ?? true,
+            }),
             scrollToContent: restored.length > 0,
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -208,7 +218,7 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
         debug('getElementsAndState ->', elements.length, 'elements');
         return {
             elements,
-            appState: serializableAppState(api.getAppState()),
+            appState: serializableCanvasAppState(api.getAppState()),
             files: api.getFiles ? api.getFiles() : {},
         };
     }, []);
@@ -216,10 +226,22 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     const { markDirty } = useAutoSave(boardId, getElementsAndState);
 
     const onChange = useCallback((elements, appState) => {
+        // Mermaid dialog crashes on React 17 (useDeferredValue); close if opened anyway.
+        if (appState?.openDialog === 'mermaid') {
+            apiRef.current?.updateScene({ appState: { openDialog: null } });
+            return;
+        }
         // While presenting, the build reveal mutates the live scene (opacity);
         // those transient changes must never be persisted.
         if (!suppressSaveRef.current) markDirty();
-        if (appState) setSelectedIds(appState.selectedElementIds ?? {});
+        if (appState) {
+            setSelectedIds(appState.selectedElementIds ?? {});
+            setCanvasAppState({
+                gridSize: appState.gridSize ?? null,
+                objectsSnapModeEnabled: appState.objectsSnapModeEnabled ?? true,
+                isBindingEnabled: appState.isBindingEnabled ?? true,
+            });
+        }
     }, [markDirty]);
 
     const handleSaveNow = useCallback(async () => {
@@ -373,7 +395,12 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
             }
             excalidrawAPI.updateScene({
                 elements: restoreElements(version.elements, null),
-                appState: { ...(version.appState || {}), gridSize: 20 },
+                appState: defaultCanvasAppState({
+                    ...(version.appState || {}),
+                    gridSize: version.appState?.gridSize ?? null,
+                    objectsSnapModeEnabled: version.appState?.objectsSnapModeEnabled ?? true,
+                    isBindingEnabled: version.appState?.isBindingEnabled ?? true,
+                }),
             });
             markDirty();
         },
@@ -486,13 +513,6 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                     Save
                 </Button>
                 <Button onClick={enterPresentation}>Present</Button>
-                <Button
-                    title="Toggle grid / snap (affects newly inserted shapes)"
-                    onClick={() => setGridEnabled((v) => !v)}
-                    style={{ fontFamily: 'monospace', minWidth: 90 }}
-                >
-                    {gridEnabled ? '⊞ Grid on' : '□ Grid off'}
-                </Button>
                 {saveStatus && (
                     <span
                         style={{
@@ -513,9 +533,13 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
                             excalidrawAPI={setExcalidrawAPI}
                             onChange={onChange}
                             theme={colorScheme === 'dark' ? 'dark' : 'light'}
-                            gridModeEnabled={gridEnabled}
                             initialData={initialData}
-                        />
+                        >
+                            <ExcalidrawPreferences
+                                excalidrawAPI={excalidrawAPI}
+                                appState={canvasAppState}
+                            />
+                        </Excalidraw>
                     )}
                     {presenting && (
                         <PresentationMode
@@ -548,17 +572,6 @@ export default function CanvasPage({ boardId, onClose, initialColorScheme }) {
     );
 }
 
-// Persist only the fields we actually want to restore, so we don't carry
-// transient UI state (showWelcomeScreen, currentItem*, editingElement, etc.)
-// that can hide or otherwise disrupt elements on reload.
-function serializableAppState(appState) {
-    if (!appState) return {};
-    return {
-        viewBackgroundColor: appState.viewBackgroundColor || '#ffffff',
-        gridSize: appState.gridSize || 20,
-    };
-}
-
 // ── Viewport → scene coordinate helpers ─────────────────────────────────────
 
 /**
@@ -571,7 +584,7 @@ function getViewportSceneCenter(api) {
     return {
         x: (a.width / 2 - a.scrollX) / zoom,
         y: (a.height / 2 - a.scrollY) / zoom,
-        grid: a.gridSize || 20,
+        grid: a.gridSize || null,
     };
 }
 
