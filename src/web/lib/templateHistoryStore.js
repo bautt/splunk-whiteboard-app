@@ -1,6 +1,7 @@
 import { kv, COLLECTIONS } from './kvstoreClient';
 import { filesToArray, rehydrateMissingFiles } from './boardFiles';
 import { sanitizeElementsForPersistence } from './build';
+import { getCurrentUser } from './currentUser';
 import { debug, logWarn } from './log';
 
 export const MAX_REVISIONS_PER_TEMPLATE = 30;
@@ -9,14 +10,6 @@ export const TEMPLATE_REVISION_SOURCES = {
     UPDATE: 'update',
     PRE_RESTORE: 'pre_restore',
 };
-
-function getCurrentUser() {
-    try {
-        return window.Splunk?.util?.getCurrentUser?.() || window.$C?.USERNAME || 'unknown';
-    } catch {
-        return 'unknown';
-    }
-}
 
 export function templateRevisionSourceLabel(source) {
     switch (source) {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { kv } from '../lib/kvstoreClient';
+import { getCurrentUser } from '../lib/currentUser';
 import {
     deleteAllTemplateRevisions,
     revisionBeforeTemplateUpdate,
@@ -37,7 +38,7 @@ export function useTemplates() {
             elements_json: JSON.stringify(elements || []),
             files_json: JSON.stringify(files || []),
             created_at: Date.now(),
-            created_by: window.Splunk?.util?.getCurrentUser?.() || '',
+            created_by: getCurrentUser(),
         };
         await kv.insert(COLLECTION, record);
         await load();
@@ -61,7 +62,7 @@ export function useTemplates() {
             created_at: existing.created_at ?? Date.now(),
             created_by: existing.created_by ?? '',
             updated_at: Date.now(),
-            updated_by: window.Splunk?.util?.getCurrentUser?.() || '',
+            updated_by: getCurrentUser(),
         };
         await kv.update(COLLECTION, id, record);
         await load();

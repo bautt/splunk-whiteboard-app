@@ -159,6 +159,7 @@ export default function CanvasPage({ boardId, onClose }) {
     const suppressSaveRef = useRef(false);
     const closingMermaidRef = useRef(false);
     const appearanceSyncRef = useRef(false);
+    const canvasReadyRef = useRef(false);
 
     const handleExcalidrawAPI = useCallback((api) => {
         apiRef.current = api;
@@ -247,7 +248,19 @@ export default function CanvasPage({ boardId, onClose }) {
         };
     }, []);
 
-    const { markDirty } = useAutoSave(boardId, getElementsAndState);
+    useEffect(() => {
+        canvasReadyRef.current = false;
+    }, [boardId]);
+
+    useEffect(() => {
+        if (excalidrawAPI && board && !loading) {
+            canvasReadyRef.current = true;
+        }
+    }, [excalidrawAPI, board, loading]);
+
+    const isCanvasReady = useCallback(() => canvasReadyRef.current, []);
+
+    const { markDirty } = useAutoSave(boardId, getElementsAndState, { isCanvasReady });
 
     // One-shot sync after Excalidraw mounts — ensures saved theme/bg apply to the live scene.
     useEffect(() => {

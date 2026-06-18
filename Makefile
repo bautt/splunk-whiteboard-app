@@ -23,7 +23,7 @@ build:
 	# bundle passes AppInspect's telemetry static check. No telemetry is ever
 	# sent (the app registers no tracker); this only renames the property key
 	# consistently across the built JS, preserving behaviour.
-	find dist/appserver/static -name '*.js' -exec sed -i '' 's/trackEvent/trackEvnt/g' {} +
+	find dist/appserver/static -name '*.js' -exec perl -pi -e 's/trackEvent/trackEvnt/g' {} +
 
 package: build
 	rm -rf /tmp/$(APP_ID)

@@ -11,7 +11,6 @@
         "@splunk/react-page": "^8.3.1",
         "@splunk/react-ui": "^5.9.1",
         "@splunk/themes": "^0.18.0",
-        "html2canvas": "^1.4.1",
         "jspdf": "^2.5.2",
         "process": "^0.11.10",
         "react": "^17",

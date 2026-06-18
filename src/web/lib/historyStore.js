@@ -1,6 +1,7 @@
 import { kv, COLLECTIONS } from './kvstoreClient';
 import { filesToArray, rehydrateMissingFiles } from './boardFiles';
 import { sanitizeElementsForPersistence } from './build';
+import { getCurrentUser } from './currentUser';
 import { debug, logWarn } from './log';
 
 export const MAX_REVISIONS_PER_BOARD = 30;
@@ -11,14 +12,6 @@ export const REVISION_SOURCES = {
     MANUAL_SAVE: 'manual_save',
     PRE_RESTORE: 'pre_restore',
 };
-
-function getCurrentUser() {
-    try {
-        return window.$C?.USERNAME || 'unknown';
-    } catch {
-        return 'unknown';
-    }
-}
 
 export function sourceLabel(source) {
     switch (source) {
@@ -184,4 +177,20 @@ export async function listSnapshots(boardId) {
 
 export async function deleteSnapshot(versionId) {
     await kv.remove(COLLECTIONS.versions, versionId);
+}
+
+async function deleteAllFromCollection(collection, entityId, idField = 'board_id') {
+    const rows = await kv.query(collection, {
+        query: JSON.stringify({ [idField]: entityId }),
+    });
+    await Promise.all((rows || []).map((r) => kv.remove(collection, r._key)));
+}
+
+/** Remove all revision and snapshot rows when a board is deleted. */
+export async function deleteAllBoardHistory(boardId) {
+    if (!boardId) return;
+    await Promise.all([
+        deleteAllFromCollection(COLLECTIONS.revisions, boardId),
+        deleteAllFromCollection(COLLECTIONS.versions, boardId),
+    ]);
 }

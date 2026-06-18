@@ -1,5 +1,4 @@
-// PDF export using the canvas Excalidraw renders into.
-// Falls back to PNG-via-Excalidraw if html2canvas misbehaves on the live DOM.
+// PDF export from an Excalidraw PNG blob via jsPDF.
 
 import jsPDF from 'jspdf';
 

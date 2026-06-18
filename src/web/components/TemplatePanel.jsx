@@ -163,7 +163,7 @@ function TemplateHistory({ templateId, onRestore, onDeleteRevision, restoring })
     );
 }
 
-function PrebuiltTemplateCard({ tpl, onApply }) {
+function PrebuiltTemplateCard({ tpl, onReplace }) {
     return (
         <div
             style={{
@@ -184,14 +184,14 @@ function PrebuiltTemplateCard({ tpl, onApply }) {
                     </span>
                 )}
             </div>
-            <Button appearance="primary" size="small" onClick={onApply}>
-                Apply
+            <Button appearance="primary" size="small" onClick={onReplace} title="Replace the current board with this template">
+                Replace board
             </Button>
         </div>
     );
 }
 
-function TemplateCard({ tpl, onApply, onUpdate, onDelete, onRestoreRevision, restoring }) {
+function TemplateCard({ tpl, onReplace, onUpdate, onDelete, onRestoreRevision, restoring }) {
     const [confirming, setConfirming] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const { name, description } = tpl;
@@ -257,8 +257,8 @@ function TemplateCard({ tpl, onApply, onUpdate, onDelete, onRestoreRevision, res
                 )}
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <Button appearance="primary" size="small" onClick={onApply}>
-                    Apply
+                <Button appearance="primary" size="small" onClick={onReplace} title="Replace the current board with this template">
+                    Replace board
                 </Button>
                 <Button appearance="secondary" size="small" onClick={onUpdate}>
                     Update
@@ -300,8 +300,8 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
         return { elements: sanitized, files: fileArr };
     };
 
-    const applyPrebuilt = (tpl) => {
-        if (!window.confirm(`Replace the current board with "${tpl.label}"?`)) return;
+    const replaceWithPrebuilt = (tpl) => {
+        if (!window.confirm(`Replace the current board with "${tpl.label}"? Unsaved changes will be lost.`)) return;
         try {
             const files = rehydrateMissingFiles(tpl.elements, tpl.files);
             onApply(tpl.elements, files);
@@ -310,8 +310,8 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
         }
     };
 
-    const applyCustom = (tpl) => {
-        if (!window.confirm(`Replace the current board with the "${tpl.name}" template?`)) return;
+    const replaceWithCustom = (tpl) => {
+        if (!window.confirm(`Replace the current board with the "${tpl.name}" template? Unsaved changes will be lost.`)) return;
         try {
             const elements = sanitizeElementsForPersistence(
                 JSON.parse(tpl.elements_json || '[]')
@@ -386,9 +386,10 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Heading level={3}>Templates</Heading>
             <P style={{ fontSize: 12, margin: 0, opacity: 0.75 }}>
-                Start from a built-in example, save boards you reuse as templates, update them
-                from the current canvas, or apply templates others have saved. Each update keeps
-                the last {MAX_REVISIONS_PER_TEMPLATE} versions automatically.
+                Start from a built-in example, save boards you reuse as templates, or update them
+                from the current canvas. Replace board loads a template onto the canvas and
+                discards unsaved changes. Each update keeps the last{' '}
+                {MAX_REVISIONS_PER_TEMPLATE} versions automatically.
             </P>
 
             <div>
@@ -400,7 +401,7 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
                         <PrebuiltTemplateCard
                             key={tpl.id}
                             tpl={tpl}
-                            onApply={() => applyPrebuilt(tpl)}
+                            onReplace={() => replaceWithPrebuilt(tpl)}
                         />
                     ))}
                 </div>
@@ -451,7 +452,7 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
                         <TemplateCard
                             key={tpl._key}
                             tpl={tpl}
-                            onApply={() => applyCustom(tpl)}
+                            onReplace={() => replaceWithCustom(tpl)}
                             onUpdate={() => {
                                 setShowSaveForm(false);
                                 setEditingTemplate(tpl);

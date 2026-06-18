@@ -22,8 +22,8 @@ Collaborative whiteboard embedded inside Splunk — built with React + [Excalidr
 | **Splunk shapes** | Forwarder (UF/HF), Indexer, Search Head, Deployment Server, Cluster Manager, License Manager, Edge Processor, Ingest Processor, SplunkCloud, and more |
 | **SVG icon mode** | All Splunk infrastructure shapes can be inserted as colourable SVG images instead of vector elements |
 | **Marketing icons** | 50 Splunk Marketing Icons — searchable, individually colourable, inserted as SVG images onto the canvas |
-| **Templates (built-in)** | Splunk Platform (13-step build), Edge Processor, Network Port Diagram, Digital Resilience Platform, SAP E2E Visibility, SIEM, Observability, IT Ops, and more |
-| **Templates (user)** | Save any board state as a named template; load or delete from the Templates panel |
+| **Templates (built-in)** | Splunk Platform (dark canvas), Cisco Data Fabric, Cisco Data Fabric (MDL) — plus user-saved templates in KV Store |
+| **Templates (user)** | Save any board as a named template; **Replace board** loads a template onto the canvas (discards unsaved changes) |
 | **Excalidraw libraries** | Browse and import from [libraries.excalidraw.com](https://libraries.excalidraw.com/) directly in the sidebar |
 | **Persistence** | All boards stored in Splunk KV Store — visible and editable by every Splunk user |
 | **Build / reveal-on-click** | PowerPoint-style progressive reveal — tag elements/groups into ordered steps that appear one click at a time in Present mode, with optional fade-in and camera-follow |
@@ -84,18 +84,20 @@ At the bottom of the **Shapes** tab, expand **Splunk Marketing Icons**. Pick a c
 
 Open the **Templates** tab.
 
-**Built-in templates** (read-only):
+**Built-in templates** (read-only, shipped with the app):
 
 | Template | Description |
 |---|---|
-| Splunk Platform (13-step build) | Client → ports → Apps → Investigate/Monitor/Analyze/Act → Machine Data; pre-tagged for PowerPoint-style Present mode |
-| Splunk Network Port Diagram | Full port reference: UF/HF → Indexers (9997), HEC (8088), SH (8000/8089), cluster replication |
-| Edge Processor Overview | Edge Processor pipeline: sources → EP → Splunk Cloud / on-prem indexers |
-| Digital Resilience Platform | SOC/NOC/BOC/OT → Investigate → Monitor → Act, with data-source icons |
-| SAP End-to-End Visibility | Business & IT sources → Investigate → Monitor → Analyze → Act |
-| SIEM | Log sources → forwarders → indexers → search heads → analyst |
-| Observability | Cloud infra → HEC/forwarders → Splunk Cloud → dashboards, alerts, ITSI |
-| IT Ops | CMDB, change management, event correlation flow |
+| Splunk Platform (dark canvas) | Splunk platform architecture on a dark canvas; supports Present / Build mode |
+| Cisco Data Fabric | Cisco Data Fabric architecture overview |
+| Cisco Data Fabric (MDL) | Cisco Data Fabric with MDL layer detail |
+
+Additional example boards ship under `assets/generated/` (e.g. Data Chaos to AI Clarity, Federated Search). Regenerate or upload with `scripts/generate-*-board.py` or import a `.whiteboard.json` via the Export panel.
+
+**Replace board** (built-in or saved templates):
+
+1. Open the **Templates** tab and click **Replace board** on a template card.
+2. Confirm — the current canvas is replaced; unsaved changes are lost. Save first if you need to keep them.
 
 **Saving a custom template:**
 
@@ -103,11 +105,11 @@ Open the **Templates** tab.
 2. In the Templates tab click **💾 Save current board as template**.
 3. Enter a name (and optional description) and press **Save template**.
 
-The template appears under **My Templates** and is stored in KV Store (`whiteboard_templates` collection), so all users can see and apply it.
+The template appears under **Saved templates** in KV Store (`whiteboard_templates` collection), visible to all users on the instance.
 
-**Deleting a custom template:**
+**Updating or deleting a custom template:**
 
-Click the 🗑 icon on a user template card, then confirm with **Delete**.
+Use **Update** on a saved template card to overwrite it with the current canvas (previous versions are kept automatically). Click the trash icon and confirm **Delete** to remove a template.
 
 ### Excalidraw Libraries
 
@@ -193,6 +195,8 @@ whiteboard_app/
 ├── Makefile
 ├── README.md
 ├── assets/
+│   ├── generated/                      # Example .whiteboard.json bundles (import via Export panel)
+│   ├── prebuilt-templates/             # Shipped built-in templates
 │   ├── generate_alt_icon.py            # Regenerate app icons from 400px master
 │   ├── listing_icon_200.png            # Splunkbase listing (200×200)
 │   ├── listing_icon_400.png            # Splunkbase listing (400×400)
@@ -240,11 +244,10 @@ whiteboard_app/
         ├── lib/
         │   ├── kvstoreClient.js        # Splunk KV Store REST wrapper (CSRF-safe)
         │   ├── shapes.js               # Splunk shape factory functions
-        │   ├── marketingIcons.js       # 50 Splunk Marketing Icons (raw SVG strings)
-        │   ├── drpIcons.js             # Pre-encoded icons for DRP template
+        │   ├── marketingIcons.js       # Splunk Marketing Icons (raw SVG strings)
+        │   ├── drpIcons.js             # Pre-encoded icons for DRP-style templates
+        │   ├── prebuiltTemplates.js    # Shipped built-in template registry
         │   └── nanoid.js               # Lightweight unique-ID generator
-        └── templates/
-            └── index.js                # All template builder functions + TEMPLATES registry
 ```
 
 ---
@@ -254,19 +257,24 @@ whiteboard_app/
 | Collection | Purpose |
 |---|---|
 | `whiteboards` | Board metadata + serialised canvas elements |
-| `whiteboard_versions` | Timestamped snapshots per board |
+| `whiteboard_versions` | Named snapshots per board |
+| `whiteboard_revisions` | Automatic revision history per board |
 | `whiteboard_templates` | User-saved templates (elements + embedded files) |
+| `whiteboard_template_revisions` | Automatic revision history per template |
 
-All three collections grant read/write to all Splunk users (`access = read : [ * ], write : [ * ]` in `metadata/default.meta`).
+All collections grant read/write to every Splunk user (`access = read : [ * ], write : [ * ]` in `metadata/default.meta`). This is intentional for collaborative editing on a shared instance — any user can modify or delete any board. Tighten those ACLs in `metadata/default.meta` if your deployment requires restricted write access.
 
 ---
 
-## Adding a new template
+## Adding a new built-in template
 
-1. Open `src/web/templates/index.js`.
-2. Write a `buildMyTemplate()` function that returns an array of Excalidraw element objects (or `{ elements, files }` if the template embeds SVG images).
-3. Add an entry to the `TEMPLATES` array at the bottom of the file.
-4. Run `make package && make deploy-norestart` to deploy.
+1. Author a board in the app or generate one with `scripts/generate-*-board.py` (see `scripts/wbgen_common.py`).
+2. Export **Download board JSON** from the Export panel, or write to `assets/prebuilt-templates/`.
+3. Register it in `assets/prebuilt-templates/manifest.json`.
+4. Import the JSON in `src/web/lib/prebuiltTemplates.js` and append to `PREBUILT_TEMPLATES`.
+5. Run `make package && make deploy-norestart` to deploy.
+
+To export KV templates from a live Splunk instance: `scripts/export-kv-templates.py`.
 
 ---
 
@@ -283,7 +291,7 @@ All three collections grant read/write to all Splunk users (`access = read : [ *
 
 | Dependency | Version |
 |---|---|
-| Splunk Enterprise | 9.x |
+| Splunk Enterprise / Cloud | 9.x |
 | Node.js | 22.x (use `nvm use 22`) |
 | Yarn | 1.x |
 | Python | 3.x (Splunk app runtime) |

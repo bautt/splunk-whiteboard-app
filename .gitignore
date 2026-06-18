@@ -13,6 +13,10 @@ deploy.local.mk
 *.env
 *.env.local
 
+# Python
+__pycache__/
+*.pyc
+
 # OS
 .DS_Store
 Thumbs.db

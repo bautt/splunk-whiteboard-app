@@ -3,15 +3,8 @@ import { kv, COLLECTIONS } from '../lib/kvstoreClient';
 import { debug, logWarn } from '../lib/log';
 import { filesToArray, rehydrateMissingFiles } from '../lib/boardFiles';
 import { sanitizeElementsForPersistence } from '../lib/build';
-import { revisionBeforeBoardWrite } from '../lib/historyStore';
-
-function getCurrentUser() {
-    try {
-        return window.$C?.USERNAME || 'unknown';
-    } catch {
-        return 'unknown';
-    }
-}
+import { getCurrentUser } from '../lib/currentUser';
+import { deleteAllBoardHistory, revisionBeforeBoardWrite } from '../lib/historyStore';
 
 function deserialize(row) {
     let elements = [];
@@ -147,13 +140,15 @@ export function useBoardMutations() {
     }, []);
 
     const deleteBoard = useCallback(async (id) => {
+        await deleteAllBoardHistory(id);
         await kv.remove(COLLECTIONS.boards, id);
     }, []);
 
     return { createBoard, updateBoard, deleteBoard };
 }
 
-export function useAutoSave(boardId, getElementsAndState, intervalMs = 30_000) {
+export function useAutoSave(boardId, getElementsAndState, options = {}) {
+    const { intervalMs = 30_000, isCanvasReady = () => true } = options;
     const timerRef = useRef(null);
     const dirtyRef = useRef(false);
     const { updateBoard } = useBoardMutations();
@@ -168,10 +163,11 @@ export function useAutoSave(boardId, getElementsAndState, intervalMs = 30_000) {
             if (!dirtyRef.current) return;
             try {
                 const { elements, appState, files } = getElementsAndState();
-                // Defensive: if the API returned no elements (e.g. mid-mount / stale ref),
-                // skip this autosave tick rather than overwriting a real saved board with [].
-                if (!elements || elements.length === 0) {
-                    debug('autosave skipped (0 elements)');
+                const ready = isCanvasReady();
+                // Skip only while Excalidraw is still mounting — not when the user
+                // intentionally cleared the canvas (ready + 0 elements).
+                if (!ready || elements == null) {
+                    debug('autosave skipped (canvas not ready)');
                     return;
                 }
                 debug(`autosave firing with ${elements.length} elements`);
@@ -188,7 +184,7 @@ export function useAutoSave(boardId, getElementsAndState, intervalMs = 30_000) {
             }
         }, intervalMs);
         return () => clearInterval(timerRef.current);
-    }, [boardId, getElementsAndState, intervalMs, updateBoard]);
+    }, [boardId, getElementsAndState, intervalMs, isCanvasReady, updateBoard]);
 
     return { markDirty };
 }

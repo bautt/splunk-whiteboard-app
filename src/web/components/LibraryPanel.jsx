@@ -5,6 +5,7 @@ import { debug, logWarn, logError } from '../lib/log';
 
 const BASE = 'https://libraries.excalidraw.com';
 const CATALOG_URL = `${BASE}/libraries.json`;
+const MAX_LIBRARY_BYTES = 5 * 1024 * 1024;
 
 /** Normalize a library file regardless of v1/v2 format.
  *  Excalidraw's LibraryItem requires: id, status, elements, created (epoch ms).
@@ -101,7 +102,11 @@ export default function LibraryPanel({ excalidrawAPI }) {
             try {
                 const resp = await fetch(url);
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const data = await resp.json();
+                const buf = await resp.arrayBuffer();
+                if (buf.byteLength > MAX_LIBRARY_BYTES) {
+                    throw new Error(`Library exceeds ${MAX_LIBRARY_BYTES / (1024 * 1024)} MB limit`);
+                }
+                const data = JSON.parse(new TextDecoder().decode(buf));
                 debug('Library raw data version:', data.version, 'keys:', Object.keys(data));
                 const items = parseLibFile(data);
                 debug('Parsed library items:', items.length,
