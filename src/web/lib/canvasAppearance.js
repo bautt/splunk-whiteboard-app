@@ -17,7 +17,15 @@ export const BACKGROUND_PRESETS = [
     { id: 'charcoal', label: 'Charcoal', color: '#1e1e1e', themes: ['dark'] },
     { id: 'slate', label: 'Slate', color: '#2d333b', themes: ['dark'] },
     { id: 'navy', label: 'Navy', color: '#0d1117', themes: ['dark'] },
+    { id: 'splunk-navy', label: 'Splunk navy', color: '#001b3a', themes: ['dark'] },
 ];
+
+/** display hex → stored hex for Excalidraw dark mode (precomputed, avoids runtime search). */
+const KNOWN_DARK_STORED = {
+    '#001b3a': '#ffe4c5',
+};
+
+const inverseCache = new Map(Object.entries(KNOWN_DARK_STORED));
 
 export function normalizeHexColor(hex) {
     if (!hex || typeof hex !== 'string') return '';
@@ -105,6 +113,22 @@ function colorDistance(a, b) {
     return Math.abs(a.r - b.r) + Math.abs(a.g - b.g) + Math.abs(a.b - b.b);
 }
 
+function relativeLuminance(hex) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return 1;
+    const channel = (c) => {
+        const s = c / 255;
+        return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    };
+    return (
+        0.2126 * channel(rgb.r) + 0.7152 * channel(rgb.g) + 0.0722 * channel(rgb.b)
+    );
+}
+
+function isDarkDisplayColor(hex) {
+    return relativeLuminance(normalizeHexColor(hex)) < 0.15;
+}
+
 /** Apply Excalidraw's dark-mode canvas filter to a stored background color. */
 export function applyDarkCanvasFilter(hex) {
     const normalized = normalizeHexColor(hex);
@@ -124,8 +148,8 @@ export function applyDarkCanvasFilter(hex) {
     return rgbToHex({ r: data[0], g: data[1], b: data[2] });
 }
 
-/** Find stored color whose filtered result matches the desired display color. */
-export function inverseDarkCanvasFilter(displayHex) {
+/** Fast iterative inverse — bounded work, suitable for interactive theme toggles. */
+function inverseDarkCanvasFilterIterative(displayHex) {
     const display = normalizeHexColor(displayHex);
     const target = hexToRgb(display);
     if (!target) return display;
@@ -133,8 +157,11 @@ export function inverseDarkCanvasFilter(displayHex) {
     const ctx = filterCanvasCtx();
     if (!ctx) return invertRgbHex(display);
 
-    const seeds = [invertRgbHex(display), display, '#ffffff', '#000000'];
-    let bestHex = seeds[0];
+    const seeds = [KNOWN_DARK_STORED[display], invertRgbHex(display), display, '#ffffff', '#000000']
+        .filter(Boolean)
+        .map(normalizeHexColor);
+
+    let bestHex = seeds[0] || invertRgbHex(display);
     let bestErr = Infinity;
 
     for (const seed of seeds) {
@@ -142,7 +169,7 @@ export function inverseDarkCanvasFilter(displayHex) {
         if (!start) continue;
 
         let { r, g, b } = start;
-        for (let iter = 0; iter < 40; iter += 1) {
+        for (let iter = 0; iter < 48; iter += 1) {
             const candidate = rgbToHex({ r, g, b });
             const current = hexToRgb(applyDarkCanvasFilter(candidate));
             if (!current) break;
@@ -163,8 +190,19 @@ export function inverseDarkCanvasFilter(displayHex) {
     return bestHex;
 }
 
+/** Find stored color whose filtered result matches the desired display color. */
+export function inverseDarkCanvasFilter(displayHex) {
+    const display = normalizeHexColor(displayHex);
+    if (!display) return display;
+    if (inverseCache.has(display)) return inverseCache.get(display);
+
+    const stored = inverseDarkCanvasFilterIterative(display);
+    inverseCache.set(display, stored);
+    return stored;
+}
+
 /**
- * RGB invert — legacy approximation; prefer applyDarkCanvasFilter / inverseDarkCanvasFilter.
+ * RGB invert — fallback when canvas filter API is unavailable (SSR/tests).
  */
 export function invertRgbHex(hex) {
     const rgb = hexToRgb(hex);
@@ -177,6 +215,24 @@ export function displayBackgroundColor(storedColor, theme) {
     const stored = normalizeHexColor(storedColor);
     if (!stored) return defaultDisplayBackgroundForTheme(theme);
     return theme === EXCALIDRAW_THEME.DARK ? applyDarkCanvasFilter(stored) : stored;
+}
+
+/** User-facing colour from persisted board appState. */
+export function resolveDisplayBackgroundColor(appState = {}) {
+    const theme = normalizeTheme(appState);
+    const explicit = normalizeHexColor(appState.displayBackgroundColor);
+    if (explicit) return explicit;
+
+    const stored =
+        normalizeHexColor(appState.viewBackgroundColor) ||
+        defaultStoredBackgroundForTheme(theme);
+
+    // Legacy boards: dark theme but still holding a light-mode stored navy, etc.
+    if (theme === EXCALIDRAW_THEME.DARK && isDarkDisplayColor(stored)) {
+        return stored;
+    }
+
+    return displayBackgroundColor(stored, theme);
 }
 
 /** Stored viewBackgroundColor for Excalidraw from a user-facing display color. */
@@ -211,6 +267,15 @@ export function backgroundMatchesTheme(displayColor, theme) {
     return presetsForTheme(theme).some((p) => normalizeHexColor(p.color) === display);
 }
 
+function appearanceFromDisplay(displayColor, theme) {
+    const display = normalizeHexColor(displayColor) || defaultDisplayBackgroundForTheme(theme);
+    return {
+        theme,
+        displayBackgroundColor: display,
+        viewBackgroundColor: storedBackgroundColor(display, theme),
+    };
+}
+
 /**
  * Panel / save helpers: patch may carry displayBackgroundColor (UI) or
  * viewBackgroundColor (already stored, e.g. from Excalidraw onChange).
@@ -221,25 +286,21 @@ export function resolveAppearancePatch(patch, current = {}) {
     const nextTheme = patch.theme != null ? normalizeTheme({ ...current, ...patch }) : normalizeTheme(current);
 
     if (patch.displayBackgroundColor != null) {
-        return {
-            theme: nextTheme,
-            viewBackgroundColor: storedBackgroundColor(patch.displayBackgroundColor, nextTheme),
-        };
+        return appearanceFromDisplay(patch.displayBackgroundColor, nextTheme);
     }
 
     if (patch.viewBackgroundColor != null && patch.theme === undefined) {
-        return { theme: nextTheme, viewBackgroundColor: normalizeHexColor(patch.viewBackgroundColor) };
+        const stored = normalizeHexColor(patch.viewBackgroundColor);
+        return {
+            theme: nextTheme,
+            displayBackgroundColor: displayBackgroundColor(stored, nextTheme),
+            viewBackgroundColor: stored,
+        };
     }
 
     if (patch.theme != null) {
-        const next = { theme: nextTheme };
-        if (patch.viewBackgroundColor !== undefined) {
-            next.viewBackgroundColor = normalizeHexColor(patch.viewBackgroundColor);
-        } else {
-            // Theme toggle: apply white (light) or charcoal (dark) automatically.
-            next.viewBackgroundColor = defaultStoredBackgroundForTheme(nextTheme);
-        }
-        return next;
+        const display = resolveDisplayBackgroundColor(current);
+        return appearanceFromDisplay(display, nextTheme);
     }
 
     return { ...patch };
@@ -249,22 +310,12 @@ export function resolveAppearancePatch(patch, current = {}) {
 export function applyCanvasAppearance(excalidrawAPI, patch, current = {}) {
     if (!excalidrawAPI || !patch || Object.keys(patch).length === 0) return;
     const resolved = resolveAppearancePatch(patch, current);
-    const elements = excalidrawAPI.getSceneElements();
-    excalidrawAPI.updateScene({
-        elements: [...elements],
-        appState: resolved,
-    });
-    if (typeof excalidrawAPI.refresh === 'function') {
-        excalidrawAPI.refresh();
-    }
+    excalidrawAPI.updateScene({ appState: resolved });
 }
 
 /** Board appState → Excalidraw-ready appearance fields (stored values). */
 export function boardAppearanceState(boardAppState = {}) {
     const theme = normalizeTheme(boardAppState);
-    return {
-        theme,
-        viewBackgroundColor:
-            boardAppState.viewBackgroundColor || defaultStoredBackgroundForTheme(theme),
-    };
+    const display = resolveDisplayBackgroundColor(boardAppState);
+    return appearanceFromDisplay(display, theme);
 }

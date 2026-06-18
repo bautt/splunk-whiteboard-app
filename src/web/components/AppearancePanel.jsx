@@ -4,13 +4,13 @@ import Heading from '@splunk/react-ui/Heading';
 import P from '@splunk/react-ui/Paragraph';
 import {
     DEFAULT_LIGHT_BG,
-    displayBackgroundColor,
     EXCALIDRAW_THEME,
     normalizeHexColor,
     normalizeTheme,
     parseColorInput,
     presetsForTheme,
     resolveAppearancePatch,
+    resolveDisplayBackgroundColor,
 } from '../lib/canvasAppearance';
 
 const THEME_OPTIONS = [
@@ -20,8 +20,7 @@ const THEME_OPTIONS = [
 
 export default function AppearancePanel({ canvasAppState, onAppearanceChange }) {
     const theme = normalizeTheme(canvasAppState);
-    const storedBg = canvasAppState?.viewBackgroundColor;
-    const displayBg = displayBackgroundColor(storedBg, theme);
+    const displayBg = resolveDisplayBackgroundColor(canvasAppState);
     const presets = presetsForTheme(theme);
     const [colorText, setColorText] = useState(displayBg);
     const [colorError, setColorError] = useState('');
@@ -58,8 +57,8 @@ export default function AppearancePanel({ canvasAppState, onAppearanceChange }) 
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Heading level={3}>Canvas appearance</Heading>
             <P style={{ fontSize: 12, margin: 0, opacity: 0.75 }}>
-                Theme and background are saved with this board. You can also change them from
-                the canvas menu (☰).
+                Theme and background are saved with this board. Swatches set the colour you
+                see on the canvas; dark mode stores a matching value for Excalidraw.
             </P>
 
             <div>

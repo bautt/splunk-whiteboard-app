@@ -37,6 +37,7 @@ import { nanoid } from '../lib/nanoid';
 import {
     applyCanvasAppearance,
     boardAppearanceState,
+    displayBackgroundColor,
     normalizeHexColor,
     normalizeTheme,
     resolveAppearancePatch,
@@ -309,6 +310,7 @@ export default function CanvasPage({ boardId, onClose }) {
         // those transient changes must never be persisted.
         if (!suppressSaveRef.current) markDirty();
         if (appState) {
+            const theme = normalizeTheme(appState);
             const nextSel = appState.selectedElementIds ?? {};
             setSelectedIds((prev) => (sameSelection(prev, nextSel) ? prev : nextSel));
             setCanvasAppState((prev) => {
@@ -318,19 +320,29 @@ export default function CanvasPage({ boardId, onClose }) {
                     isBindingEnabled: appState.isBindingEnabled ?? true,
                     theme: appState.theme,
                     viewBackgroundColor: appState.viewBackgroundColor,
+                    displayBackgroundColor: prev.displayBackgroundColor,
                 };
 
                 if (appearanceSyncRef.current) {
                     appearanceSyncRef.current = false;
+                    const synced = resolveAppearancePatch(
+                        { viewBackgroundColor: appState.viewBackgroundColor, theme },
+                        prev
+                    );
+                    nextPrefs = { ...nextPrefs, ...synced };
                     return sameCanvasPrefs(prev, nextPrefs) ? prev : { ...prev, ...nextPrefs };
                 }
 
-                const themeChanged = normalizeTheme(prev) !== normalizeTheme(appState);
+                const themeChanged = normalizeTheme(prev) !== theme;
                 if (themeChanged && apiRef.current) {
-                    const resolved = resolveAppearancePatch({ theme: appState.theme }, prev);
+                    const resolved = resolveAppearancePatch({ theme }, prev);
                     appearanceSyncRef.current = true;
                     applyCanvasAppearance(apiRef.current, resolved, prev);
                     nextPrefs = { ...nextPrefs, ...resolved };
+                } else if (!themeChanged) {
+                    const stored = normalizeHexColor(appState.viewBackgroundColor);
+                    nextPrefs.displayBackgroundColor = displayBackgroundColor(stored, theme);
+                    nextPrefs.viewBackgroundColor = stored;
                 }
 
                 return sameCanvasPrefs(prev, nextPrefs) ? prev : { ...prev, ...nextPrefs };
@@ -782,6 +794,7 @@ function sameCanvasPrefs(a, b) {
         a.objectsSnapModeEnabled === b.objectsSnapModeEnabled &&
         a.isBindingEnabled === b.isBindingEnabled &&
         a.theme === b.theme &&
+        a.displayBackgroundColor === b.displayBackgroundColor &&
         a.viewBackgroundColor === b.viewBackgroundColor
     );
 }

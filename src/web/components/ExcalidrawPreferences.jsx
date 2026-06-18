@@ -1,8 +1,10 @@
 import React from 'react';
 import { MainMenu } from '@excalidraw/excalidraw';
 import {
-    defaultBackgroundForTheme,
+    defaultDisplayBackgroundForTheme,
     normalizeTheme,
+    resolveDisplayBackgroundColor,
+    storedBackgroundColor,
 } from '../lib/canvasAppearance';
 
 /** Matches Excalidraw 0.17.6 actionToggleGridMode (constants.GRID_SIZE). */
@@ -78,16 +80,20 @@ export default function ExcalidrawPreferences({ excalidrawAPI, appState }) {
 /** Defaults for new boards / missing persisted fields. */
 export function defaultCanvasAppState(overrides = {}) {
     const theme = normalizeTheme(overrides);
-    const fallbackBg = defaultBackgroundForTheme(theme);
+    const display =
+        resolveDisplayBackgroundColor(overrides) || defaultDisplayBackgroundForTheme(theme);
+    const stored = storedBackgroundColor(display, theme);
     return {
         gridSize: null,
         objectsSnapModeEnabled: true,
         isBindingEnabled: true,
-        viewBackgroundColor: fallbackBg,
+        displayBackgroundColor: display,
+        viewBackgroundColor: stored,
         theme,
         ...overrides,
         theme,
-        viewBackgroundColor: overrides.viewBackgroundColor || fallbackBg,
+        displayBackgroundColor: overrides.displayBackgroundColor || display,
+        viewBackgroundColor: overrides.viewBackgroundColor || stored,
     };
 }
 
@@ -95,8 +101,10 @@ export function defaultCanvasAppState(overrides = {}) {
 export function serializableCanvasAppState(appState) {
     if (!appState) return defaultCanvasAppState();
     const theme = normalizeTheme(appState);
+    const display = resolveDisplayBackgroundColor(appState);
     return {
-        viewBackgroundColor: appState.viewBackgroundColor || defaultBackgroundForTheme(theme),
+        displayBackgroundColor: display,
+        viewBackgroundColor: storedBackgroundColor(display, theme),
         theme,
         gridSize: appState.gridSize ?? null,
         objectsSnapModeEnabled: appState.objectsSnapModeEnabled ?? true,
