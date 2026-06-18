@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { kv } from '../lib/kvstoreClient';
+import {
+    deleteAllTemplateRevisions,
+    revisionBeforeTemplateUpdate,
+    TEMPLATE_REVISION_SOURCES,
+} from '../lib/templateHistoryStore';
 
 const COLLECTION = 'whiteboard_templates';
 
@@ -38,10 +43,35 @@ export function useTemplates() {
         await load();
     }, [load]);
 
+    const updateTemplate = useCallback(async (id, { name, description, elements, files }, options = {}) => {
+        const existing = await kv.get(COLLECTION, id);
+        if (!existing) throw new Error('Template not found');
+        if (options.skipRevision !== true) {
+            await revisionBeforeTemplateUpdate(
+                id,
+                existing,
+                options.revisionSource || TEMPLATE_REVISION_SOURCES.UPDATE
+            );
+        }
+        const record = {
+            name: name.trim(),
+            description: (description || '').trim(),
+            elements_json: JSON.stringify(elements || []),
+            files_json: JSON.stringify(files || []),
+            created_at: existing.created_at ?? Date.now(),
+            created_by: existing.created_by ?? '',
+            updated_at: Date.now(),
+            updated_by: window.Splunk?.util?.getCurrentUser?.() || '',
+        };
+        await kv.update(COLLECTION, id, record);
+        await load();
+    }, [load]);
+
     const deleteTemplate = useCallback(async (id) => {
+        await deleteAllTemplateRevisions(id);
         await kv.remove(COLLECTION, id);
         setTemplates((prev) => prev.filter((t) => t._key !== id));
     }, []);
 
-    return { templates, loading, error, saveTemplate, deleteTemplate, reload: load };
+    return { templates, loading, error, saveTemplate, updateTemplate, deleteTemplate, reload: load };
 }

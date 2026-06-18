@@ -49,9 +49,122 @@ function rgbToHex({ r, g, b }) {
     return `#${[r, g, b].map((c) => Math.round(c).toString(16).padStart(2, '0')).join('')}`;
 }
 
+function isValidRgb({ r, g, b }) {
+    return [r, g, b].every((c) => Number.isFinite(c) && c >= 0 && c <= 255);
+}
+
 /**
- * RGB invert — approximates Excalidraw dark-mode canvas filter on background.
- * Dark theme stores inverted values; light theme is WYSIWYG.
+ * Parse user-entered color: #hex, hex, rgb(...), rgba(...), or comma/space-separated RGB.
+ * Returns normalized #rrggbb or null.
+ */
+export function parseColorInput(input) {
+    if (!input || typeof input !== 'string') return null;
+    const s = input.trim().toLowerCase();
+    if (!s) return null;
+
+    const rgbFn = s.match(
+        /^rgba?\(\s*(\d{1,3})\s*[,/\s]+\s*(\d{1,3})\s*[,/\s]+\s*(\d{1,3})/
+    );
+    if (rgbFn) {
+        const rgb = { r: Number(rgbFn[1]), g: Number(rgbFn[2]), b: Number(rgbFn[3]) };
+        return isValidRgb(rgb) ? rgbToHex(rgb) : null;
+    }
+
+    const parts = s.split(/[\s,]+/).filter(Boolean);
+    if (parts.length === 3 && parts.every((p) => /^\d{1,3}$/.test(p))) {
+        const rgb = { r: Number(parts[0]), g: Number(parts[1]), b: Number(parts[2]) };
+        return isValidRgb(rgb) ? rgbToHex(rgb) : null;
+    }
+
+    const hex = s.startsWith('#') ? s : `#${s}`;
+    const normalized = normalizeHexColor(hex);
+    return hexToRgb(normalized) ? normalized : null;
+}
+
+/** Excalidraw dark-theme canvas CSS filter (see excalidraw theme styles). */
+const DARK_CANVAS_FILTER = 'invert(93%) hue-rotate(180deg)';
+
+let _filterCanvasCtx;
+
+function filterCanvasCtx() {
+    if (typeof document === 'undefined') return null;
+    if (!_filterCanvasCtx) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        _filterCanvasCtx = canvas.getContext('2d', { willReadFrequently: true });
+    }
+    return _filterCanvasCtx;
+}
+
+function clampByte(value) {
+    return Math.max(0, Math.min(255, value));
+}
+
+function colorDistance(a, b) {
+    return Math.abs(a.r - b.r) + Math.abs(a.g - b.g) + Math.abs(a.b - b.b);
+}
+
+/** Apply Excalidraw's dark-mode canvas filter to a stored background color. */
+export function applyDarkCanvasFilter(hex) {
+    const normalized = normalizeHexColor(hex);
+    const rgb = hexToRgb(normalized);
+    if (!rgb) return normalized;
+
+    const ctx = filterCanvasCtx();
+    if (!ctx) return invertRgbHex(normalized);
+
+    ctx.clearRect(0, 0, 1, 1);
+    ctx.filter = DARK_CANVAS_FILTER;
+    ctx.fillStyle = normalized;
+    ctx.fillRect(0, 0, 1, 1);
+    ctx.filter = 'none';
+
+    const data = ctx.getImageData(0, 0, 1, 1).data;
+    return rgbToHex({ r: data[0], g: data[1], b: data[2] });
+}
+
+/** Find stored color whose filtered result matches the desired display color. */
+export function inverseDarkCanvasFilter(displayHex) {
+    const display = normalizeHexColor(displayHex);
+    const target = hexToRgb(display);
+    if (!target) return display;
+
+    const ctx = filterCanvasCtx();
+    if (!ctx) return invertRgbHex(display);
+
+    const seeds = [invertRgbHex(display), display, '#ffffff', '#000000'];
+    let bestHex = seeds[0];
+    let bestErr = Infinity;
+
+    for (const seed of seeds) {
+        const start = hexToRgb(seed);
+        if (!start) continue;
+
+        let { r, g, b } = start;
+        for (let iter = 0; iter < 40; iter += 1) {
+            const candidate = rgbToHex({ r, g, b });
+            const current = hexToRgb(applyDarkCanvasFilter(candidate));
+            if (!current) break;
+
+            const err = colorDistance(current, target);
+            if (err < bestErr) {
+                bestErr = err;
+                bestHex = candidate;
+            }
+            if (err <= 2) return candidate;
+
+            r = clampByte(r + target.r - current.r);
+            g = clampByte(g + target.g - current.g);
+            b = clampByte(b + target.b - current.b);
+        }
+    }
+
+    return bestHex;
+}
+
+/**
+ * RGB invert — legacy approximation; prefer applyDarkCanvasFilter / inverseDarkCanvasFilter.
  */
 export function invertRgbHex(hex) {
     const rgb = hexToRgb(hex);
@@ -63,14 +176,14 @@ export function invertRgbHex(hex) {
 export function displayBackgroundColor(storedColor, theme) {
     const stored = normalizeHexColor(storedColor);
     if (!stored) return defaultDisplayBackgroundForTheme(theme);
-    return theme === EXCALIDRAW_THEME.DARK ? invertRgbHex(stored) : stored;
+    return theme === EXCALIDRAW_THEME.DARK ? applyDarkCanvasFilter(stored) : stored;
 }
 
 /** Stored viewBackgroundColor for Excalidraw from a user-facing display color. */
 export function storedBackgroundColor(displayColor, theme) {
     const display = normalizeHexColor(displayColor);
     if (!display) return defaultStoredBackgroundForTheme(theme);
-    return theme === EXCALIDRAW_THEME.DARK ? invertRgbHex(display) : display;
+    return theme === EXCALIDRAW_THEME.DARK ? inverseDarkCanvasFilter(display) : display;
 }
 
 /** Default display color shown on canvas for a theme. */

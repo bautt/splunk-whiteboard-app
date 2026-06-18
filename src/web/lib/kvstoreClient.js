@@ -87,4 +87,5 @@ export const COLLECTIONS = {
     boards: 'whiteboards',
     versions: 'whiteboard_versions',
     revisions: 'whiteboard_revisions',
+    templateRevisions: 'whiteboard_template_revisions',
 };

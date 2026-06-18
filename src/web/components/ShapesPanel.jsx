@@ -1,14 +1,44 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Heading from '@splunk/react-ui/Heading';
 
+import { parseColorInput } from '../lib/canvasAppearance';
 import { SHAPE_CATEGORIES, buildShape } from '../lib/shapes';
 import MARKETING_ICONS from '../lib/marketingIcons';
+import BRAND_ICONS from '../lib/brandIcons';
 import { SHAPE_ICONS, getShapeSvgMarkup } from '../lib/shapeIcons';
+import { normalizeIconColor } from '../lib/iconFiles';
+import { iconToDataUrl } from '../lib/tintSvg';
 
 export default function ShapesPanel({ onAdd, onAddImage }) {
     const [mktgExpanded, setMktgExpanded] = useState(false);
+    const [brandExpanded, setBrandExpanded] = useState(true);
     const [iconColor, setIconColor] = useState('#000000');
+    const [iconColorText, setIconColorText] = useState('#000000');
+    const [iconColorError, setIconColorError] = useState('');
+
+    useEffect(() => {
+        setIconColorText(iconColor);
+        setIconColorError('');
+    }, [iconColor]);
+
+    const setIconColorSafe = useCallback((next) => {
+        const normalized = normalizeIconColor(next);
+        setIconColor(normalized);
+        setIconColorText(normalized);
+        setIconColorError('');
+    }, []);
+
+    const commitIconColorText = useCallback(() => {
+        const parsed = parseColorInput(iconColorText);
+        if (!parsed) {
+            setIconColorError('Use #hex, rgb(r, g, b), or r, g, b');
+            return;
+        }
+        setIconColor(parsed);
+        setIconColorText(parsed);
+        setIconColorError('');
+    }, [iconColorText]);
     // 'elements' = insert as grouped Excalidraw shapes; 'svg' = insert as tinted SVG image
     const [shapeMode, setShapeMode] = useState('elements');
 
@@ -17,58 +47,166 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
         onAdd(elements);
     };
 
-    // Build a data URL from raw SVG with the chosen tint color.
-    // Handles both explicit fill attributes and fill/stroke="currentColor".
-    const tintedDataURL = (svgText, color) => {
-        const tinted = svgText
-            // inject fill on root <svg> for paths with no explicit fill
-            .replace(/^(<svg\b[^>]*)(>)/i, (_, tag, close) => `${tag} fill="${color}"${close}`)
-            // replace currentColor references so they resolve when used as <img>
-            .replace(/fill="currentColor"/g, `fill="${color}"`)
-            .replace(/stroke="currentColor"/g, `stroke="${color}"`);
-        return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(tinted)));
-    };
+    const tintedDataURL = (icon, color) => iconToDataUrl(icon, color);
 
     const COLOR_PRESETS = ['#000000', '#ef4444', '#f97316', '#3b82f6', '#22c55e', '#9333ea', '#65737e'];
 
-    const ColorRow = () => (
-        <div
+    const IconGrid = ({ icons, showColor }) => (
+        <>
+            {showColor && <ColorRow />}
+            <div
+                style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
+                    gap: 6,
+                }}
+            >
+                {icons.map((icon) => {
+                    const preview = tintedDataURL(icon, iconColor);
+                    return (
+                        <button
+                            key={icon.id}
+                            title={icon.label}
+                            onClick={() => onAddImage({ ...icon, color: icon.tintable === false ? undefined : iconColor })}
+                            style={{
+                                all: 'unset',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: 3,
+                                padding: '8px 4px',
+                                border: '1px solid var(--gray60, #c3cbd4)',
+                                borderRadius: 6,
+                                background: 'transparent',
+                                minWidth: 0,
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'var(--gray95, #f2f4f5)';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'transparent';
+                            }}
+                        >
+                            <img
+                                src={preview}
+                                alt={icon.label}
+                                style={{ width: 36, height: 36, objectFit: 'contain' }}
+                            />
+                            <span
+                                style={{
+                                    fontSize: 9,
+                                    textAlign: 'center',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    width: '100%',
+                                    display: 'block',
+                                    color: 'var(--gray30, #444)',
+                                }}
+                            >
+                                {icon.label}
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+        </>
+    );
+
+    const SectionToggle = ({ expanded, onToggle, label }) => (
+        <button
+            onClick={onToggle}
             style={{
+                all: 'unset',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 600,
+                textTransform: 'uppercase',
+                opacity: 0.7,
+                marginBottom: 6,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8,
-                marginBottom: 10,
-                padding: '6px 8px',
-                background: 'var(--gray95, #f2f4f5)',
-                borderRadius: 6,
-                fontSize: 12,
+                gap: 6,
+                width: '100%',
             }}
         >
-            <span style={{ opacity: 0.7 }}>Color:</span>
-            <input
-                type="color"
-                value={iconColor}
-                onChange={(e) => setIconColor(e.target.value)}
+            <span style={{ fontSize: 10 }}>{expanded ? '▼' : '▶'}</span>
+            {label}
+        </button>
+    );
+
+    const ColorRow = () => (
+        <div style={{ marginBottom: 10 }}>
+            <div
                 style={{
-                    width: 28, height: 28, padding: 2,
-                    border: '1px solid var(--gray60, #c3cbd4)',
-                    borderRadius: 4, cursor: 'pointer', background: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '6px 8px',
+                    background: 'var(--gray95, #f2f4f5)',
+                    borderRadius: 6,
+                    fontSize: 12,
+                    flexWrap: 'wrap',
                 }}
-            />
-            <span style={{ fontFamily: 'monospace', opacity: 0.7 }}>{iconColor}</span>
-            {COLOR_PRESETS.map((c) => (
-                <button
-                    key={c}
-                    onClick={() => setIconColor(c)}
-                    title={c}
+            >
+                <span style={{ opacity: 0.7 }}>Color:</span>
+                <input
+                    type="color"
+                    value={iconColor}
+                    onChange={(e) => setIconColorSafe(e.target.value)}
                     style={{
-                        all: 'unset', width: 16, height: 16, borderRadius: '50%',
-                        background: c, cursor: 'pointer', flexShrink: 0,
-                        border: iconColor === c ? '2px solid white' : '1px solid rgba(0,0,0,0.2)',
-                        boxShadow: iconColor === c ? `0 0 0 2px ${c}` : 'none',
+                        width: 28, height: 28, padding: 2,
+                        border: '1px solid var(--gray60, #c3cbd4)',
+                        borderRadius: 4, cursor: 'pointer', background: 'none',
                     }}
                 />
-            ))}
+                <input
+                    type="text"
+                    value={iconColorText}
+                    onChange={(e) => {
+                        setIconColorText(e.target.value);
+                        setIconColorError('');
+                    }}
+                    onBlur={commitIconColorText}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            commitIconColorText();
+                        }
+                    }}
+                    placeholder="#000000"
+                    spellCheck={false}
+                    aria-label="Icon color hex or RGB"
+                    style={{
+                        width: 96,
+                        padding: '4px 6px',
+                        fontSize: 12,
+                        fontFamily: 'monospace',
+                        border: `1px solid ${iconColorError ? '#dc4e41' : 'var(--gray60, #c3cbd4)'}`,
+                        borderRadius: 4,
+                        background: 'var(--white, #fff)',
+                    }}
+                />
+                {COLOR_PRESETS.map((c) => (
+                    <button
+                        key={c}
+                        onClick={() => setIconColorSafe(c)}
+                        title={c}
+                        style={{
+                            all: 'unset', width: 16, height: 16, borderRadius: '50%',
+                            background: c, cursor: 'pointer', flexShrink: 0,
+                            border: iconColor === c ? '2px solid white' : '1px solid rgba(0,0,0,0.2)',
+                            boxShadow: iconColor === c ? `0 0 0 2px ${c}` : 'none',
+                        }}
+                    />
+                ))}
+            </div>
+            {iconColorError && (
+                <div style={{ fontSize: 11, color: '#dc4e41', marginTop: 4, paddingLeft: 8 }}>
+                    {iconColorError}
+                </div>
+            )}
         </div>
     );
 
@@ -145,89 +283,31 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
                 </div>
             ))}
 
-            {/* ── Marketing Icons ─────────────────────────── */}
+            {/* ── Brand logos ─────────────────────────────── */}
             <div>
-                <button
-                    onClick={() => setMktgExpanded((v) => !v)}
-                    style={{
-                        all: 'unset',
-                        cursor: 'pointer',
-                        fontSize: 12,
-                        fontWeight: 600,
-                        textTransform: 'uppercase',
-                        opacity: 0.7,
-                        marginBottom: 6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        width: '100%',
-                    }}
-                >
-                    <span style={{ fontSize: 10 }}>{mktgExpanded ? '▼' : '▶'}</span>
-                    Splunk Marketing Icons ({MARKETING_ICONS.length})
-                </button>
-                {mktgExpanded && (
+                <SectionToggle
+                    expanded={brandExpanded}
+                    onToggle={() => setBrandExpanded((v) => !v)}
+                    label={`Brand logos (${BRAND_ICONS.length})`}
+                />
+                {brandExpanded && (
                     <>
-                        <ColorRow />
-                        <div
-                            style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(4, 1fr)',
-                                gap: 6,
-                            }}
-                        >
-                            {MARKETING_ICONS.map((icon) => {
-                                const preview = tintedDataURL(icon.svg, iconColor);
-                                return (
-                                    <button
-                                        key={icon.id}
-                                        title={icon.label}
-                                        onClick={() => onAddImage({ ...icon, color: iconColor })}
-                                        style={{
-                                            all: 'unset',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            gap: 3,
-                                            padding: '8px 4px',
-                                            border: '1px solid var(--gray60, #c3cbd4)',
-                                            borderRadius: 6,
-                                            background: 'transparent',
-                                            minWidth: 0,
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.currentTarget.style.background = 'var(--gray95, #f2f4f5)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.currentTarget.style.background = 'transparent';
-                                        }}
-                                    >
-                                        <img
-                                            src={preview}
-                                            alt={icon.label}
-                                            style={{ width: 36, height: 36, objectFit: 'contain' }}
-                                        />
-                                        <span
-                                            style={{
-                                                fontSize: 9,
-                                                textAlign: 'center',
-                                                overflow: 'hidden',
-                                                textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap',
-                                                width: '100%',
-                                                display: 'block',
-                                                color: 'var(--gray30, #444)',
-                                            }}
-                                        >
-                                            {icon.label}
-                                        </span>
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <p style={{ fontSize: 11, opacity: 0.65, margin: '0 0 8px' }}>
+                            Official brand colors (not tintable).
+                        </p>
+                        <IconGrid icons={BRAND_ICONS} showColor={false} />
                     </>
                 )}
+            </div>
+
+            {/* ── Marketing Icons ─────────────────────────── */}
+            <div>
+                <SectionToggle
+                    expanded={mktgExpanded}
+                    onToggle={() => setMktgExpanded((v) => !v)}
+                    label={`Splunk Marketing Icons (${MARKETING_ICONS.length})`}
+                />
+                {mktgExpanded && <IconGrid icons={MARKETING_ICONS} showColor />}
             </div>
         </div>
     );

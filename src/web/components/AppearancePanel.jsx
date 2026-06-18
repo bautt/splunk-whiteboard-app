@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Heading from '@splunk/react-ui/Heading';
 import P from '@splunk/react-ui/Paragraph';
@@ -8,6 +8,7 @@ import {
     EXCALIDRAW_THEME,
     normalizeHexColor,
     normalizeTheme,
+    parseColorInput,
     presetsForTheme,
     resolveAppearancePatch,
 } from '../lib/canvasAppearance';
@@ -22,6 +23,13 @@ export default function AppearancePanel({ canvasAppState, onAppearanceChange }) 
     const storedBg = canvasAppState?.viewBackgroundColor;
     const displayBg = displayBackgroundColor(storedBg, theme);
     const presets = presetsForTheme(theme);
+    const [colorText, setColorText] = useState(displayBg);
+    const [colorError, setColorError] = useState('');
+
+    useEffect(() => {
+        setColorText(displayBg);
+        setColorError('');
+    }, [displayBg]);
 
     const apply = useCallback(
         (patch) => {
@@ -34,6 +42,17 @@ export default function AppearancePanel({ canvasAppState, onAppearanceChange }) 
     const setTheme = (nextTheme) => {
         apply({ theme: nextTheme });
     };
+
+    const commitColorText = useCallback(() => {
+        const parsed = parseColorInput(colorText);
+        if (!parsed) {
+            setColorError('Use #hex, rgb(r, g, b), or r, g, b');
+            return;
+        }
+        setColorError('');
+        setColorText(parsed);
+        apply({ displayBackgroundColor: parsed });
+    }, [colorText, apply]);
 
     return (
         <div style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -107,18 +126,61 @@ export default function AppearancePanel({ canvasAppState, onAppearanceChange }) 
                         </button>
                     ))}
                 </div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
-                    <span style={{ flexShrink: 0 }}>Custom</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12 }}>
+                        <span style={{ flexShrink: 0 }}>Custom</span>
+                        <input
+                            type="color"
+                            value={toColorInput(displayBg)}
+                            onChange={(e) =>
+                                apply({ displayBackgroundColor: e.target.value })
+                            }
+                            style={{
+                                width: 40,
+                                height: 32,
+                                padding: 0,
+                                border: 'none',
+                                cursor: 'pointer',
+                            }}
+                        />
+                    </label>
                     <input
-                        type="color"
-                        value={toColorInput(displayBg)}
-                        onChange={(e) =>
-                            apply({ displayBackgroundColor: e.target.value })
-                        }
-                        style={{ width: 40, height: 32, padding: 0, border: 'none', cursor: 'pointer' }}
+                        type="text"
+                        value={colorText}
+                        onChange={(e) => {
+                            setColorText(e.target.value);
+                            if (colorError) setColorError('');
+                        }}
+                        onBlur={commitColorText}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                commitColorText();
+                            }
+                        }}
+                        placeholder="#0e37dd or rgb(14, 55, 221)"
+                        aria-label="Background color"
+                        style={{
+                            padding: '6px 8px',
+                            fontSize: 12,
+                            fontFamily: 'ui-monospace, monospace',
+                            border: `1px solid ${colorError ? '#d9534f' : 'var(--gray60, #c3cbd4)'}`,
+                            borderRadius: 4,
+                            outline: 'none',
+                            background: 'var(--gray99, #fff)',
+                            color: 'inherit',
+                            width: '100%',
+                            boxSizing: 'border-box',
+                        }}
                     />
-                    <code style={{ fontSize: 11, opacity: 0.8 }}>{displayBg}</code>
-                </label>
+                    {colorError ? (
+                        <span style={{ fontSize: 11, color: '#d9534f' }}>{colorError}</span>
+                    ) : (
+                        <span style={{ fontSize: 11, opacity: 0.65 }}>
+                            Press Enter or click away to apply
+                        </span>
+                    )}
+                </div>
             </div>
 
             <Button

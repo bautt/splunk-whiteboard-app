@@ -1,6 +1,13 @@
 import { DRP_ICONS } from './drpIcons';
 import MARKETING_ICONS from './marketingIcons';
+import BRAND_ICONS from './brandIcons';
 import { getShapeSvgMarkup } from './shapeIcons';
+import { iconToDataUrl, svgMarkupToDataUrl, tintSvgDataUrl } from './tintSvg';
+
+/** Old board file ids → current brand icon id (rehydration only). */
+const LEGACY_BRAND_FILE_IDS = {
+    'brand-splunk-wordmark': 'brand-splunk-transition-black',
+};
 
 /** Normalize Excalidraw getFiles() map → array for KV storage. */
 export function filesToArray(files) {
@@ -15,34 +22,31 @@ export function filesToMap(files) {
     return Object.fromEntries(arr.filter((f) => f?.id).map((f) => [f.id, f]));
 }
 
-function tintSvgDataUrl(dataURL, color) {
+function tintSvgDataUrlFromDataUrl(dataURL, color) {
     try {
         const svgB64 = dataURL.split(',')[1];
         const svgText = atob(svgB64);
-        const tinted = svgText
-            .replace(/^(<svg\b[^>]*)(>)/i, (_, tag, close) => `${tag} fill="${color}"${close}`)
-            .replace(/fill="currentColor"/g, `fill="${color}"`)
-            .replace(/stroke="currentColor"/g, `stroke="${color}"`);
-        return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(tinted)));
+        return tintSvgDataUrl(svgText, color);
     } catch {
         return dataURL;
     }
 }
 
 function tintSvgString(svg, color) {
-    const tinted = svg.replace(
-        /^(<svg\b[^>]*)(>)/i,
-        (_, tag, close) => `${tag} fill="${color}"${close}`
-    );
-    return 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(tinted)));
+    return tintSvgDataUrl(svg, color);
 }
 
-function makeFile(id, dataURL) {
+function extractEmbeddedPngDataUrl(svg) {
+    const m = svg?.match(/href="(data:image\/png;base64,[^"]+)"/i);
+    return m?.[1] ?? null;
+}
+
+function makeFile(id, dataURL, mimeType = 'image/svg+xml') {
     const now = Date.now();
     return {
         id,
         dataURL,
-        mimeType: 'image/svg+xml',
+        mimeType,
         created: now,
         lastRetrieved: now,
     };
@@ -67,7 +71,7 @@ export function rehydrateMissingFiles(elements, files) {
         if (shapeMatch) {
             const svg = getShapeSvgMarkup(shapeMatch[1]);
             if (svg) {
-                const color = `#${shapeMatch[2]}`;
+                const color = `#${shapeMatch[2].toLowerCase()}`;
                 byId.set(fileId, makeFile(fileId, tintSvgString(svg, color)));
             }
             return;
@@ -77,7 +81,7 @@ export function rehydrateMissingFiles(elements, files) {
         const drpMatch = fileId.match(/^drp-(.+)-([0-9a-fA-F]{6})$/);
         if (drpMatch && DRP_ICONS[drpMatch[1]]) {
             const color = `#${drpMatch[2]}`;
-            byId.set(fileId, makeFile(fileId, tintSvgDataUrl(DRP_ICONS[drpMatch[1]], color)));
+            byId.set(fileId, makeFile(fileId, tintSvgDataUrlFromDataUrl(DRP_ICONS[drpMatch[1]], color)));
             return;
         }
 
@@ -89,6 +93,18 @@ export function rehydrateMissingFiles(elements, files) {
             const icon = MARKETING_ICONS.find((i) => i.id === iconId);
             if (icon?.svg) {
                 byId.set(fileId, makeFile(fileId, tintSvgString(icon.svg, color)));
+            }
+            return;
+        }
+
+        const brandIcon = BRAND_ICONS.find((i) => i.id === fileId)
+            || BRAND_ICONS.find((i) => i.id === LEGACY_BRAND_FILE_IDS[fileId]);
+        if (brandIcon?.svg) {
+            const png = extractEmbeddedPngDataUrl(brandIcon.svg);
+            if (png) {
+                byId.set(fileId, makeFile(fileId, png, 'image/png'));
+            } else {
+                byId.set(fileId, makeFile(fileId, iconToDataUrl(brandIcon)));
             }
         }
     });

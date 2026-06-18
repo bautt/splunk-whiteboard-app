@@ -50,6 +50,7 @@ import {
     REVISION_SOURCES,
 } from '../lib/historyStore';
 import { APP_VERSION } from '../lib/version';
+import { fitIconDimensions, parseSvgViewBox, prepareIconFile, upsertSvgImageFile } from '../lib/iconFiles';
 
 const TABS = [
     { label: 'Shapes', value: 'shapes', Icon: LayoutPanels },
@@ -384,44 +385,24 @@ export default function CanvasPage({ boardId, onClose }) {
     // Excalidraw requires: (1) register the file via addFiles, (2) add an image
     // element referencing that fileId.
     const handleAddImage = useCallback(
-        ({ id, svg, color }) => {
+        ({ id, svg, color, tintable = true }) => {
             const api = apiRef.current;
             if (!api) return;
 
-            // Apply tint color to the SVG by injecting fill on the root element.
-            const finalColor = color || '#000000';
-            const tinted = svg.replace(
-                /^(<svg\b[^>]*)(>)/i,
-                (_, tag, close) => `${tag} fill="${finalColor}"${close}`,
-            );
-            const dataURL =
-                'data:image/svg+xml;base64,' +
-                btoa(unescape(encodeURIComponent(tinted)));
-
-            // Use a color-specific fileId so different tints are registered as
-            // separate files and don't overwrite each other in Excalidraw's cache.
-            const fileId = `${id}-${finalColor.replace('#', '')}`;
-
-            api.addFiles([
-                {
-                    id: fileId,
-                    dataURL,
-                    mimeType: 'image/svg+xml',
-                    created: Date.now(),
-                    lastRetrieved: Date.now(),
-                },
-            ]);
+            const { fileId, dataURL, mimeType } = prepareIconFile({ id, svg, color, tintable });
+            upsertSvgImageFile(api, fileId, dataURL, mimeType);
             const current = api.getSceneElements();
-            const size = 120;
-            const pos = computeInsertPos(api, size, size);
+            const natural = parseSvgViewBox(svg);
+            const { width, height } = fitIconDimensions(natural.width, natural.height);
+            const pos = computeInsertPos(api, width, height);
             const newEl = {
                 id: nanoid(),
                 type: 'image',
                 fileId,
                 x: pos.x,
                 y: pos.y,
-                width: size,
-                height: size,
+                width,
+                height,
                 angle: 0,
                 scale: [1, 1],
                 status: 'saved',
