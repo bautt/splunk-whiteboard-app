@@ -20,12 +20,8 @@ export const BACKGROUND_PRESETS = [
     { id: 'splunk-navy', label: 'Splunk navy', color: '#001b3a', themes: ['dark'] },
 ];
 
-/** display hex → stored hex for Excalidraw dark mode (precomputed, avoids runtime search). */
-const KNOWN_DARK_STORED = {
-    '#001b3a': '#ffe4c5',
-};
-
-const inverseCache = new Map(Object.entries(KNOWN_DARK_STORED));
+/** Memoized display → stored for dark mode (populated on first use in the browser). */
+const inverseCache = new Map();
 
 export function normalizeHexColor(hex) {
     if (!hex || typeof hex !== 'string') return '';
@@ -157,9 +153,7 @@ function inverseDarkCanvasFilterIterative(displayHex) {
     const ctx = filterCanvasCtx();
     if (!ctx) return invertRgbHex(display);
 
-    const seeds = [KNOWN_DARK_STORED[display], invertRgbHex(display), display, '#ffffff', '#000000']
-        .filter(Boolean)
-        .map(normalizeHexColor);
+    const seeds = [invertRgbHex(display), display, '#ffffff', '#000000'].map(normalizeHexColor);
 
     let bestHex = seeds[0] || invertRgbHex(display);
     let bestErr = Infinity;

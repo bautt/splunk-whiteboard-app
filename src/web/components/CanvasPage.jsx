@@ -41,6 +41,7 @@ import {
     normalizeHexColor,
     normalizeTheme,
     resolveAppearancePatch,
+    storedBackgroundColor,
 } from '../lib/canvasAppearance';
 import { debug } from '../lib/log';
 import { filesToMap } from '../lib/boardFiles';
@@ -286,7 +287,10 @@ export default function CanvasPage({ boardId, onClose }) {
         (patch) => {
             setCanvasAppState((prev) => {
                 const resolved = resolveAppearancePatch(patch, prev);
-                applyCanvasAppearance(apiRef.current, resolved, prev);
+                if (apiRef.current) {
+                    appearanceSyncRef.current = true;
+                    applyCanvasAppearance(apiRef.current, resolved, prev);
+                }
                 return { ...prev, ...resolved };
             });
             markDirty();
@@ -341,7 +345,15 @@ export default function CanvasPage({ boardId, onClose }) {
                     nextPrefs = { ...nextPrefs, ...resolved };
                 } else if (!themeChanged) {
                     const stored = normalizeHexColor(appState.viewBackgroundColor);
-                    nextPrefs.displayBackgroundColor = displayBackgroundColor(stored, theme);
+                    const prevDisplay = normalizeHexColor(prev.displayBackgroundColor);
+                    const derivedDisplay = displayBackgroundColor(stored, theme);
+                    const storedMatchesDisplay =
+                        prevDisplay &&
+                        normalizeHexColor(storedBackgroundColor(prevDisplay, theme)) === stored;
+                    nextPrefs.displayBackgroundColor =
+                        storedMatchesDisplay || prevDisplay === derivedDisplay
+                            ? prevDisplay || derivedDisplay
+                            : derivedDisplay;
                     nextPrefs.viewBackgroundColor = stored;
                 }
 
