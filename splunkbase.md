@@ -1,12 +1,18 @@
 # Whiteboard App — Splunkbase listing content
 
-Copy the sections below into the Splunkbase app listing fields (Summary, Details, Installation, Troubleshooting), matching the structure used for [Ponypoll](https://splunkbase.splunk.com/app/8767).
+Copy the sections below into the Splunkbase app listing fields (Short Description, Summary, Details, Installation, Troubleshooting), matching the structure used for [Ponypoll](https://splunkbase.splunk.com/app/8767).
+
+---
+
+## Short Description
+
+Collaborative Excalidraw whiteboard inside Splunk for platform architecture and workshop diagrams. Splunk shapes, templates, and KV Store persistence — no external infrastructure.
 
 ---
 
 ## Summary
 
-Whiteboard App turns any Splunk instance into a collaborative architecture canvas — no external database, no middleware, no extra infrastructure. Draw Splunk platform diagrams, workshop layouts, and use-case storyboards directly inside Splunk Web with a full Excalidraw-powered editor styled to match Splunk's dark and light themes. Boards, templates, and version history persist in Splunk KV Store, so every user on the instance can open, edit, and share the same content. A built-in Splunk shape library covers forwarders, indexers, search heads, Edge Processor, Ingest Processor, Splunk Cloud, and more — plus 50 Splunk Marketing Icons you can tint and drop onto the canvas. Ship with ready-made templates (Splunk Platform, Cisco Data Fabric), save your own templates to KV Store, export PNG/SVG/JSON, or present step-by-step with Build mode progressive reveal. Optional Excalidraw library import is opt-in only. This is not a diagramming SaaS wrapped in an iframe — it is a native Splunk app built for architects, SEs, and workshop facilitators who want to sketch platform designs where their audience already lives.
+Whiteboard App is a native Splunk canvas for architecture and workshop diagrams — no external database or middleware. Draw inside Splunk Web with Excalidraw, Splunk infrastructure shapes, and built-in templates; boards persist in KV Store for the whole instance. Export PNG/SVG/JSON or walk through designs step-by-step in Present mode. Built for architects, SEs, and facilitators who sketch where their audience already works.
 
 ---
 
@@ -68,7 +74,7 @@ The app does not phone home and includes no product analytics. The **Excalidraw 
 
 | Platform | Minimum version |
 |---|---|
-| Splunk Enterprise | 9.0.0 |
+| Splunk Enterprise | 9.0.0 (manifest declares `"Enterprise": "*"` for SSAI) |
 | Splunk Cloud (Victoria) | 9.0.0 |
 
 Splunk 8.x is not supported. The app uses `@splunk/react-page` 8.x and `@splunk/react-ui` 5.x on Splunk's custom HTML dashboard framework. No custom `bin/` search commands or data inputs are required. Expected to run on Splunk 10.x; no upper bound is declared.

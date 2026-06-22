@@ -5,7 +5,7 @@
         "id": {
             "group": null,
             "name": "whiteboard_app",
-            "version": "0.3.53"
+            "version": "0.3.54"
         },
         "author": [
             {
@@ -15,7 +15,7 @@
             }
         ],
         "releaseDate": "2026-06-22",
-        "description": "Collaborative whiteboard for Splunk platform and use case design. Draw architectures, apply Splunk shape libraries and use-case templates, and persist boards in KV Store.",
+        "description": "Collaborative Excalidraw whiteboard inside Splunk for platform architecture and workshop diagrams. Splunk shapes, templates, and KV Store persistence — no external infrastructure.",
         "classification": {
             "intendedAudience": "Splunk administrators and architects",
             "categories": ["Utilities"],
@@ -44,8 +44,7 @@
     "incompatibleApps": null,
     "platformRequirements": {
         "splunk": {
-            "Enterprise": ">=9.0.0",
-            "Cloud": ">=9.0.0"
+            "Enterprise": "*"
         }
     }
 }

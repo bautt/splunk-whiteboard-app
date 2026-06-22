@@ -9,7 +9,7 @@ Collaborative whiteboard embedded inside Splunk — built with React + [Excalidr
 **GitHub:** https://github.com/bautt/splunk-whiteboard-app
 
 <p align="center">
-  <img src="assets/screenshot.png" alt="Splunk Whiteboard App — dark canvas with architecture diagram and Splunk shape library" width="900" />
+  <img src="assets/screenshot.png" alt="Splunk Whiteboard App — Cisco Data Fabric architecture diagram with Splunk shape library" width="900" />
 </p>
 
 ---
@@ -298,4 +298,4 @@ To export KV templates from a live Splunk instance: `scripts/export-kv-templates
 
 ### Splunk version compatibility
 
-Minimum **9.0.0** on Enterprise and Cloud. The UI uses Splunk's custom HTML dashboard framework with `@splunk/react-page` 8.x and `@splunk/react-ui` 5.x, which target the Splunk 9.x web stack. KV Store REST APIs used for persistence are supported on Splunk Cloud Victoria stacks. No upper bound is declared; the app is a client-side React bundle with no custom `bin/` commands and is expected to run on Splunk 10.x as well. Splunk 8.x is not supported.
+Minimum **9.0.0** on Enterprise and Cloud (tested stack: `@splunk/react-page` 8.x, `@splunk/react-ui` 5.x). The `app.manifest` declares `"Enterprise": "*"` for Splunkbase SSAI/SLIM compatibility (semver ranges like `>=9.0.0` are rejected; `Cloud` is not a valid manifest edition key). Splunk 8.x is not supported.
