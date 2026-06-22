@@ -291,7 +291,11 @@ To export KV templates from a live Splunk instance: `scripts/export-kv-templates
 
 | Dependency | Version |
 |---|---|
-| Splunk Enterprise / Cloud | 9.x |
-| Node.js | 22.x (use `nvm use 22`) |
-| Yarn | 1.x |
-| Python | 3.x (Splunk app runtime) |
+| Splunk Enterprise | >= 9.0.0 |
+| Splunk Cloud (Victoria) | >= 9.0.0 |
+| Node.js (build only) | 22.x (use `nvm use 22`) |
+| Yarn (build only) | 1.x |
+
+### Splunk version compatibility
+
+Minimum **9.0.0** on Enterprise and Cloud. The UI uses Splunk's custom HTML dashboard framework with `@splunk/react-page` 8.x and `@splunk/react-ui` 5.x, which target the Splunk 9.x web stack. KV Store REST APIs used for persistence are supported on Splunk Cloud Victoria stacks. No upper bound is declared; the app is a client-side React bundle with no custom `bin/` commands and is expected to run on Splunk 10.x as well. Splunk 8.x is not supported.

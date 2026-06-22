@@ -5,16 +5,16 @@
         "id": {
             "group": null,
             "name": "whiteboard_app",
-            "version": "0.3.51"
+            "version": "0.3.53"
         },
         "author": [
             {
                 "name": "Tomas Baublys",
                 "email": "tbaublys@splunk.com",
-                "company": null
+                "company": "Splunk"
             }
         ],
-        "releaseDate": null,
+        "releaseDate": "2026-06-22",
         "description": "Collaborative whiteboard for Splunk platform and use case design. Draw architectures, apply Splunk shape libraries and use-case templates, and persist boards in KV Store.",
         "classification": {
             "intendedAudience": "Splunk administrators and architects",
@@ -28,12 +28,12 @@
             "uri": null
         },
         "privacyPolicy": {
-            "name": null,
-            "text": null,
+            "name": "Privacy Policy",
+            "text": "./PRIVACY.md",
             "uri": null
         },
         "releaseNotes": {
-            "name": null,
+            "name": "Release Notes",
             "text": "./README.md",
             "uri": null
         }

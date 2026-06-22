@@ -47,6 +47,10 @@ const config = merge(baseConfig.default, {
                     from: path.join(__dirname, 'package'),
                     to: path.join(__dirname, '..', 'dist'),
                 },
+                {
+                    from: path.join(__dirname, '..', 'README.md'),
+                    to: path.join(__dirname, '..', 'dist'),
+                },
             ],
         }),
         // Excalidraw 0.17 references process.env.IS_PREACT and process.env.NODE_ENV
