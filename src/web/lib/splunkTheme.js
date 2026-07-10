@@ -1,17 +1,25 @@
-// Detects Splunk Web's preferred colour scheme so Excalidraw matches it.
+// Resolves the theme Splunk Web is actually using so our React UI matches the
+// surrounding page exactly. Splunk's theme is a user preference stored in
+// Splunk — it is independent of the OS `prefers-color-scheme`, so we must read
+// it from Splunk's own theme API rather than guessing from the browser/OS.
+import { getUserTheme, getThemeOptions } from '@splunk/splunk-utils/themes';
 
-export function detectSplunkColorScheme() {
+// Props expected by <SplunkThemeProvider> when the theme API is unavailable.
+const FALLBACK_THEME_OPTIONS = { family: 'enterprise', colorScheme: 'light', density: 'compact' };
+
+/**
+ * Resolve the SplunkThemeProvider props ({ family, colorScheme, density }) for
+ * the current user's Splunk Web theme. Async because Splunk lazy-loads its
+ * theme API script. Always resolves (never rejects) — falls back to light.
+ */
+export async function resolveSplunkThemeOptions() {
     try {
-        const body = document.body;
-        if (body?.classList?.contains('dark')) return 'dark';
-        if (body?.dataset?.theme === 'dark') return 'dark';
-        const html = document.documentElement;
-        if (html?.dataset?.theme === 'dark') return 'dark';
-        if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) return 'dark';
+        const theme = await getUserTheme();
+        const options = getThemeOptions(theme);
+        return { ...FALLBACK_THEME_OPTIONS, ...options };
     } catch {
-        // ignore — fall back to light
+        return { ...FALLBACK_THEME_OPTIONS };
     }
-    return 'light';
 }
 
 // Splunk semantic colours for sticky-note palette

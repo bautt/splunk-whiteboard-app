@@ -294,10 +294,10 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
 
     const boardSnapshot = () => {
         if (!getElementsAndState) return null;
-        const { elements, files } = getElementsAndState();
+        const { elements, files, appState } = getElementsAndState();
         const sanitized = sanitizeElementsForPersistence(elements);
         const fileArr = rehydrateMissingFiles(sanitized, Object.values(files || {}));
-        return { elements: sanitized, files: fileArr };
+        return { elements: sanitized, files: fileArr, appState: appState || {} };
     };
 
     const replaceWithPrebuilt = (tpl) => {
@@ -318,7 +318,13 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
             );
             const storedFiles = JSON.parse(tpl.files_json || '[]');
             const files = rehydrateMissingFiles(elements, storedFiles);
-            onApply(elements, files);
+            let appState = null;
+            try {
+                appState = JSON.parse(tpl.appstate_json || 'null');
+            } catch {
+                appState = null;
+            }
+            onApply(elements, files, appState);
         } catch (e) {
             window.alert('Failed to load template: ' + e.message);
         }
@@ -367,6 +373,7 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
                     description: revision.description,
                     elements: revision.elements,
                     files: revision.files,
+                    appState: revision.appState || {},
                 },
                 { revisionSource: TEMPLATE_REVISION_SOURCES.PRE_RESTORE }
             );

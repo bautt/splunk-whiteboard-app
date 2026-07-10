@@ -22,7 +22,7 @@ export function templateRevisionSourceLabel(source) {
     }
 }
 
-export function templateSnapshotPayload({ name, description, elements, files }) {
+export function templateSnapshotPayload({ name, description, elements, files, appState }) {
     const sanitized = sanitizeElementsForPersistence(elements || []);
     const fileArr = filesToArray(files);
     return {
@@ -30,12 +30,13 @@ export function templateSnapshotPayload({ name, description, elements, files }) 
         description: (description || '').trim(),
         elements: sanitized,
         files: fileArr,
+        appState: appState || {},
         elementCount: sanitized.length,
     };
 }
 
 export function parseTemplateSnapshotJson(snapshotJson) {
-    let snapshot = { name: '', description: '', elements: [], files: [] };
+    let snapshot = { name: '', description: '', elements: [], files: [], appState: {} };
     try {
         snapshot = JSON.parse(snapshotJson || '{}');
     } catch {
@@ -48,6 +49,7 @@ export function parseTemplateSnapshotJson(snapshotJson) {
         description: snapshot.description || '',
         elements,
         files,
+        appState: snapshot.appState || {},
         elementCount: elements.length,
     };
 }
@@ -66,6 +68,7 @@ export function deserializeTemplateRevision(row) {
         description: snap.description,
         elements: snap.elements,
         files: snap.files,
+        appState: snap.appState,
     };
 }
 
@@ -80,9 +83,9 @@ async function pruneTemplateRevisions(templateId) {
 }
 
 /** Persist a template revision snapshot. */
-export async function insertTemplateRevision(templateId, { name, description, elements, files, source, label }) {
+export async function insertTemplateRevision(templateId, { name, description, elements, files, appState, source, label }) {
     if (!templateId) return;
-    const snap = templateSnapshotPayload({ name, description, elements, files });
+    const snap = templateSnapshotPayload({ name, description, elements, files, appState });
     await kv.insert(COLLECTIONS.templateRevisions, {
         template_id: templateId,
         source: source || TEMPLATE_REVISION_SOURCES.UPDATE,
@@ -95,6 +98,7 @@ export async function insertTemplateRevision(templateId, { name, description, el
             description: snap.description,
             elements: snap.elements,
             files: snap.files,
+            appState: snap.appState,
         }),
     });
     await pruneTemplateRevisions(templateId);
@@ -117,12 +121,19 @@ export async function revisionBeforeTemplateUpdate(templateId, existing, source)
     } catch {
         files = [];
     }
+    let appState = {};
+    try {
+        appState = JSON.parse(existing.appstate_json || '{}');
+    } catch {
+        appState = {};
+    }
     try {
         await insertTemplateRevision(templateId, {
             name: existing.name,
             description: existing.description,
             elements,
             files,
+            appState,
             source: source || TEMPLATE_REVISION_SOURCES.UPDATE,
         });
     } catch (e) {

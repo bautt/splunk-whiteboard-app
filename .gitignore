@@ -2,6 +2,8 @@
 dist/
 *.tar.gz
 *.spl
+# Extracted package (created when deploying locally)
+/whiteboard_app/
 
 # Node
 src/node_modules/

@@ -1,5 +1,5 @@
 import { kv, COLLECTIONS } from './kvstoreClient';
-import { BOARD_SCOPE, BOARD_VISIBILITY, visibilityForScope } from './boardScope';
+import { BOARD_SCOPE, BOARD_VISIBILITY, scopeForVisibility, visibilityForScope } from './boardScope';
 import { filesToArray, rehydrateMissingFiles } from './boardFiles';
 import { sanitizeElementsForPersistence } from './build';
 
@@ -62,17 +62,50 @@ export async function fetchBoard(boardId) {
     return null;
 }
 
-/** List shared boards plus the current user's private boards. */
+/** An explicit, recognised visibility value on a raw KV row (or null). */
+function explicitRowVisibility(row) {
+    const v = row?.visibility;
+    return v === BOARD_VISIBILITY.SHARED || v === BOARD_VISIBILITY.PRIVATE ? v : null;
+}
+
+/**
+ * List shared boards plus the current user's private boards.
+ *
+ * Boards live in a single `whiteboards` KV collection. Querying it through both
+ * the app (shared) and user (private) namespace lenses returns the *same*
+ * physical record twice for boards that predate RBAC, which surfaced the same
+ * board as both "Shared" and "Private" — and deleting either card removed the
+ * one underlying record ("delete one, delete both"). We therefore de-duplicate
+ * by `_key`:
+ *   - A row carrying an explicit `visibility` field wins over one that doesn't.
+ *   - Legacy rows with no `visibility` field default to shared, and the board's
+ *     scope is derived from its resolved visibility so writes/deletes target the
+ *     correct namespace.
+ */
 export async function listAccessibleBoards() {
     const [sharedRows, privateRows] = await Promise.all([
         kv.list(COLLECTIONS.boards, BOARD_SCOPE.SHARED).catch(() => []),
         kv.list(COLLECTIONS.boards, BOARD_SCOPE.PRIVATE).catch(() => []),
     ]);
 
-    const boards = [
-        ...(sharedRows || []).map((row) => deserializeRow(row, BOARD_SCOPE.SHARED)),
-        ...(privateRows || []).map((row) => deserializeRow(row, BOARD_SCOPE.PRIVATE)),
-    ];
+    const rowsByKey = new Map();
+    const consider = (row) => {
+        if (!row?._key) return;
+        const prev = rowsByKey.get(row._key);
+        // Prefer a row that declares an explicit visibility over one that doesn't.
+        if (!prev || (!explicitRowVisibility(prev) && explicitRowVisibility(row))) {
+            rowsByKey.set(row._key, row);
+        }
+    };
+    (sharedRows || []).forEach(consider);
+    (privateRows || []).forEach(consider);
+
+    const boards = Array.from(rowsByKey.values()).map((row) => {
+        // Legacy boards (no visibility field) are treated as shared; align the
+        // scope to the resolved visibility so it maps to a single namespace.
+        const visibility = explicitRowVisibility(row) || BOARD_VISIBILITY.SHARED;
+        return deserializeRow(row, scopeForVisibility(visibility));
+    });
     boards.sort((a, b) => b.updatedAt - a.updatedAt);
     return boards;
 }

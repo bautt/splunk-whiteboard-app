@@ -44,6 +44,7 @@ import {
     normalizeHexColor,
     normalizeTheme,
     resolveAppearancePatch,
+    resolveDisplayBackgroundColor,
     storedBackgroundColor,
 } from '../lib/canvasAppearance';
 import { debug } from '../lib/log';
@@ -526,12 +527,17 @@ export default function CanvasPage({ boardId, onClose }) {
                 elements: restoreElements(templateElements, null),
             });
             // Templates may declare an intended theme/background (e.g. the dark
-            // Splunk Platform canvas). Apply it so the board doesn't inherit the
-            // previous board's appearance.
-            if (templateAppState && (templateAppState.theme || templateAppState.displayBackgroundColor)) {
+            // Splunk Platform canvas, or a user template's saved appearance).
+            // Apply it so the board doesn't inherit the previous board's look.
+            if (
+                templateAppState &&
+                (templateAppState.theme ||
+                    templateAppState.displayBackgroundColor ||
+                    templateAppState.viewBackgroundColor)
+            ) {
                 handleAppearanceChange({
                     theme: normalizeTheme(templateAppState),
-                    displayBackgroundColor: templateAppState.displayBackgroundColor,
+                    displayBackgroundColor: resolveDisplayBackgroundColor(templateAppState),
                 });
             }
             markDirty();

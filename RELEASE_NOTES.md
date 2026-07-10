@@ -4,6 +4,20 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.62 — 2026-07-10
+
+**Theme reliability (readable in dark or light)**
+- The app now reads Splunk Web's *actual* theme via Splunk's theme API (`getUserTheme`) instead of guessing from the OS `prefers-color-scheme`. Fixes unreadable text when the OS/browser is in dark mode but Splunk Web is light (or vice versa).
+
+**Duplicate boards / delete-safety (data-loss fix)**
+- Boards are de-duplicated by key, so a board no longer appears twice (once "Shared", once "Private"). This removes the trap where deleting one card deleted the single underlying record for both.
+- Legacy boards (created before RBAC, with no visibility field) are classified as **shared**, and a board's scope is aligned to its visibility so edits/deletes target the correct namespace.
+
+**Template appearance saved & restored**
+- Saving a board as a template now stores its canvas theme and background; applying the template restores that appearance. Previously user templates lost theme/background on save and apply. Template revisions capture appearance too.
+
+---
+
 ## v0.3.61 — 2026-07-10
 
 **RBAC hardening & sharing safety**

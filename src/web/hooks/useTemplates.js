@@ -31,12 +31,15 @@ export function useTemplates() {
 
     useEffect(() => { load(); }, [load]);
 
-    const saveTemplate = useCallback(async ({ name, description, elements, files }) => {
+    const saveTemplate = useCallback(async ({ name, description, elements, files, appState }) => {
         const record = {
             name: name.trim(),
             description: (description || '').trim(),
             elements_json: JSON.stringify(elements || []),
             files_json: JSON.stringify(files || []),
+            // Persist canvas appearance (theme + background) so applying the
+            // template restores the look it was saved with.
+            appstate_json: JSON.stringify(appState || {}),
             created_at: Date.now(),
             created_by: getCurrentUser(),
         };
@@ -44,7 +47,7 @@ export function useTemplates() {
         await load();
     }, [load]);
 
-    const updateTemplate = useCallback(async (id, { name, description, elements, files }, options = {}) => {
+    const updateTemplate = useCallback(async (id, { name, description, elements, files, appState }, options = {}) => {
         const existing = await kv.get(COLLECTION, id);
         if (!existing) throw new Error('Template not found');
         if (options.skipRevision !== true) {
@@ -59,6 +62,10 @@ export function useTemplates() {
             description: (description || '').trim(),
             elements_json: JSON.stringify(elements || []),
             files_json: JSON.stringify(files || []),
+            // Keep the prior appearance if this update doesn't supply one.
+            appstate_json: appState !== undefined
+                ? JSON.stringify(appState || {})
+                : (existing.appstate_json || '{}'),
             created_at: existing.created_at ?? Date.now(),
             created_by: existing.created_by ?? '',
             updated_at: Date.now(),
