@@ -1,5 +1,5 @@
 /**
- * Starter boards shipped with the app (from assets/prebuilt-templates/).
+ * Example boards shipped with the app (from assets/prebuilt-templates/).
  *
  * These are immutable, in-bundle boards. Opening one always CLONES it into a
  * new private board (see BoardListPage), so app upgrades that refresh these
@@ -17,7 +17,7 @@ import svaC1c11SingleSite from '../../../assets/prebuilt-templates/sva-c1c11-sin
 
 function fromBundle(bundle, overrides = {}) {
     const board = bundle.board || {};
-    // Starter boards may declare an intended canvas appearance (theme +
+    // Example boards may declare an intended canvas appearance (theme +
     // background). Shipped bundles currently persist an empty appState, so
     // allow an explicit override; fall back to whatever the bundle stored.
     const appState = overrides.appState
@@ -32,7 +32,7 @@ function fromBundle(bundle, overrides = {}) {
     };
 }
 
-export const STARTER_BOARDS = [
+export const EXAMPLE_BOARDS = [
     // Splunk Platform on a dark charcoal canvas.
     fromBundle(plattformWbDark, {
         id: 'plattform-wb-dark',
@@ -70,4 +70,4 @@ export const STARTER_BOARDS = [
     }),
 ];
 
-export default STARTER_BOARDS;
+export default EXAMPLE_BOARDS;

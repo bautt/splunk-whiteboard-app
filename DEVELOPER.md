@@ -56,7 +56,7 @@ whiteboard_app/
 ├── DEVELOPER.md                      # This file
 ├── assets/
 │   ├── generated/                    # Example .whiteboard.json bundles (import via Export panel)
-│   ├── prebuilt-templates/           # Shipped starter board JSON bundles
+│   ├── prebuilt-templates/           # Shipped example board JSON bundles
 │   ├── generate_alt_icon.py          # Regenerate app icons from 400px master
 │   ├── listing_icon_200.png          # Splunkbase listing (200×200)
 │   ├── listing_icon_400.png          # Splunkbase listing (400×400)
@@ -100,7 +100,7 @@ whiteboard_app/
             ├── marketingIcons.js     # Splunk Marketing Icons (raw SVG strings)
             ├── brandIcons.js         # Brand logo icons
             ├── drpIcons.js           # Pre-encoded icons for DRP-style boards
-            ├── starterBoards.js      # Shipped starter board registry
+            ├── exampleBoards.js      # Shipped example board registry
             ├── migrateTemplates.js   # One-time legacy template → shared board migration
             ├── cleanup.js            # Purge all KV data (About → Danger zone)
             ├── boardBundle.js        # .whiteboard.json import/export format
@@ -127,7 +127,7 @@ whiteboard_app/
 | **Everyone** (shared) | App-wide | `nobody` / `app` |
 | **Just me** (private) | Per-user | current user / `user` |
 
-New boards default to **private**. The owner can **Share with everyone** from the canvas, which copies the board (and its revision history) into the shared namespace and removes the private copy. Starter boards are not stored in KV Store — they ship in the app bundle (`src/web/lib/starterBoards.js`) and are cloned into a private board when used.
+New boards default to **private**. The owner can **Share with everyone** from the canvas, which copies the board (and its revision history) into the shared namespace and removes the private copy. Example boards are not stored in KV Store — they ship in the app bundle (`src/web/lib/exampleBoards.js`) and are cloned into a private board when used.
 
 Board documents include a `visibility` field (`private` | `shared`). Legacy boards in the shared namespace without `visibility` are treated as shared.
 
@@ -159,19 +159,19 @@ make package && make deploy-norestart
 
 ---
 
-## Adding a new starter board
+## Adding a new example board
 
 ### Option A — Author in the app
 
 1. Draw the board in the running app.
 2. Open the **Export** tab → **Download board JSON**.
 3. Save the file under `assets/prebuilt-templates/` (e.g. `my-board.whiteboard.json`).
-4. Import the JSON in `src/web/lib/starterBoards.js` and append it to `STARTER_BOARDS` (optionally with a theme/background `appState` override). `manifest.json` in that folder is documentation only and not read at runtime.
+4. Import the JSON in `src/web/lib/exampleBoards.js` and append it to `EXAMPLE_BOARDS` (optionally with a theme/background `appState` override). `manifest.json` in that folder is documentation only and not read at runtime.
 5. Run `make package && make deploy-norestart`.
 
 ### Option B — Generate with scripts
 
-Starter boards can be generated with Python scripts in `scripts/`:
+Example boards can be generated with Python scripts in `scripts/`:
 
 | Script | Purpose |
 |---|---|

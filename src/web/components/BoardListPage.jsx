@@ -20,7 +20,7 @@ import { buildBoardsZipBlob } from '../lib/exportBoardZip';
 import { APP_VERSION } from '../lib/version';
 import { generateThumbnailDataUrl, boardHasContent } from '../lib/thumbnail';
 import { getThumbnail, saveThumbnail } from '../lib/thumbnailStore';
-import STARTER_BOARDS from '../lib/starterBoards';
+import EXAMPLE_BOARDS from '../lib/exampleBoards';
 import { migrateTemplatesToBoards } from '../lib/migrateTemplates';
 import { rehydrateMissingFiles } from '../lib/boardFiles';
 
@@ -159,9 +159,9 @@ function BoardThumbnail({ board }) {
     );
 }
 
-// Preview for an in-bundle starter board. Starter boards are not in KV, so the
+// Preview for an in-bundle example board. Example boards are not in KV, so the
 // thumbnail is rendered on the fly and not persisted.
-function StarterThumbnail({ starter }) {
+function ExampleThumbnail({ example }) {
     const [src, setSrc] = useState(null);
     const [status, setStatus] = useState('loading');
     const frameRef = useRef(null);
@@ -194,9 +194,9 @@ function StarterThumbnail({ starter }) {
         (async () => {
             try {
                 const image = await generateThumbnailDataUrl({
-                    elements: starter.elements,
-                    appState: starter.appState || {},
-                    files: rehydrateMissingFiles(starter.elements, starter.files),
+                    elements: example.elements,
+                    appState: example.appState || {},
+                    files: rehydrateMissingFiles(example.elements, example.files),
                 });
                 if (cancelled) return;
                 if (image) {
@@ -212,7 +212,7 @@ function StarterThumbnail({ starter }) {
         return () => {
             cancelled = true;
         };
-    }, [visible, starter.id]);
+    }, [visible, example.id]);
 
     return (
         <div ref={frameRef} style={thumbFrameStyle}>
@@ -286,11 +286,11 @@ export default function BoardListPage({ onOpen }) {
         })();
     }, [refresh]);
 
-    const filteredStarters = useMemo(() => {
+    const filteredExamples = useMemo(() => {
         if (filter === FILTER_PRIVATE || filter === FILTER_SHARED) return [];
         const q = query.trim().toLowerCase();
-        if (!q) return STARTER_BOARDS;
-        return STARTER_BOARDS.filter(
+        if (!q) return EXAMPLE_BOARDS;
+        return EXAMPLE_BOARDS.filter(
             (s) =>
                 s.label.toLowerCase().includes(q) ||
                 (s.description || '').toLowerCase().includes(q)
@@ -299,12 +299,16 @@ export default function BoardListPage({ onOpen }) {
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        return boards.filter((b) => {
+        const matches = boards.filter((b) => {
             if (filter === FILTER_SHARED && b.visibility !== BOARD_VISIBILITY.SHARED) return false;
             if (filter === FILTER_PRIVATE && b.visibility !== BOARD_VISIBILITY.PRIVATE) return false;
             if (!q) return true;
             return b.name.toLowerCase().includes(q) || (b.tags || '').toLowerCase().includes(q);
         });
+        // Your own (private) boards first, then shared boards; newest-first within
+        // each group. Keeps user-created work above shipped/shared content.
+        const rank = (b) => (b.visibility === BOARD_VISIBILITY.PRIVATE ? 0 : 1);
+        return matches.sort((a, b) => rank(a) - rank(b) || b.updatedAt - a.updatedAt);
     }, [boards, query, filter]);
 
     const handleCreate = async () => {
@@ -313,15 +317,15 @@ export default function BoardListPage({ onOpen }) {
         if (created?.id) onOpen(created.id);
     };
 
-    // Clone a starter board into a fresh private board, then open it. Keeps the
-    // shipped starter immutable so app upgrades never overwrite user work.
-    const handleUseStarter = async (starter) => {
+    // Clone an example board into a fresh private board, then open it. Keeps the
+    // shipped example immutable so app upgrades never overwrite user work.
+    const handleUseExample = async (example) => {
         try {
             const created = await importBoard({
-                name: starter.label,
-                elements: starter.elements,
-                appState: starter.appState || {},
-                files: rehydrateMissingFiles(starter.elements, starter.files),
+                name: example.label,
+                elements: example.elements,
+                appState: example.appState || {},
+                files: rehydrateMissingFiles(example.elements, example.files),
                 visibility: BOARD_VISIBILITY.PRIVATE,
             });
             if (created?.id) onOpen(created.id);
@@ -483,8 +487,8 @@ export default function BoardListPage({ onOpen }) {
 
             <P style={{ marginTop: 0, marginBottom: 16, opacity: 0.75 }}>
                 New boards default to <strong>Just me</strong> (private). Share a board from the canvas
-                to make it visible to everyone on this instance. Start from a <strong>starter board</strong>
-                {' '}below or <strong>Duplicate</strong> any board to make your own editable copy.
+                to make it visible to everyone on this instance. Start from an <strong>example board</strong>
+                {' '}at the bottom, or <strong>Duplicate</strong> any board to make your own editable copy.
             </P>
 
             <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
@@ -527,37 +531,6 @@ export default function BoardListPage({ onOpen }) {
                 <Message type="error">Failed to load whiteboards: {error}</Message>
             )}
 
-            {filteredStarters.length > 0 && (
-                <div style={{ marginBottom: 24 }}>
-                    <Heading level={2} style={{ marginBottom: 4 }}>
-                        Starter boards
-                    </Heading>
-                    <P style={{ marginTop: 0, marginBottom: 12, opacity: 0.7 }}>
-                        Ready-made architecture diagrams. <strong>Use</strong> creates your own
-                        editable copy — the originals stay unchanged across app updates.
-                    </P>
-                    <CardLayout cardWidth={300} wrap="wrap">
-                        {filteredStarters.map((s) => (
-                            <Card key={s.id} style={{ minHeight: 160 }}>
-                                <StarterThumbnail starter={s} />
-                                <Card.Header title={s.label} subtitle="Starter board" />
-                                <Card.Body>
-                                    {s.description && <P>{s.description}</P>}
-                                </Card.Body>
-                                <Card.Footer showBorder>
-                                    <Button
-                                        appearance="primary"
-                                        onClick={() => handleUseStarter(s)}
-                                    >
-                                        Use
-                                    </Button>
-                                </Card.Footer>
-                            </Card>
-                        ))}
-                    </CardLayout>
-                </div>
-            )}
-
             {loading ? (
                 <P>Loading…</P>
             ) : filtered.length === 0 ? (
@@ -586,14 +559,15 @@ export default function BoardListPage({ onOpen }) {
                                 showBorder
                                 style={{
                                     display: 'flex',
-                                    gap: 8,
-                                    justifyContent: 'space-between',
+                                    flexDirection: 'column',
+                                    gap: 10,
+                                    alignItems: 'stretch',
                                 }}
                             >
                                 <Button appearance="primary" onClick={() => onOpen(b.id)}>
                                     Open
                                 </Button>
-                                <div style={{ display: 'flex', gap: 8 }}>
+                                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                                     <Link
                                         onClick={(e) => {
                                             e.preventDefault();
@@ -633,6 +607,36 @@ export default function BoardListPage({ onOpen }) {
                         </Card>
                     ))}
                 </CardLayout>
+            )}
+
+            {filteredExamples.length > 0 && (
+                <div style={{ marginTop: 40 }}>
+                    <Heading level={2} style={{ marginBottom: 4 }}>
+                        Example boards
+                    </Heading>
+                    <P style={{ marginTop: 0, marginBottom: 12, opacity: 0.7 }}>
+                        Pre-built example whiteboards.
+                    </P>
+                    <CardLayout cardWidth={300} wrap="wrap">
+                        {filteredExamples.map((ex) => (
+                            <Card key={ex.id} style={{ minHeight: 160 }}>
+                                <ExampleThumbnail example={ex} />
+                                <Card.Header title={ex.label} subtitle="Example board" />
+                                <Card.Body>
+                                    {ex.description && <P>{ex.description}</P>}
+                                </Card.Body>
+                                <Card.Footer showBorder>
+                                    <Button
+                                        appearance="primary"
+                                        onClick={() => handleUseExample(ex)}
+                                    >
+                                        Use
+                                    </Button>
+                                </Card.Footer>
+                            </Card>
+                        ))}
+                    </CardLayout>
+                </div>
             )}
 
             <Modal

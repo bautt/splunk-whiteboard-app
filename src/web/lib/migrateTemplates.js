@@ -1,7 +1,7 @@
 // One-time migration: convert legacy user-saved templates into shared boards.
 //
 // The dedicated "template" concept was removed in favour of treating everything
-// as a board (starter boards clone on open; any board can be duplicated). Any
+// as a board (example boards clone on open; any board can be duplicated). Any
 // templates a user previously saved in the `whiteboard_templates` KV collection
 // are migrated here into ordinary shared boards, then the source rows (and their
 // revision history) are removed so the migration never runs twice.

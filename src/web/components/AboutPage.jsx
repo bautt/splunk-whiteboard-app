@@ -10,8 +10,21 @@ import Text from '@splunk/react-ui/Text';
 import { APP_VERSION } from '../lib/version';
 import { README_URL, DEVELOPER_URL, RELEASE_NOTES_URL, GITHUB_REPO } from '../lib/appLinks';
 import { purgeAllWhiteboardData } from '../lib/cleanup';
+import { useBoards } from '../hooks/useKVStore';
+import { buildBoardsZipBlob } from '../lib/exportBoardZip';
 
 const WHITEBOARD_URL = '/en-US/app/whiteboard_app/whiteboard';
+
+function downloadBlob(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
 
 const sectionStyle = { marginTop: 28 };
 const listStyle = { margin: '8px 0 0', paddingLeft: 20, lineHeight: 1.7 };
@@ -37,6 +50,7 @@ function Kbd({ children }) {
 const CONFIRM_WORD = 'DELETE';
 
 function CleanupSection() {
+    const { boards } = useBoards();
     const [expanded, setExpanded] = useState(false);
     const [confirmText, setConfirmText] = useState('');
     const [busy, setBusy] = useState(false);
@@ -45,6 +59,22 @@ function CleanupSection() {
     const reset = () => {
         setExpanded(false);
         setConfirmText('');
+    };
+
+    const handleExportAll = () => {
+        if (!boards.length) return;
+        try {
+            const stamp = new Date().toISOString().slice(0, 10);
+            const zipBlob = buildBoardsZipBlob(boards, APP_VERSION);
+            downloadBlob(zipBlob, `whiteboards-export-${stamp}.zip`);
+            setResult({
+                type: 'success',
+                text: `Backed up ${boards.length} board${boards.length !== 1 ? 's' : ''} to a ZIP. `
+                    + 'Re-import them any time from the board list with Import board…',
+            });
+        } catch (e) {
+            setResult({ type: 'error', text: `Backup failed: ${e.message}` });
+        }
     };
 
     const runPurge = async () => {
@@ -91,11 +121,37 @@ function CleanupSection() {
                     defaults</strong>. <strong>This cannot be undone.</strong>
                 </P>
                 <P style={{ marginBottom: 0, opacity: 0.75, fontSize: 13 }}>
-                    The built-in <strong>starter boards</strong> ship in the app and are not stored in
+                    The built-in <strong>example boards</strong> ship in the app and are not stored in
                     KV Store, so they remain available after a reset. Clears all shared boards for
                     every user plus your own private boards; other users&apos; private boards are
                     removed automatically when an admin uninstalls the app.
                 </P>
+
+                <P
+                    style={{
+                        marginBottom: 0,
+                        marginTop: 12,
+                        fontSize: 13,
+                        padding: '8px 12px',
+                        borderRadius: 6,
+                        background: 'rgba(245, 158, 11, 0.12)',
+                        border: '1px solid rgba(245, 158, 11, 0.5)',
+                    }}
+                >
+                    <strong>Tip:</strong> back up first. Download every board (shared and private)
+                    as a ZIP of JSON files before you delete or reset — you can re-import them later
+                    from the board list with <strong>Import board…</strong>.
+                </P>
+                <Button
+                    appearance="secondary"
+                    onClick={handleExportAll}
+                    disabled={busy || boards.length === 0}
+                    style={{ marginTop: 8 }}
+                >
+                    {boards.length
+                        ? `Back up all whiteboards (${boards.length})…`
+                        : 'Back up all whiteboards…'}
+                </Button>
 
                 {result && (
                     <Message
@@ -229,7 +285,7 @@ export default function AboutPage() {
                         , import a set, then drag shapes from Excalidraw&apos;s library panel.
                     </li>
                     <li>
-                        <strong>Starter boards:</strong> the board list ships ready-made architecture
+                        <strong>Example boards:</strong> the board list ships ready-made architecture
                         diagrams — click <strong>Use</strong> to create your own editable copy, or{' '}
                         <strong>Duplicate</strong> any board to branch off it.
                     </li>

@@ -6,13 +6,13 @@ Copy the sections below into the Splunkbase app listing fields (Short Descriptio
 
 ## Short Description
 
-Collaborative Excalidraw whiteboard inside Splunk for platform architecture and workshop diagrams. Splunk shapes, starter boards, and KV Store persistence — no external infrastructure.
+Collaborative Excalidraw whiteboard inside Splunk for platform architecture and workshop diagrams. Splunk shapes, example boards, and KV Store persistence — no external infrastructure.
 
 ---
 
 ## Summary
 
-Whiteboard App is a native Splunk canvas for architecture and workshop diagrams — no external database or middleware. Draw inside Splunk Web with Excalidraw, Splunk infrastructure shapes, and ready-made starter boards; boards persist in KV Store. New boards are private by default; share with everyone on the instance when you are ready. Export PNG/SVG/JSON or walk through designs step-by-step in Present mode. Built for architects, SEs, and facilitators who sketch where their audience already works.
+Whiteboard App is a native Splunk canvas for architecture and workshop diagrams — no external database or middleware. Draw inside Splunk Web with Excalidraw, Splunk infrastructure shapes, and ready-made example boards; boards persist in KV Store. New boards are private by default; share with everyone on the instance when you are ready. Export PNG/SVG/JSON or walk through designs step-by-step in Present mode. Built for architects, SEs, and facilitators who sketch where their audience already works.
 
 ---
 
@@ -30,18 +30,18 @@ Whiteboard App is a React + Excalidraw custom HTML dashboard embedded in Splunk.
 - **Splunk Marketing Icons** — searchable set of 50 icons, individually tinted before insert
 - **Brand icons** — Cisco, Kubernetes, OpenTelemetry, and Splunk marks for reference architectures
 
-### Starter boards
+### Example boards
 
-Ready-made architecture diagrams ship with the app and appear in a **Starter boards** section of the board list:
+Ready-made architecture diagrams ship with the app and appear in a **Example boards** section of the board list:
 
-| Starter board | Description |
+| Example board | Description |
 |---|---|
 | Splunk Platform (dark / light) | Splunk platform architecture; supports Present / Build mode |
 | Cisco Data Fabric | Cisco Data Fabric architecture overview |
 | Cisco Data Fabric (MDL) | Cisco Data Fabric with MDL layer detail |
 | SVA C1/C11 & C3/C13 | Splunk Validated Architecture single-site reference designs |
 
-Click **Use** on a starter board to create your own editable private copy, or **Duplicate** any existing board to branch off it. Starter boards live in the app bundle, so app upgrades refresh them without ever touching your saved copies.
+Click **Use** on an example board to create your own editable private copy, or **Duplicate** any existing board to branch off it. Example boards live in the app bundle, so app upgrades refresh them without ever touching your saved copies.
 
 ### Present and Build mode
 
@@ -69,7 +69,7 @@ All application data is stored in Splunk KV Store collections in the `whiteboard
 
 By default, all Splunk users can read and write shared boards (`access = read : [ * ], write : [ * ]`). Private boards are isolated per user via Splunk's user-scoped KV Store. Tighten ACLs in `metadata/default.meta` before deployment if your organisation requires restricted write access to shared content.
 
-**Reset / uninstall cleanup:** The **About** tab includes a *Danger zone* with **Delete all whiteboard data** — a guarded, type-to-confirm action that purges all boards, history, snapshots, and thumbnails from KV Store before uninstalling, or to reset the app to factory defaults. Starter boards ship in the app bundle and remain available after a cleanup.
+**Reset / uninstall cleanup:** The **About** tab includes a *Danger zone* with **Delete all whiteboard data** — a guarded, type-to-confirm action that purges all boards, history, snapshots, and thumbnails from KV Store before uninstalling, or to reset the app to factory defaults. Example boards ship in the app bundle and remain available after a cleanup.
 
 ### External services
 
@@ -132,7 +132,7 @@ $SPLUNK_HOME/bin/splunk restart
 
 ### First run
 
-On first open, Splunk creates the KV Store collections defined in `default/collections.conf`. No indexes, inputs, or forwarder configuration is required. Starter boards are available immediately; user-created boards appear in the board list after the first save.
+On first open, Splunk creates the KV Store collections defined in `default/collections.conf`. No indexes, inputs, or forwarder configuration is required. Example boards are available immediately; user-created boards appear in the board list after the first save.
 
 ### Upgrading
 
@@ -180,7 +180,7 @@ Upload the newer package over the existing app and restart Splunk (or follow you
 ### Present / Build mode shows no steps
 
 - Open the **Build** tab and add steps manually (**Add selection as step N**) or use an auto-layout button (by group, left→right, etc.).
-- The Splunk Platform starter board ships with pre-tagged build steps; blank boards need steps added first.
+- The Splunk Platform example board ships with pre-tagged build steps; blank boards need steps added first.
 - Without build steps, Present mode falls back to Excalidraw **frames** if any exist on the canvas.
 
 ### Large boards feel slow

@@ -17,7 +17,7 @@ Draw architecture diagrams, workshop sketches, and presentation flows **inside S
 ## Get started
 
 <p align="center">
-  <img src="assets/screenshot-board-list.png" alt="Whiteboard App board list with thumbnail previews, starter boards, and import/export actions" width="900" />
+  <img src="assets/screenshot-board-list.png" alt="Whiteboard App board list with thumbnail previews, example boards, and import/export actions" width="900" />
 </p>
 
 1. Open **Apps → Whiteboard App** (or go to `/en-US/app/whiteboard_app/whiteboard`).
@@ -36,21 +36,21 @@ The right sidebar adds Splunk-specific panels on top of Excalidraw — shapes, l
 
 ---
 
-## Start from scratch, a starter, or a copy
+## Start from scratch, an example, or a copy
 
 ### Blank board
 
 The fastest path: **Create board** on the home screen. You get an empty Excalidraw canvas. Add Splunk shapes from the sidebar, draw freehand, or import content (see [Export & import](#export--import) below).
 
-### Starter boards
+### Example boards
 
-The board list shows a **Starter boards** section with ready-made architecture diagrams — Splunk Platform, Cisco Data Fabric, and SVA (C1/C11, C3/C13) reference architectures. Click **Use** to create your own editable copy as a private board and open it.
+The board list shows a **Example boards** section with ready-made architecture diagrams — Splunk Platform, Cisco Data Fabric, and SVA (C1/C11, C3/C13) reference architectures. Click **Use** to create your own editable copy as a private board and open it.
 
-Starter boards are shipped with the app and never change your work: **Use** always clones, so app updates that refresh the starters can't overwrite a board you've edited.
+Example boards are shipped with the app and never change your work: **Use** always clones, so app updates that refresh the examples can't overwrite a board you've edited.
 
 ### Duplicate any board
 
-Every board card has a **Duplicate** action that creates a private copy (`<name> (copy)`). Use it to branch off an existing board — including one you made from a starter — or to keep a shared board as your own working copy. To reuse a layout across a team, make a board, share it (**Everyone**), and colleagues can duplicate it.
+Every board card has a **Duplicate** action that creates a private copy (`<name> (copy)`). Use it to branch off an existing board — including one you made from an example — or to keep a shared board as your own working copy. To reuse a layout across a team, make a board, share it (**Everyone**), and colleagues can duplicate it.
 
 ---
 
@@ -167,7 +167,7 @@ To restrict who can write shared boards, see [DEVELOPER.md](DEVELOPER.md) (KV St
 The **About** tab has a *Danger zone* with **Delete all whiteboard data** — a guarded, type-to-confirm action that purges all boards, version history, snapshots, and preview thumbnails from KV Store. Use it to:
 
 - **Clean up before uninstalling** the app, so no board data is left behind.
-- **Reset to factory defaults** — because the shipped **starter boards** live in the app bundle (not KV Store), they survive the purge. After a cleanup you're left with a clean board list and the starters ready to clone again.
+- **Reset to factory defaults** — because the shipped **example boards** live in the app bundle (not KV Store), they survive the purge. After a cleanup you're left with a clean board list and the examples ready to clone again.
 
 The purge clears all **shared** boards (for every user) plus **your own private** boards. Other users' private boards live in their own KV namespaces and are removed automatically when an admin uninstalls the app. **This cannot be undone** — export anything you want to keep first.
 
@@ -175,7 +175,7 @@ The purge clears all **shared** boards (for every user) plus **your own private*
 
 ## For developers
 
-Build, deploy, extend shapes, add starter boards, and repository layout: **[DEVELOPER.md](DEVELOPER.md)**.
+Build, deploy, extend shapes, add example boards, and repository layout: **[DEVELOPER.md](DEVELOPER.md)**.
 
 ---
 

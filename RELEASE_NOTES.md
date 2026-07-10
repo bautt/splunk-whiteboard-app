@@ -4,6 +4,15 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.70 — 2026-07-10
+
+**Board list layout & wording**
+- Renamed **Starter boards** to **Example boards** throughout the app and docs.
+- Your own boards now appear **first**; the shipped **Example boards** section moved to the **bottom** of the list.
+- Fixed the cramped board card footer: **Open** is now a full-width button with the **Duplicate · Export · Copy link · Delete** actions on their own row below (no more truncated "Op…" button).
+
+---
+
 ## v0.3.69 — 2026-07-10
 
 **Starter boards replace the template concept**
