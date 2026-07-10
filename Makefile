@@ -24,10 +24,18 @@ build:
 	# sent (the app registers no tracker); this only renames the property key
 	# consistently across the built JS, preserving behaviour.
 	find dist/appserver/static -name '*.js' -exec perl -pi -e 's/trackEvent/trackEvnt/g' {} +
+	# Single source of truth for the version is src/web/lib/version.js. Sync it
+	# into the injected HTML, default/app.conf, and app.manifest so they can
+	# never drift — a mismatch here fails Splunk Cloud SLIM/semver validation.
 	@VER=$$(grep "APP_VERSION" src/web/lib/version.js | sed -n "s/.*['\"]\\([^'\"]*\\)['\"].*/\\1/p"); \
+		BUILD=$${VER##*.}; \
 		for f in dist/appserver/templates/*.html; do \
 			perl -pi -e "s/__WB_APP_VERSION__/$$VER/g" "$$f"; \
-		done
+		done; \
+		perl -pi -e "s/^version = .*/version = $$VER/" dist/default/app.conf; \
+		perl -pi -e "s/^build = .*/build = $$BUILD/" dist/default/app.conf; \
+		perl -pi -e "s/\"version\": \"[^\"]*\"/\"version\": \"$$VER\"/" dist/app.manifest; \
+		echo "Synced app version $$VER (build $$BUILD) into app.conf + app.manifest"
 
 package: build
 	rm -rf /tmp/$(APP_ID)

@@ -4,6 +4,15 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.71 — 2026-07-10
+
+**Splunk Cloud compatibility fix**
+- Fixed a version mismatch that failed Splunk Cloud AppInspect (SLIM validation + semver): `app.manifest` had drifted to `0.3.65` while `app.conf` was newer, so the package could not be SSAI-installed on Classic Splunk Cloud.
+- The build now treats `src/web/lib/version.js` as the single source of truth and syncs the version/build into `default/app.conf` and `app.manifest` automatically, so they can never drift again.
+- Updated the app manifest description ("templates" → "example boards").
+
+---
+
 ## v0.3.70 — 2026-07-10
 
 **Board list layout & wording**
