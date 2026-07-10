@@ -32,7 +32,7 @@ Whiteboard App is a React + Excalidraw custom HTML dashboard embedded in Splunk.
 
 ### Example boards
 
-Ready-made architecture diagrams ship with the app and appear in a **Example boards** section of the board list:
+Ready-made architecture diagrams ship with the app and appear in an **Example boards** section at the bottom of the board list (your own boards are listed first):
 
 | Example board | Description |
 |---|---|
@@ -69,7 +69,7 @@ All application data is stored in Splunk KV Store collections in the `whiteboard
 
 By default, all Splunk users can read and write shared boards (`access = read : [ * ], write : [ * ]`). Private boards are isolated per user via Splunk's user-scoped KV Store. Tighten ACLs in `metadata/default.meta` before deployment if your organisation requires restricted write access to shared content.
 
-**Reset / uninstall cleanup:** The **About** tab includes a *Danger zone* with **Delete all whiteboard data** — a guarded, type-to-confirm action that purges all boards, history, snapshots, and thumbnails from KV Store before uninstalling, or to reset the app to factory defaults. Example boards ship in the app bundle and remain available after a cleanup.
+**Reset / uninstall cleanup:** The **About** tab includes a *Danger zone* with **Delete all whiteboard data** — a guarded, type-to-confirm action that purges all boards, history, snapshots, and thumbnails from KV Store before uninstalling, or to reset the app to factory defaults. A **Back up all whiteboards** button in the same section exports every board (shared and private) to a ZIP first, so you can restore them later via **Import board…**. Example boards ship in the app bundle and remain available after a cleanup.
 
 ### External services
 
