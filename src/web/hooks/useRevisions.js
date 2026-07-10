@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { deleteRevision, listRevisions } from '../lib/historyStore';
+import { BOARD_SCOPE } from '../lib/boardScope';
 
-export function useRevisions(boardId) {
+export function useRevisions(boardId, scopeKey = BOARD_SCOPE.SHARED) {
     const [revisions, setRevisions] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -13,11 +14,11 @@ export function useRevisions(boardId) {
         }
         setLoading(true);
         try {
-            setRevisions(await listRevisions(boardId));
+            setRevisions(await listRevisions(boardId, scopeKey));
         } finally {
             setLoading(false);
         }
-    }, [boardId]);
+    }, [boardId, scopeKey]);
 
     useEffect(() => {
         refresh();
@@ -25,11 +26,11 @@ export function useRevisions(boardId) {
 
     const removeRevision = useCallback(
         async (revisionId) => {
-            await deleteRevision(revisionId);
+            await deleteRevision(revisionId, scopeKey);
             await refresh();
         },
-        [refresh]
+        [scopeKey, refresh]
     );
 
-    return { revisions, loading, refresh, deleteRevision };
+    return { revisions, loading, refresh, deleteRevision: removeRevision };
 }

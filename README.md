@@ -164,9 +164,18 @@ Open the **History** tab. **Save snapshot** captures a named checkpoint; **Resto
 
 ## Sharing & access
 
-Boards and saved templates are **shared on the whole Splunk instance** — there are no per-user private whiteboards. When you create a board, your username is stored as the owner (shown on the board card), but **any user** who can open the app can view, edit, and delete any board or template. This is intentional for collaborative workshops; use **History** snapshots or **Export → Download board JSON** if you need a backup before shared editing.
+Boards can be **private** (default) or **shared**:
 
-To restrict who can write boards, see [DEVELOPER.md](DEVELOPER.md) (KV Store ACLs).
+| Visibility | Who can access |
+|---|---|
+| **Just me** (private) | Only you — stored in your Splunk user KV Store namespace |
+| **Everyone** (shared) | All users who can open Whiteboard App |
+
+When you create a board, visibility defaults to **Just me**. Open the board and click **Share with everyone** to move it to the shared namespace. Shareable links and the board list copy-link action work only for shared boards.
+
+**Templates** remain shared for all users on the instance (unchanged).
+
+To restrict who can write shared boards, see [DEVELOPER.md](DEVELOPER.md) (KV Store ACLs).
 
 ---
 

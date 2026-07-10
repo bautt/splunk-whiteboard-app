@@ -40,6 +40,7 @@ export default function ExportPanel({
     boardId,
     boardName,
     appVersion,
+    canShareLink = true,
     getExportable,
     getBoardState,
     onImportBoard,
@@ -184,7 +185,14 @@ export default function ExportPanel({
             <Button appearance="primary" onClick={exportPdf}>
                 Download PDF
             </Button>
-            <Button onClick={copyLink}>Copy shareable link</Button>
+            <Button onClick={copyLink} disabled={!canShareLink || !boardId}>
+                Copy shareable link
+            </Button>
+            {!canShareLink && (
+                <P style={{ fontSize: 11, margin: 0, opacity: 0.7 }}>
+                    Shareable links are available after you share the board with everyone.
+                </P>
+            )}
 
             <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', opacity: 0.6, marginTop: 4 }}>
                 Dashboard Studio

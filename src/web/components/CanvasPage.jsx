@@ -33,6 +33,7 @@ import ExcalidrawPreferences, {
 import { useBoard, useBoardMutations, useAutoSave } from '../hooks/useKVStore';
 import { useVersions } from '../hooks/useVersions';
 import { useRevisions } from '../hooks/useRevisions';
+import { BOARD_SCOPE, BOARD_VISIBILITY, canShareBoard, visibilityLabel } from '../lib/boardScope';
 import { nanoid } from '../lib/nanoid';
 import {
     applyCanvasAppearance,
@@ -137,10 +138,11 @@ function ResizableSidebar({ children }) {
 }
 
 export default function CanvasPage({ boardId, onClose }) {
-    const { board, loading, error } = useBoard(boardId);
-    const { updateBoard } = useBoardMutations();
-    const { versions, saveSnapshot, deleteVersion, maxSnapshots } = useVersions(boardId);
-    const { revisions, deleteRevision, refresh: refreshRevisions } = useRevisions(boardId);
+    const { board, loading, error, refresh: refreshBoard, setBoard } = useBoard(boardId);
+    const boardScope = board?.scope ?? BOARD_SCOPE.SHARED;
+    const { updateBoard, shareBoard } = useBoardMutations();
+    const { versions, saveSnapshot, deleteVersion, maxSnapshots } = useVersions(boardId, boardScope);
+    const { revisions, deleteRevision, refresh: refreshRevisions } = useRevisions(boardId, boardScope);
 
     const [excalidrawAPI, setExcalidrawAPI] = useState(null);
     const [activeTab, setActiveTab] = useState('shapes');
@@ -149,6 +151,8 @@ export default function CanvasPage({ boardId, onClose }) {
     const [restoring, setRestoring] = useState(false);
     const [presenting, setPresenting] = useState(false);
     const [saveStatus, setSaveStatus] = useState(null);
+    const [shareStatus, setShareStatus] = useState(null);
+    const [sharing, setSharing] = useState(false);
     const [selectedIds, setSelectedIds] = useState({});
     const [canvasAppState, setCanvasAppState] = useState(() => defaultCanvasAppState());
 
@@ -262,7 +266,7 @@ export default function CanvasPage({ boardId, onClose }) {
 
     const isCanvasReady = useCallback(() => canvasReadyRef.current, []);
 
-    const { markDirty } = useAutoSave(boardId, getElementsAndState, { isCanvasReady });
+    const { markDirty } = useAutoSave(boardId, boardScope, getElementsAndState, { isCanvasReady });
 
     // One-shot sync after Excalidraw mounts — ensures saved theme/bg apply to the live scene.
     useEffect(() => {
@@ -363,7 +367,7 @@ export default function CanvasPage({ boardId, onClose }) {
     }, [markDirty]);
 
     const handleSaveNow = useCallback(async () => {
-        if (!boardId) return;
+        if (!boardId || !board) return;
         const { elements, appState, files } = getElementsAndState();
         debug('saving', elements.length, 'elements');
         try {
@@ -374,14 +378,14 @@ export default function CanvasPage({ boardId, onClose }) {
                 appState,
                 files,
                 saveSource: REVISION_SOURCES.MANUAL_SAVE,
-            });
+            }, board.scope);
             setSaveStatus({ type: 'success', text: `Saved ${elements.length} elements.` });
             refreshRevisions();
             setTimeout(() => setSaveStatus(null), 2000);
         } catch (e) {
             setSaveStatus({ type: 'error', text: e.message });
         }
-    }, [boardId, getElementsAndState, name, tags, updateBoard, refreshRevisions]);
+    }, [boardId, board, getElementsAndState, name, tags, updateBoard, refreshRevisions]);
 
     const handleAddShape = useCallback(
         (newElements) => {
@@ -489,7 +493,7 @@ export default function CanvasPage({ boardId, onClose }) {
 
     const handleRestore = useCallback(
         async (entry, { checkpointFirst = true } = {}) => {
-            if (!excalidrawAPI || !boardId) return;
+            if (!excalidrawAPI || !boardId || !board) return;
             setRestoring(true);
             try {
                 if (checkpointFirst) {
@@ -498,7 +502,7 @@ export default function CanvasPage({ boardId, onClose }) {
                         ...current,
                         source: REVISION_SOURCES.PRE_RESTORE,
                         label: 'Before restore',
-                    });
+                    }, board.scope);
                 }
                 const files = rehydrateMissingFiles(entry.elements, entry.files);
                 registerBoardFiles(excalidrawAPI, files);
@@ -517,7 +521,7 @@ export default function CanvasPage({ boardId, onClose }) {
                     appState: serializableCanvasAppState(appState),
                     files,
                     saveSource: REVISION_SOURCES.MANUAL_SAVE,
-                });
+                }, board.scope);
                 await refreshRevisions();
                 setSaveStatus({
                     type: 'success',
@@ -530,7 +534,7 @@ export default function CanvasPage({ boardId, onClose }) {
                 setRestoring(false);
             }
         },
-        [excalidrawAPI, boardId, getElementsAndState, updateBoard, refreshRevisions]
+        [excalidrawAPI, boardId, board, getElementsAndState, updateBoard, refreshRevisions]
     );
 
     const getExportable = useCallback(async () => {
@@ -567,7 +571,7 @@ export default function CanvasPage({ boardId, onClose }) {
 
     const handleImportBoard = useCallback(
         async (parsed) => {
-            if (!excalidrawAPI || !boardId) return;
+            if (!excalidrawAPI || !boardId || !board) return;
             const files = rehydrateMissingFiles(parsed.elements, parsed.files);
             registerBoardFiles(excalidrawAPI, files);
             const appState = defaultCanvasAppState({
@@ -587,7 +591,7 @@ export default function CanvasPage({ boardId, onClose }) {
                 appState: serializableCanvasAppState(appState),
                 files,
                 saveSource: REVISION_SOURCES.MANUAL_SAVE,
-            });
+            }, board.scope);
             await refreshRevisions();
             setSaveStatus({
                 type: 'success',
@@ -595,8 +599,39 @@ export default function CanvasPage({ boardId, onClose }) {
             });
             setTimeout(() => setSaveStatus(null), 3000);
         },
-        [excalidrawAPI, boardId, name, updateBoard, refreshRevisions]
+        [excalidrawAPI, boardId, board, name, updateBoard, refreshRevisions]
     );
+
+    const handleShareWithEveryone = useCallback(async () => {
+        if (!board || !canShareBoard(board)) return;
+        // eslint-disable-next-line no-alert
+        if (!window.confirm(
+            'Share this board with everyone on this Splunk instance? '
+            + 'All users with access to Whiteboard App will be able to view and edit it.'
+        )) {
+            return;
+        }
+        setSharing(true);
+        setShareStatus(null);
+        try {
+            const shared = await shareBoard(board);
+            setBoard((prev) => (prev ? {
+                ...prev,
+                scope: shared.scope,
+                visibility: shared.visibility,
+            } : prev));
+            await refreshBoard();
+            await refreshRevisions();
+            setShareStatus({
+                type: 'success',
+                text: 'Board is now shared with everyone on this instance.',
+            });
+        } catch (e) {
+            setShareStatus({ type: 'error', text: e.message });
+        } finally {
+            setSharing(false);
+        }
+    }, [board, shareBoard, setBoard, refreshBoard, refreshRevisions]);
 
     const renderPanel = () => {
         debug('renderPanel for tab:', activeTab);
@@ -625,6 +660,7 @@ export default function CanvasPage({ boardId, onClose }) {
                         boardId={boardId}
                         boardName={name}
                         appVersion={APP_VERSION}
+                        canShareLink={board.visibility === BOARD_VISIBILITY.SHARED}
                         getExportable={getExportable}
                         getBoardState={getElementsAndState}
                         onImportBoard={handleImportBoard}
@@ -688,6 +724,24 @@ export default function CanvasPage({ boardId, onClose }) {
                 <Button onClick={onClose} appearance="pill">
                     ← All boards
                 </Button>
+                <span
+                    style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        padding: '2px 8px',
+                        borderRadius: 999,
+                        background: board.visibility === BOARD_VISIBILITY.SHARED
+                            ? 'rgba(90, 79, 207, 0.12)'
+                            : 'var(--gray90, #e2e6ea)',
+                        color: board.visibility === BOARD_VISIBILITY.SHARED
+                            ? '#5a4fcf'
+                            : 'inherit',
+                    }}
+                >
+                    {visibilityLabel(board.visibility)}
+                </span>
                 <Text
                     value={name}
                     onChange={(_, { value }) => setName(value)}
@@ -703,7 +757,22 @@ export default function CanvasPage({ boardId, onClose }) {
                 <Button appearance="primary" onClick={handleSaveNow}>
                     Save
                 </Button>
+                {canShareBoard(board) && (
+                    <Button appearance="secondary" onClick={handleShareWithEveryone} disabled={sharing}>
+                        {sharing ? 'Sharing…' : 'Share with everyone'}
+                    </Button>
+                )}
                 <Button onClick={enterPresentation}>Present</Button>
+                {shareStatus && (
+                    <span
+                        style={{
+                            fontSize: 12,
+                            color: shareStatus.type === 'error' ? '#DC4E41' : '#53A051',
+                        }}
+                    >
+                        {shareStatus.text}
+                    </span>
+                )}
                 {saveStatus && (
                     <span
                         style={{

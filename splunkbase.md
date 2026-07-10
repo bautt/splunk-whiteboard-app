@@ -12,7 +12,7 @@ Collaborative Excalidraw whiteboard inside Splunk for platform architecture and 
 
 ## Summary
 
-Whiteboard App is a native Splunk canvas for architecture and workshop diagrams — no external database or middleware. Draw inside Splunk Web with Excalidraw, Splunk infrastructure shapes, and built-in templates; boards persist in KV Store for the whole instance. Export PNG/SVG/JSON or walk through designs step-by-step in Present mode. Built for architects, SEs, and facilitators who sketch where their audience already works.
+Whiteboard App is a native Splunk canvas for architecture and workshop diagrams — no external database or middleware. Draw inside Splunk Web with Excalidraw, Splunk infrastructure shapes, and built-in templates; boards persist in KV Store. New boards are private by default; share with everyone on the instance when you are ready. Export PNG/SVG/JSON or walk through designs step-by-step in Present mode. Built for architects, SEs, and facilitators who sketch where their audience already works.
 
 ---
 
@@ -64,7 +64,9 @@ All application data is stored in Splunk KV Store collections in the `whiteboard
 | `whiteboard_templates` | User-saved templates |
 | `whiteboard_template_revisions` | Automatic revision history per template |
 
-By default, all Splunk users can read and write all boards and templates (`access = read : [ * ], write : [ * ]`). This is intentional for collaborative workshop use. Tighten ACLs in `metadata/default.meta` before deployment if your organisation requires restricted write access.
+**Board visibility:** New boards default to **Just me** (private) in the current user's KV namespace. Choose **Everyone** when creating a board, or open a private board and click **Share with everyone** to move it to the shared app namespace. Shareable URLs work only for shared boards. **Templates** remain shared for all users.
+
+By default, all Splunk users can read and write shared boards and templates (`access = read : [ * ], write : [ * ]`). Private boards are isolated per user via Splunk's user-scoped KV Store. Tighten ACLs in `metadata/default.meta` before deployment if your organisation requires restricted write access to shared content.
 
 ### External services
 
@@ -163,8 +165,9 @@ Upload the newer package over the existing app and restart Splunk (or follow you
 
 ### Another user deleted or overwrote my board
 
-- Default ACLs allow every user to read and write all boards. This is by design for shared workshop instances.
-- To restrict write access, edit `metadata/default.meta` before deployment (for example `write : [ admin, sc_admin, power ]` on collection stanzas) and restart Splunk.
+- **Shared** boards: default ACLs allow every user to read and write. This is by design for collaborative workshop instances.
+- **Private** boards are visible only to you until you share them with everyone.
+- To restrict write access to shared boards, edit `metadata/default.meta` before deployment (for example `write : [ admin, sc_admin, power ]` on collection stanzas) and restart Splunk.
 
 ### Excalidraw Libraries panel shows an error
 

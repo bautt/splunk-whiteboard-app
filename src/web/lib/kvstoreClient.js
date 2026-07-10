@@ -1,17 +1,19 @@
 // Thin wrapper around Splunk's KV Store REST API.
-// All boards live in the `nobody` namespace so every user sees the same data.
+// Shared boards use the app (nobody) namespace; private boards use the user namespace.
 
 import { createRESTURL } from '@splunk/splunk-utils/url';
 import { createFetchInit } from '@splunk/splunk-utils/fetch';
 import { debug } from './log';
+import { resolveKvScope, BOARD_SCOPE } from './boardScope';
 
 const APP = 'whiteboard_app';
 
-function endpoint(collection, suffix = '') {
+function endpoint(collection, suffix = '', scopeKey = BOARD_SCOPE.SHARED) {
+    const scope = resolveKvScope(scopeKey);
     return createRESTURL(`storage/collections/data/${collection}${suffix}`, {
         app: APP,
-        owner: 'nobody',
-        sharing: 'app',
+        owner: scope.owner,
+        sharing: scope.sharing,
     });
 }
 
@@ -49,36 +51,36 @@ function withOutputModeJson(url) {
 }
 
 export const kv = {
-    list(collection) {
-        return send(withOutputModeJson(endpoint(collection)));
+    list(collection, scopeKey = BOARD_SCOPE.SHARED) {
+        return send(withOutputModeJson(endpoint(collection, '', scopeKey)));
     },
-    get(collection, key) {
-        return send(withOutputModeJson(endpoint(collection, `/${encodeURIComponent(key)}`)));
+    get(collection, key, scopeKey = BOARD_SCOPE.SHARED) {
+        return send(withOutputModeJson(endpoint(collection, `/${encodeURIComponent(key)}`, scopeKey)));
     },
-    insert(collection, doc) {
+    insert(collection, doc, scopeKey = BOARD_SCOPE.SHARED) {
         return send(
-            withOutputModeJson(endpoint(collection)),
+            withOutputModeJson(endpoint(collection, '', scopeKey)),
             { method: 'POST', body: JSON.stringify(doc) }
         );
     },
-    update(collection, key, doc) {
+    update(collection, key, doc, scopeKey = BOARD_SCOPE.SHARED) {
         return send(
-            withOutputModeJson(endpoint(collection, `/${encodeURIComponent(key)}`)),
+            withOutputModeJson(endpoint(collection, `/${encodeURIComponent(key)}`, scopeKey)),
             { method: 'POST', body: JSON.stringify(doc) }
         );
     },
-    remove(collection, key) {
+    remove(collection, key, scopeKey = BOARD_SCOPE.SHARED) {
         return send(
-            withOutputModeJson(endpoint(collection, `/${encodeURIComponent(key)}`)),
+            withOutputModeJson(endpoint(collection, `/${encodeURIComponent(key)}`, scopeKey)),
             { method: 'DELETE' },
             [200, 204]
         );
     },
-    query(collection, params) {
+    query(collection, params, scopeKey = BOARD_SCOPE.SHARED) {
         const qs = Object.entries(params)
             .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
             .join('&');
-        const url = endpoint(collection) + '?' + qs + '&output_mode=json';
+        const url = endpoint(collection, '', scopeKey) + '?' + qs + '&output_mode=json';
         return send(url);
     },
 };

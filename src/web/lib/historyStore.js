@@ -1,4 +1,5 @@
 import { kv, COLLECTIONS } from './kvstoreClient';
+import { BOARD_SCOPE } from './boardScope';
 import { filesToArray, rehydrateMissingFiles } from './boardFiles';
 import { sanitizeElementsForPersistence } from './build';
 import { getCurrentUser } from './currentUser';
@@ -87,18 +88,18 @@ export function deserializeSnapshot(row) {
     };
 }
 
-async function pruneCollection(collection, boardId, maxKeep, boardField = 'board_id') {
+async function pruneCollection(collection, boardId, maxKeep, scopeKey, boardField = 'board_id') {
     const rows = await kv.query(collection, {
         query: JSON.stringify({ [boardField]: boardId }),
         sort: 'created_at:-1',
-    });
+    }, scopeKey);
     const all = rows || [];
     const stale = all.slice(maxKeep);
-    await Promise.all(stale.map((r) => kv.remove(collection, r._key)));
+    await Promise.all(stale.map((r) => kv.remove(collection, r._key, scopeKey)));
 }
 
 /** Persist an automatic revision (autosave, manual save, pre-restore). */
-export async function insertRevision(boardId, { elements, appState, files, source, label }) {
+export async function insertRevision(boardId, { elements, appState, files, source, label }, scopeKey = BOARD_SCOPE.SHARED) {
     if (!boardId) return;
     const snap = snapshotPayload({ elements, appState, files });
     if (snap.elementCount === 0 && source !== REVISION_SOURCES.PRE_RESTORE) {
@@ -117,13 +118,13 @@ export async function insertRevision(boardId, { elements, appState, files, sourc
             appState: snap.appState,
             files: snap.files,
         }),
-    });
-    await pruneCollection(COLLECTIONS.revisions, boardId, MAX_REVISIONS_PER_BOARD);
+    }, scopeKey);
+    await pruneCollection(COLLECTIONS.revisions, boardId, MAX_REVISIONS_PER_BOARD, scopeKey);
     debug(`revision saved (${source}, ${snap.elementCount} elements)`);
 }
 
 /** Snapshot existing KV board state before a canvas overwrite. */
-export async function revisionBeforeBoardWrite(boardId, existingParsed, saveSource) {
+export async function revisionBeforeBoardWrite(boardId, existingParsed, saveSource, scopeKey = BOARD_SCOPE.SHARED) {
     const elements = existingParsed?.elements || [];
     if (!elements.length) return;
     try {
@@ -132,26 +133,26 @@ export async function revisionBeforeBoardWrite(boardId, existingParsed, saveSour
             appState: existingParsed.appState,
             files: existingParsed.files,
             source: saveSource || REVISION_SOURCES.AUTOSAVE,
-        });
+        }, scopeKey);
     } catch (e) {
         logWarn('Auto-revision before save failed', e);
     }
 }
 
-export async function listRevisions(boardId) {
+export async function listRevisions(boardId, scopeKey = BOARD_SCOPE.SHARED) {
     if (!boardId) return [];
     const rows = await kv.query(COLLECTIONS.revisions, {
         query: JSON.stringify({ board_id: boardId }),
         sort: 'created_at:-1',
-    });
+    }, scopeKey);
     return (rows || []).map(deserializeRevision);
 }
 
-export async function deleteRevision(revisionId) {
-    await kv.remove(COLLECTIONS.revisions, revisionId);
+export async function deleteRevision(revisionId, scopeKey = BOARD_SCOPE.SHARED) {
+    await kv.remove(COLLECTIONS.revisions, revisionId, scopeKey);
 }
 
-export async function insertNamedSnapshot(boardId, { elements, appState, files, label }) {
+export async function insertNamedSnapshot(boardId, { elements, appState, files, label }, scopeKey = BOARD_SCOPE.SHARED) {
     const snap = snapshotPayload({ elements, appState, files });
     await kv.insert(COLLECTIONS.versions, {
         board_id: boardId,
@@ -162,35 +163,72 @@ export async function insertNamedSnapshot(boardId, { elements, appState, files, 
             files: snap.files,
         }),
         created_at: Date.now(),
-    });
-    await pruneCollection(COLLECTIONS.versions, boardId, MAX_SNAPSHOTS_PER_BOARD);
+    }, scopeKey);
+    await pruneCollection(COLLECTIONS.versions, boardId, MAX_SNAPSHOTS_PER_BOARD, scopeKey);
 }
 
-export async function listSnapshots(boardId) {
+export async function listSnapshots(boardId, scopeKey = BOARD_SCOPE.SHARED) {
     if (!boardId) return [];
     const rows = await kv.query(COLLECTIONS.versions, {
         query: JSON.stringify({ board_id: boardId }),
         sort: 'created_at:-1',
-    });
+    }, scopeKey);
     return (rows || []).map(deserializeSnapshot);
 }
 
-export async function deleteSnapshot(versionId) {
-    await kv.remove(COLLECTIONS.versions, versionId);
+export async function deleteSnapshot(versionId, scopeKey = BOARD_SCOPE.SHARED) {
+    await kv.remove(COLLECTIONS.versions, versionId, scopeKey);
 }
 
-async function deleteAllFromCollection(collection, entityId, idField = 'board_id') {
+async function deleteAllFromCollection(collection, entityId, scopeKey, idField = 'board_id') {
     const rows = await kv.query(collection, {
         query: JSON.stringify({ [idField]: entityId }),
-    });
-    await Promise.all((rows || []).map((r) => kv.remove(collection, r._key)));
+    }, scopeKey);
+    await Promise.all((rows || []).map((r) => kv.remove(collection, r._key, scopeKey)));
 }
 
 /** Remove all revision and snapshot rows when a board is deleted. */
-export async function deleteAllBoardHistory(boardId) {
+export async function deleteAllBoardHistory(boardId, scopeKey = BOARD_SCOPE.SHARED) {
     if (!boardId) return;
     await Promise.all([
-        deleteAllFromCollection(COLLECTIONS.revisions, boardId),
-        deleteAllFromCollection(COLLECTIONS.versions, boardId),
+        deleteAllFromCollection(COLLECTIONS.revisions, boardId, scopeKey),
+        deleteAllFromCollection(COLLECTIONS.versions, boardId, scopeKey),
     ]);
+}
+
+/** Copy revision and snapshot rows between namespaces (private → shared). */
+export async function migrateBoardHistory(boardId, fromScope, toScope) {
+    if (!boardId || fromScope === toScope) return;
+
+    const [revisions, snapshots] = await Promise.all([
+        listRevisions(boardId, fromScope),
+        listSnapshots(boardId, fromScope),
+    ]);
+
+    await Promise.all(revisions.map((rev) => kv.insert(COLLECTIONS.revisions, {
+        board_id: boardId,
+        source: rev.source,
+        label: rev.label || '',
+        element_count: rev.elementCount,
+        created_by: rev.createdBy || getCurrentUser(),
+        created_at: rev.createdAt || Date.now(),
+        snapshot_json: JSON.stringify({
+            elements: rev.elements,
+            appState: rev.appState,
+            files: rev.files,
+        }),
+    }, toScope)));
+
+    await Promise.all(snapshots.map((snap) => kv.insert(COLLECTIONS.versions, {
+        board_id: boardId,
+        label: snap.label || '',
+        snapshot_json: JSON.stringify({
+            elements: snap.elements,
+            appState: snap.appState,
+            files: snap.files,
+        }),
+        created_at: snap.createdAt || Date.now(),
+    }, toScope)));
+
+    await deleteAllBoardHistory(boardId, fromScope);
 }

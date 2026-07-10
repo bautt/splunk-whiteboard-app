@@ -119,7 +119,18 @@ whiteboard_app/
 | `whiteboard_templates` | User-saved templates (elements + embedded files) |
 | `whiteboard_template_revisions` | Automatic revision history per template |
 
-All collections grant read/write to every Splunk user (`access = read : [ * ], write : [ * ]` in `metadata/default.meta`). This is intentional for collaborative editing on a shared instance. Tighten those ACLs in `metadata/default.meta` if your deployment requires restricted write access.
+### Board visibility (namespaces)
+
+| Visibility | KV namespace | `owner` / `sharing` |
+|---|---|---|
+| **Everyone** (shared) | App-wide | `nobody` / `app` |
+| **Just me** (private) | Per-user | current user / `user` |
+
+New boards default to **private**. The owner can **Share with everyone** from the canvas, which copies the board (and its revision history) into the shared namespace and removes the private copy. Templates always use the shared namespace.
+
+Board documents include a `visibility` field (`private` | `shared`). Legacy boards in the shared namespace without `visibility` are treated as shared.
+
+All collections grant read/write to every Splunk user (`access = read : [ * ], write : [ * ]` in `metadata/default.meta`). Private boards rely on Splunk's user-scoped KV namespace for access control; tighten shared-collection ACLs in `metadata/default.meta` if your deployment requires restricted write access to shared boards.
 
 ---
 
