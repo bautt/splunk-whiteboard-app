@@ -4,6 +4,15 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.65 — 2026-07-10
+
+**Board previews in the list**
+- Each board card now shows a thumbnail preview of its content, so boards are easy to tell apart at a glance.
+- Previews are stored in a dedicated `whiteboard_thumbnails` KV collection and refreshed shortly after edits are saved. Boards that don't yet have a stored preview generate one on demand the first time they scroll into view, then cache it for next time.
+- Deleting a board also removes its stored preview.
+
+---
+
 ## v0.3.64 — 2026-07-10
 
 **Import & export from the board list**

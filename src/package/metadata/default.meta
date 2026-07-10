@@ -26,6 +26,10 @@ access = read : [ * ], write : [ * ]
 export = system
 access = read : [ * ], write : [ * ]
 
+[collections/whiteboard_thumbnails]
+export = system
+access = read : [ * ], write : [ * ]
+
 [collections/whiteboard_templates]
 export = system
 access = read : [ * ], write : [ * ]

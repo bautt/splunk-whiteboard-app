@@ -16,6 +16,7 @@ import {
     serializeBoardPayload,
 } from '../lib/boardAccess';
 import { deleteAllBoardHistory, migrateBoardHistory, revisionBeforeBoardWrite } from '../lib/historyStore';
+import { deleteThumbnail } from '../lib/thumbnailStore';
 
 export function useBoards() {
     const [boards, setBoards] = useState([]);
@@ -168,6 +169,7 @@ export function useBoardMutations() {
     const deleteBoard = useCallback(async (id, scopeKey = BOARD_SCOPE.SHARED) => {
         await deleteAllBoardHistory(id, scopeKey);
         await kv.remove(COLLECTIONS.boards, id, scopeKey);
+        await deleteThumbnail(id);
     }, []);
 
     const shareBoard = useCallback(async (board) => {

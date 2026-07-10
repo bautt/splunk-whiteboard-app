@@ -57,6 +57,10 @@ import {
 } from '../lib/historyStore';
 import { APP_VERSION } from '../lib/version';
 import { fitIconDimensions, parseSvgViewBox, prepareIconFile, upsertSvgImageFile } from '../lib/iconFiles';
+import { generateThumbnailDataUrl } from '../lib/thumbnail';
+import { saveThumbnail } from '../lib/thumbnailStore';
+
+const THUMBNAIL_DEBOUNCE_MS = 12000;
 
 const TABS = [
     { label: 'Shapes', value: 'shapes', Icon: LayoutPanels },
@@ -283,6 +287,45 @@ export default function CanvasPage({ boardId, onClose }) {
         };
     }, []);
 
+    // --- Board preview (thumbnail) generation --------------------------------
+    // Regenerate the stored preview a short while after edits settle, so the
+    // board list stays current without writing on every autosave keystroke.
+    const thumbTimerRef = useRef(null);
+    const thumbDirtyRef = useRef(false);
+
+    const updateThumbnail = useCallback(async () => {
+        thumbDirtyRef.current = false;
+        if (!boardId) return;
+        try {
+            const { elements, appState, files } = getElementsAndState();
+            const image = await generateThumbnailDataUrl({ elements, appState, files });
+            if (image) await saveThumbnail(boardId, image);
+        } catch (e) {
+            debug('thumbnail update failed', e);
+        }
+    }, [boardId, getElementsAndState]);
+
+    const scheduleThumbnail = useCallback(() => {
+        thumbDirtyRef.current = true;
+        if (thumbTimerRef.current) clearTimeout(thumbTimerRef.current);
+        thumbTimerRef.current = setTimeout(() => {
+            thumbTimerRef.current = null;
+            updateThumbnail();
+        }, THUMBNAIL_DEBOUNCE_MS);
+    }, [updateThumbnail]);
+
+    // On unmount / board switch, flush a pending preview so a board closed soon
+    // after editing still gets an up-to-date thumbnail.
+    useEffect(() => {
+        return () => {
+            if (thumbTimerRef.current) {
+                clearTimeout(thumbTimerRef.current);
+                thumbTimerRef.current = null;
+            }
+            if (thumbDirtyRef.current) updateThumbnail();
+        };
+    }, [updateThumbnail]);
+
     useEffect(() => {
         canvasReadyRef.current = false;
     }, [boardId]);
@@ -302,7 +345,7 @@ export default function CanvasPage({ boardId, onClose }) {
         {
             isCanvasReady,
             getExpectedUpdatedAt: () => syncedAtRef.current,
-            onSaved: (ts) => { syncedAtRef.current = ts; },
+            onSaved: (ts) => { syncedAtRef.current = ts; scheduleThumbnail(); },
             onConflict: () => setConflict(true),
         }
     );
@@ -422,6 +465,7 @@ export default function CanvasPage({ boardId, onClose }) {
             if (result?.updatedAt) syncedAtRef.current = result.updatedAt;
             setConflict(false);
             resumeAutoSave();
+            scheduleThumbnail();
             setSaveStatus({ type: 'success', text: `Saved ${elements.length} elements.` });
             refreshRevisions();
             setTimeout(() => setSaveStatus(null), 2000);
@@ -433,7 +477,7 @@ export default function CanvasPage({ boardId, onClose }) {
             }
             setSaveStatus({ type: 'error', text: e.message });
         }
-    }, [boardId, board, getElementsAndState, name, tags, updateBoard, refreshRevisions, resumeAutoSave]);
+    }, [boardId, board, getElementsAndState, name, tags, updateBoard, refreshRevisions, resumeAutoSave, scheduleThumbnail]);
 
     const handleAddShape = useCallback(
         (newElements) => {

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Card from '@splunk/react-ui/Card';
 import CardLayout from '@splunk/react-ui/CardLayout';
@@ -17,6 +17,8 @@ import { BOARD_VISIBILITY, visibilityLabel } from '../lib/boardScope';
 import { buildShareLink } from '../lib/url';
 import { buildBoardBundle, buildBoardCollection, parseBoardImport } from '../lib/boardBundle';
 import { APP_VERSION } from '../lib/version';
+import { generateThumbnailDataUrl, boardHasContent } from '../lib/thumbnail';
+import { getThumbnail, saveThumbnail } from '../lib/thumbnailStore';
 
 function formatDate(ts) {
     if (!ts) return '';
@@ -48,6 +50,107 @@ function downloadJson(obj, fileName) {
 const FILTER_ALL = 'all';
 const FILTER_SHARED = 'shared';
 const FILTER_PRIVATE = 'private';
+
+const THUMB_HEIGHT = 150;
+
+const thumbFrameStyle = {
+    height: THUMB_HEIGHT,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    background: 'rgba(127, 127, 127, 0.10)',
+    borderBottom: '1px solid rgba(127, 127, 127, 0.2)',
+};
+
+// Fixed-aspect board preview. Prefers the stored thumbnail; if none exists and
+// the board has content, it renders one on the fly and backfills the store so
+// the next visit is instant. Rendering is deferred until the card scrolls near
+// the viewport to keep large lists responsive.
+function BoardThumbnail({ board }) {
+    const [src, setSrc] = useState(null);
+    // status: loading | ready | empty | error
+    const [status, setStatus] = useState('loading');
+    const [visible, setVisible] = useState(false);
+    const frameRef = useRef(null);
+
+    useEffect(() => {
+        if (visible) return undefined;
+        const el = frameRef.current;
+        if (!el || typeof IntersectionObserver === 'undefined') {
+            setVisible(true);
+            return undefined;
+        }
+        const io = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    setVisible(true);
+                    io.disconnect();
+                }
+            },
+            { rootMargin: '250px' }
+        );
+        io.observe(el);
+        return () => io.disconnect();
+    }, [visible]);
+
+    useEffect(() => {
+        if (!visible) return undefined;
+        let cancelled = false;
+        setStatus('loading');
+        setSrc(null);
+        (async () => {
+            const stored = await getThumbnail(board.id);
+            if (cancelled) return;
+            if (stored) {
+                setSrc(stored);
+                setStatus('ready');
+                return;
+            }
+            if (!boardHasContent(board.elements)) {
+                setStatus('empty');
+                return;
+            }
+            try {
+                const image = await generateThumbnailDataUrl({
+                    elements: board.elements,
+                    appState: board.appState,
+                    files: board.files,
+                });
+                if (cancelled) return;
+                if (image) {
+                    setSrc(image);
+                    setStatus('ready');
+                    saveThumbnail(board.id, image);
+                } else {
+                    setStatus('empty');
+                }
+            } catch {
+                if (!cancelled) setStatus('error');
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+        // Regenerate when the board's content changes (updatedAt) or scope flips.
+    }, [visible, board.id, board.updatedAt]);
+
+    return (
+        <div ref={frameRef} style={thumbFrameStyle}>
+            {status === 'ready' && src ? (
+                <img
+                    src={src}
+                    alt=""
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
+            ) : (
+                <span style={{ fontSize: 12, opacity: 0.5 }}>
+                    {status === 'loading' ? 'Loading preview…' : 'No preview'}
+                </span>
+            )}
+        </div>
+    );
+}
 
 function VisibilityToggle({ value, onChange }) {
     return (
@@ -286,6 +389,7 @@ export default function BoardListPage({ onOpen }) {
                 <CardLayout cardWidth={300} wrap="wrap">
                     {filtered.map((b) => (
                         <Card key={`${b.scope}:${b.id}`} style={{ minHeight: 160 }}>
+                            <BoardThumbnail board={b} />
                             <Card.Header
                                 title={b.name}
                                 subtitle={boardSubtitle(b)}
