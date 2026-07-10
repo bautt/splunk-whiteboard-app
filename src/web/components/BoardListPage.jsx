@@ -20,6 +20,9 @@ import { buildBoardsZipBlob } from '../lib/exportBoardZip';
 import { APP_VERSION } from '../lib/version';
 import { generateThumbnailDataUrl, boardHasContent } from '../lib/thumbnail';
 import { getThumbnail, saveThumbnail } from '../lib/thumbnailStore';
+import STARTER_BOARDS from '../lib/starterBoards';
+import { migrateTemplatesToBoards } from '../lib/migrateTemplates';
+import { rehydrateMissingFiles } from '../lib/boardFiles';
 
 function formatDate(ts) {
     if (!ts) return '';
@@ -156,6 +159,78 @@ function BoardThumbnail({ board }) {
     );
 }
 
+// Preview for an in-bundle starter board. Starter boards are not in KV, so the
+// thumbnail is rendered on the fly and not persisted.
+function StarterThumbnail({ starter }) {
+    const [src, setSrc] = useState(null);
+    const [status, setStatus] = useState('loading');
+    const frameRef = useRef(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        if (visible) return undefined;
+        const el = frameRef.current;
+        if (!el || typeof IntersectionObserver === 'undefined') {
+            setVisible(true);
+            return undefined;
+        }
+        const io = new IntersectionObserver(
+            (entries) => {
+                if (entries.some((entry) => entry.isIntersecting)) {
+                    setVisible(true);
+                    io.disconnect();
+                }
+            },
+            { rootMargin: '250px' }
+        );
+        io.observe(el);
+        return () => io.disconnect();
+    }, [visible]);
+
+    useEffect(() => {
+        if (!visible) return undefined;
+        let cancelled = false;
+        setStatus('loading');
+        (async () => {
+            try {
+                const image = await generateThumbnailDataUrl({
+                    elements: starter.elements,
+                    appState: starter.appState || {},
+                    files: rehydrateMissingFiles(starter.elements, starter.files),
+                });
+                if (cancelled) return;
+                if (image) {
+                    setSrc(image);
+                    setStatus('ready');
+                } else {
+                    setStatus('empty');
+                }
+            } catch {
+                if (!cancelled) setStatus('error');
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [visible, starter.id]);
+
+    return (
+        <div ref={frameRef} style={thumbFrameStyle}>
+            {status === 'ready' && src ? (
+                <img
+                    src={src}
+                    alt=""
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
+            ) : (
+                <span style={{ fontSize: 12, opacity: 0.5 }}>
+                    {status === 'loading' ? 'Loading preview…' : 'No preview'}
+                </span>
+            )}
+        </div>
+    );
+}
+
 function VisibilityToggle({ value, onChange }) {
     return (
         <ControlGroup label="Visibility" labelPosition="left" style={{ marginBottom: 0 }}>
@@ -189,6 +264,38 @@ export default function BoardListPage({ onOpen }) {
     const [notice, setNotice] = useState(null);
     const [importing, setImporting] = useState(false);
     const importInputRef = useRef(null);
+    const migratedRef = useRef(false);
+
+    // One-time migration of legacy user templates into shared boards.
+    useEffect(() => {
+        if (migratedRef.current) return;
+        migratedRef.current = true;
+        (async () => {
+            try {
+                const count = await migrateTemplatesToBoards();
+                if (count > 0) {
+                    await refresh();
+                    setNotice({
+                        type: 'success',
+                        text: `Migrated ${count} saved template${count !== 1 ? 's' : ''} to shared board${count !== 1 ? 's' : ''}.`,
+                    });
+                }
+            } catch {
+                // Non-fatal: templates simply remain until a later attempt.
+            }
+        })();
+    }, [refresh]);
+
+    const filteredStarters = useMemo(() => {
+        if (filter === FILTER_PRIVATE || filter === FILTER_SHARED) return [];
+        const q = query.trim().toLowerCase();
+        if (!q) return STARTER_BOARDS;
+        return STARTER_BOARDS.filter(
+            (s) =>
+                s.label.toLowerCase().includes(q) ||
+                (s.description || '').toLowerCase().includes(q)
+        );
+    }, [query, filter]);
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -204,6 +311,43 @@ export default function BoardListPage({ onOpen }) {
         const created = await createBoard(newName.trim() || 'Untitled', '', newVisibility);
         setNewName('');
         if (created?.id) onOpen(created.id);
+    };
+
+    // Clone a starter board into a fresh private board, then open it. Keeps the
+    // shipped starter immutable so app upgrades never overwrite user work.
+    const handleUseStarter = async (starter) => {
+        try {
+            const created = await importBoard({
+                name: starter.label,
+                elements: starter.elements,
+                appState: starter.appState || {},
+                files: rehydrateMissingFiles(starter.elements, starter.files),
+                visibility: BOARD_VISIBILITY.PRIVATE,
+            });
+            if (created?.id) onOpen(created.id);
+        } catch (e) {
+            setNotice({ type: 'error', text: `Could not create board: ${e.message}` });
+        }
+    };
+
+    const handleDuplicate = async (board) => {
+        try {
+            await importBoard({
+                name: `${board.name} (copy)`,
+                tags: board.tags || '',
+                elements: board.elements,
+                appState: board.appState || {},
+                files: board.files,
+                visibility: BOARD_VISIBILITY.PRIVATE,
+            });
+            await refresh();
+            setNotice({
+                type: 'success',
+                text: `Duplicated "${board.name}" as a private board.`,
+            });
+        } catch (e) {
+            setNotice({ type: 'error', text: `Duplicate failed: ${e.message}` });
+        }
     };
 
     const confirmDelete = async () => {
@@ -339,7 +483,8 @@ export default function BoardListPage({ onOpen }) {
 
             <P style={{ marginTop: 0, marginBottom: 16, opacity: 0.75 }}>
                 New boards default to <strong>Just me</strong> (private). Share a board from the canvas
-                to make it visible to everyone on this instance. Templates remain shared for all users.
+                to make it visible to everyone on this instance. Start from a <strong>starter board</strong>
+                {' '}below or <strong>Duplicate</strong> any board to make your own editable copy.
             </P>
 
             <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
@@ -382,6 +527,37 @@ export default function BoardListPage({ onOpen }) {
                 <Message type="error">Failed to load whiteboards: {error}</Message>
             )}
 
+            {filteredStarters.length > 0 && (
+                <div style={{ marginBottom: 24 }}>
+                    <Heading level={2} style={{ marginBottom: 4 }}>
+                        Starter boards
+                    </Heading>
+                    <P style={{ marginTop: 0, marginBottom: 12, opacity: 0.7 }}>
+                        Ready-made architecture diagrams. <strong>Use</strong> creates your own
+                        editable copy — the originals stay unchanged across app updates.
+                    </P>
+                    <CardLayout cardWidth={300} wrap="wrap">
+                        {filteredStarters.map((s) => (
+                            <Card key={s.id} style={{ minHeight: 160 }}>
+                                <StarterThumbnail starter={s} />
+                                <Card.Header title={s.label} subtitle="Starter board" />
+                                <Card.Body>
+                                    {s.description && <P>{s.description}</P>}
+                                </Card.Body>
+                                <Card.Footer showBorder>
+                                    <Button
+                                        appearance="primary"
+                                        onClick={() => handleUseStarter(s)}
+                                    >
+                                        Use
+                                    </Button>
+                                </Card.Footer>
+                            </Card>
+                        ))}
+                    </CardLayout>
+                </div>
+            )}
+
             {loading ? (
                 <P>Loading…</P>
             ) : filtered.length === 0 ? (
@@ -418,6 +594,14 @@ export default function BoardListPage({ onOpen }) {
                                     Open
                                 </Button>
                                 <div style={{ display: 'flex', gap: 8 }}>
+                                    <Link
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleDuplicate(b);
+                                        }}
+                                    >
+                                        Duplicate
+                                    </Link>
                                     <Link
                                         onClick={(e) => {
                                             e.preventDefault();

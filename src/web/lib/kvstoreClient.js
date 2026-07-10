@@ -88,6 +88,15 @@ export const kv = {
             [200, 204]
         );
     },
+    // Delete every record in a collection for the given namespace. A DELETE on
+    // the collection's data endpoint (no key) clears all rows.
+    clear(collection, scopeKey = BOARD_SCOPE.SHARED) {
+        return send(
+            withOutputModeJson(endpoint(collection, '', scopeKey)),
+            { method: 'DELETE' },
+            [200, 204]
+        );
+    },
     query(collection, params, scopeKey = BOARD_SCOPE.SHARED) {
         const qs = Object.entries(params)
             .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)

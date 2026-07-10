@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Heading from '@splunk/react-ui/Heading';
 import P from '@splunk/react-ui/Paragraph';
 import Link from '@splunk/react-ui/Link';
 import Card from '@splunk/react-ui/Card';
+import Button from '@splunk/react-ui/Button';
+import Message from '@splunk/react-ui/Message';
+import Text from '@splunk/react-ui/Text';
 
 import { APP_VERSION } from '../lib/version';
 import { README_URL, DEVELOPER_URL, RELEASE_NOTES_URL, GITHUB_REPO } from '../lib/appLinks';
+import { purgeAllWhiteboardData } from '../lib/cleanup';
 
 const WHITEBOARD_URL = '/en-US/app/whiteboard_app/whiteboard';
 
@@ -27,6 +31,118 @@ function Kbd({ children }) {
         >
             {children}
         </code>
+    );
+}
+
+const CONFIRM_WORD = 'DELETE';
+
+function CleanupSection() {
+    const [expanded, setExpanded] = useState(false);
+    const [confirmText, setConfirmText] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [result, setResult] = useState(null);
+
+    const reset = () => {
+        setExpanded(false);
+        setConfirmText('');
+    };
+
+    const runPurge = async () => {
+        if (confirmText.trim().toUpperCase() !== CONFIRM_WORD) return;
+        // Final browser-level gate on top of the typed confirmation.
+        if (!window.confirm(
+            'This permanently deletes ALL whiteboards, history, thumbnails and shared '
+            + 'content in this app. This cannot be undone. Continue?'
+        )) {
+            return;
+        }
+        setBusy(true);
+        setResult(null);
+        try {
+            const { errors } = await purgeAllWhiteboardData();
+            if (errors.length) {
+                setResult({
+                    type: 'warning',
+                    text: `Cleanup finished with ${errors.length} issue(s): ${errors.join('; ')}`,
+                });
+            } else {
+                setResult({
+                    type: 'success',
+                    text: 'All whiteboard data was deleted. You can now safely uninstall the app.',
+                });
+            }
+            reset();
+        } catch (e) {
+            setResult({ type: 'error', text: `Cleanup failed: ${e.message}` });
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    return (
+        <Card style={{ marginTop: 28, border: '1px solid #dc2626' }}>
+            <Card.Header title="Danger zone — reset or delete all data" />
+            <Card.Body>
+                <P style={{ margin: 0 }}>
+                    Permanently delete <strong>all whiteboard content</strong> from this instance:
+                    every board (shared and your private ones), version history, snapshots, preview
+                    thumbnails, and any legacy template data. Use this to clean up KV Store{' '}
+                    <strong>before uninstalling</strong>, or to <strong>reset the app to factory
+                    defaults</strong>. <strong>This cannot be undone.</strong>
+                </P>
+                <P style={{ marginBottom: 0, opacity: 0.75, fontSize: 13 }}>
+                    The built-in <strong>starter boards</strong> ship in the app and are not stored in
+                    KV Store, so they remain available after a reset. Clears all shared boards for
+                    every user plus your own private boards; other users&apos; private boards are
+                    removed automatically when an admin uninstalls the app.
+                </P>
+
+                {result && (
+                    <Message
+                        type={result.type}
+                        onRequestRemove={() => setResult(null)}
+                        style={{ marginTop: 12 }}
+                    >
+                        {result.text}
+                    </Message>
+                )}
+
+                {!expanded ? (
+                    <Button
+                        appearance="destructive"
+                        onClick={() => { setResult(null); setExpanded(true); }}
+                        style={{ marginTop: 12 }}
+                    >
+                        Delete all whiteboard data…
+                    </Button>
+                ) : (
+                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <P style={{ margin: 0, fontSize: 13 }}>
+                            Type <code>{CONFIRM_WORD}</code> to confirm:
+                        </P>
+                        <Text
+                            value={confirmText}
+                            onChange={(_, { value }) => setConfirmText(value)}
+                            placeholder={CONFIRM_WORD}
+                            disabled={busy}
+                            style={{ maxWidth: 220 }}
+                        />
+                        <div style={{ display: 'flex', gap: 8 }}>
+                            <Button
+                                appearance="destructive"
+                                onClick={runPurge}
+                                disabled={busy || confirmText.trim().toUpperCase() !== CONFIRM_WORD}
+                            >
+                                {busy ? 'Deleting…' : 'Delete everything'}
+                            </Button>
+                            <Button appearance="secondary" onClick={reset} disabled={busy}>
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                )}
+            </Card.Body>
+        </Card>
     );
 }
 
@@ -113,8 +229,9 @@ export default function AboutPage() {
                         , import a set, then drag shapes from Excalidraw&apos;s library panel.
                     </li>
                     <li>
-                        <strong>Templates tab:</strong> start from built-in examples or save the
-                        current board as a reusable template (theme &amp; background included).
+                        <strong>Starter boards:</strong> the board list ships ready-made architecture
+                        diagrams — click <strong>Use</strong> to create your own editable copy, or{' '}
+                        <strong>Duplicate</strong> any board to branch off it.
                     </li>
                 </ul>
             </div>
@@ -185,6 +302,9 @@ export default function AboutPage() {
                     </li>
                 </ul>
             </div>
+
+            {/* Danger zone --------------------------------------------------- */}
+            <CleanupSection />
         </div>
     );
 }

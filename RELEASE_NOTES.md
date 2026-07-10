@@ -4,6 +4,19 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.69 — 2026-07-10
+
+**Starter boards replace the template concept**
+- The board list now has a **Starter boards** section (Splunk Platform, Cisco Data Fabric, SVA C1/C11 & C3/C13). Click **Use** to create your own editable private copy and open it — the shipped originals never change, so app updates can't overwrite your work.
+- **Duplicate** action on every board card makes a private copy (`<name> (copy)`), so branching off any board (including a shared one) is one click.
+- The separate **Templates** tab and the user-saved-template feature (with its 30-version history) have been removed. Reusing a layout across a team is now: make a board, share it, and colleagues **Duplicate** it.
+- Existing user-saved templates are automatically **migrated to shared boards** on first load after upgrade.
+
+**Uninstall cleanup**
+- The **About** tab has a new *Danger zone* with **Delete all whiteboard data** — a guarded (type-to-confirm) action that purges every board, its history/snapshots, thumbnails, and legacy template data from KV Store before uninstalling the app.
+
+---
+
 ## v0.3.68 — 2026-07-10
 
 **SVA architecture templates**

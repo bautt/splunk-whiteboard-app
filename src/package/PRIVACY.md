@@ -4,7 +4,7 @@
 
 ## Summary
 
-Whiteboard App stores all application data on your Splunk deployment. The app author does not operate a backend service and does not receive your board or template data.
+Whiteboard App stores all application data on your Splunk deployment. The app author does not operate a backend service and does not receive your board data.
 
 ## Data stored on your Splunk instance
 
@@ -15,8 +15,7 @@ The app uses Splunk KV Store collections to persist:
 | `whiteboards` | Board name, tags, canvas elements, owner username, timestamps |
 | `whiteboard_versions` | Named snapshots per board |
 | `whiteboard_revisions` | Automatic revision history |
-| `whiteboard_templates` | User-saved templates |
-| `whiteboard_template_revisions` | Template revision history |
+| `whiteboard_thumbnails` | Board preview images |
 
 Usernames from your Splunk session may be recorded in `owner`, `created_by`, and `updated_by` fields. All data remains on your Splunk Enterprise or Splunk Cloud stack under your organization's access controls.
 

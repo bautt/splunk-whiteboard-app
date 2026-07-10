@@ -9,7 +9,6 @@ import Modal from '@splunk/react-ui/Modal';
 import P from '@splunk/react-ui/Paragraph';
 
 import LayoutPanels from '@splunk/react-icons/LayoutPanels';
-import FloppyDisk from '@splunk/react-icons/FloppyDisk';
 import ListNumbered from '@splunk/react-icons/ListNumbered';
 import Bookshelf from '@splunk/react-icons/Bookshelf';
 import Clock from '@splunk/react-icons/Clock';
@@ -18,7 +17,6 @@ import Paintbrush from '@splunk/react-icons/Paintbrush';
 
 import AppearancePanel from './AppearancePanel';
 
-import TemplatePanel from './TemplatePanel';
 import ShapesPanel from './ShapesPanel';
 import BuildPanel from './BuildPanel';
 import HistoryPanel from './HistoryPanel';
@@ -44,7 +42,6 @@ import {
     normalizeHexColor,
     normalizeTheme,
     resolveAppearancePatch,
-    resolveDisplayBackgroundColor,
     storedBackgroundColor,
 } from '../lib/canvasAppearance';
 import { debug } from '../lib/log';
@@ -64,7 +61,6 @@ const THUMBNAIL_DEBOUNCE_MS = 12000;
 
 const TABS = [
     { label: 'Shapes', value: 'shapes', Icon: LayoutPanels },
-    { label: 'Templates', value: 'templates', Icon: FloppyDisk },
     { label: 'Build', value: 'build', Icon: ListNumbered },
     { label: 'Canvas', value: 'appearance', Icon: Paintbrush },
     { label: 'Libraries', value: 'libraries', Icon: Bookshelf },
@@ -562,31 +558,6 @@ export default function CanvasPage({ boardId, onClose }) {
             markDirty();
         },
         [computeInsertPos, markDirty]
-    );    const handleApplyTemplate = useCallback(
-        (templateElements, templateFiles, templateAppState) => {
-            if (!excalidrawAPI) return;
-            const files = rehydrateMissingFiles(templateElements, templateFiles);
-            registerBoardFiles(excalidrawAPI, files);
-            excalidrawAPI.updateScene({
-                elements: restoreElements(templateElements, null),
-            });
-            // Templates may declare an intended theme/background (e.g. the dark
-            // Splunk Platform canvas, or a user template's saved appearance).
-            // Apply it so the board doesn't inherit the previous board's look.
-            if (
-                templateAppState &&
-                (templateAppState.theme ||
-                    templateAppState.displayBackgroundColor ||
-                    templateAppState.viewBackgroundColor)
-            ) {
-                handleAppearanceChange({
-                    theme: normalizeTheme(templateAppState),
-                    displayBackgroundColor: resolveDisplayBackgroundColor(templateAppState),
-                });
-            }
-            markDirty();
-        },
-        [excalidrawAPI, markDirty, handleAppearanceChange]
     );
 
     const handleSnapshot = useCallback(
@@ -743,8 +714,6 @@ export default function CanvasPage({ boardId, onClose }) {
         switch (activeTab) {
             case 'shapes':
                 return <ShapesPanel onAdd={handleAddShape} onAddImage={handleAddImage} />;
-            case 'templates':
-                return <TemplatePanel onApply={handleApplyTemplate} getElementsAndState={getElementsAndState} />;
             case 'history':
                 return (
                     <HistoryPanel

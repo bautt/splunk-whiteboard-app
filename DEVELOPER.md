@@ -56,12 +56,12 @@ whiteboard_app/
 ├── DEVELOPER.md                      # This file
 ├── assets/
 │   ├── generated/                    # Example .whiteboard.json bundles (import via Export panel)
-│   ├── prebuilt-templates/           # Shipped built-in templates
+│   ├── prebuilt-templates/           # Shipped starter board JSON bundles
 │   ├── generate_alt_icon.py          # Regenerate app icons from 400px master
 │   ├── listing_icon_200.png          # Splunkbase listing (200×200)
 │   ├── listing_icon_400.png          # Splunkbase listing (400×400)
 │   └── screenshot.png                # README product screenshot
-├── scripts/                          # Board/template generation utilities
+├── scripts/                          # Board generation utilities
 └── src/
     ├── package/                      # Splunk app skeleton (copied verbatim to dist/)
     │   ├── default/
@@ -86,23 +86,23 @@ whiteboard_app/
         │   ├── App.jsx               # Board list + routing
         │   ├── CanvasPage.jsx        # Main canvas, toolbar, resizable sidebar
         │   ├── ShapesPanel.jsx       # Splunk shape library + Marketing Icons
-        │   ├── TemplatePanel.jsx     # Built-in & user templates
         │   ├── LibraryPanel.jsx      # Browse libraries.excalidraw.com
         │   ├── BuildPanel.jsx        # Reveal-on-click steps
         │   ├── HistoryPanel.jsx      # Version snapshots
         │   └── ExportPanel.jsx       # PNG / PDF / JSON / link export
         ├── hooks/
         │   ├── useKVStore.js         # Board CRUD + auto-save
-        │   ├── useVersions.js        # Snapshot CRUD
-        │   └── useTemplates.js       # User template CRUD
+        │   └── useVersions.js        # Snapshot CRUD
         └── lib/
             ├── kvstoreClient.js      # Splunk KV Store REST wrapper (CSRF-safe)
             ├── shapes.js             # Splunk shape factory functions
             ├── shapeIcons.js         # SVG markup for shape library
             ├── marketingIcons.js     # Splunk Marketing Icons (raw SVG strings)
             ├── brandIcons.js         # Brand logo icons
-            ├── drpIcons.js           # Pre-encoded icons for DRP-style templates
-            ├── prebuiltTemplates.js  # Shipped built-in template registry
+            ├── drpIcons.js           # Pre-encoded icons for DRP-style boards
+            ├── starterBoards.js      # Shipped starter board registry
+            ├── migrateTemplates.js   # One-time legacy template → shared board migration
+            ├── cleanup.js            # Purge all KV data (About → Danger zone)
             ├── boardBundle.js        # .whiteboard.json import/export format
             └── build.js              # Build/reveal step helpers
 ```
@@ -116,8 +116,9 @@ whiteboard_app/
 | `whiteboards` | Board metadata + serialised canvas elements |
 | `whiteboard_versions` | Named snapshots per board |
 | `whiteboard_revisions` | Automatic revision history per board |
-| `whiteboard_templates` | User-saved templates (elements + embedded files) |
-| `whiteboard_template_revisions` | Automatic revision history per template |
+| `whiteboard_thumbnails` | Board preview images |
+| `whiteboard_templates` *(deprecated)* | Legacy user templates — retained only so pre-0.3.69 data can be migrated to shared boards, then emptied. Remove in a future release. |
+| `whiteboard_template_revisions` *(deprecated)* | Legacy template revision history — emptied during migration. |
 
 ### Board visibility (namespaces)
 
@@ -126,7 +127,7 @@ whiteboard_app/
 | **Everyone** (shared) | App-wide | `nobody` / `app` |
 | **Just me** (private) | Per-user | current user / `user` |
 
-New boards default to **private**. The owner can **Share with everyone** from the canvas, which copies the board (and its revision history) into the shared namespace and removes the private copy. Templates always use the shared namespace.
+New boards default to **private**. The owner can **Share with everyone** from the canvas, which copies the board (and its revision history) into the shared namespace and removes the private copy. Starter boards are not stored in KV Store — they ship in the app bundle (`src/web/lib/starterBoards.js`) and are cloned into a private board when used.
 
 Board documents include a `visibility` field (`private` | `shared`). Legacy boards in the shared namespace without `visibility` are treated as shared.
 
@@ -158,37 +159,32 @@ make package && make deploy-norestart
 
 ---
 
-## Adding a new built-in template
+## Adding a new starter board
 
 ### Option A — Author in the app
 
 1. Draw the board in the running app.
 2. Open the **Export** tab → **Download board JSON**.
-3. Save the file under `assets/prebuilt-templates/` (e.g. `my-template.whiteboard.json`).
-4. Register it in `assets/prebuilt-templates/manifest.json`.
-5. Import the JSON in `src/web/lib/prebuiltTemplates.js` and append to `PREBUILT_TEMPLATES`.
-6. Run `make package && make deploy-norestart`.
+3. Save the file under `assets/prebuilt-templates/` (e.g. `my-board.whiteboard.json`).
+4. Import the JSON in `src/web/lib/starterBoards.js` and append it to `STARTER_BOARDS` (optionally with a theme/background `appState` override). `manifest.json` in that folder is documentation only and not read at runtime.
+5. Run `make package && make deploy-norestart`.
 
 ### Option B — Generate with scripts
 
-Example boards can be generated with Python scripts in `scripts/`:
+Starter boards can be generated with Python scripts in `scripts/`:
 
 | Script | Purpose |
 |---|---|
-| `generate-cisco-data-fabric-board.py` | Cisco Data Fabric template |
+| `generate-cisco-data-fabric-board.py` | Cisco Data Fabric board |
 | `generate-data-chaos-clarity-board.py` | Data Chaos to AI Clarity example |
 | `generate-federated-search-board.py` | Federated Search example |
-| `refine-splunk-platform-board.py` | Splunk Platform (dark) template |
+| `generate-c3c13-shc-board.py` | SVA C3/C13 (SHC single site) board |
+| `generate-c1c11-board.py` | SVA C1/C11 (single site) board |
+| `refine-splunk-platform-board.py` | Splunk Platform (dark) board |
 | `assign-reveal-order.py` | Assign build/reveal step order to elements |
 | `wbgen_common.py` | Shared helpers for board generation |
 
 Output typically lands in `assets/generated/`. Copy or promote to `assets/prebuilt-templates/` and register as above.
-
-To export user templates from a live Splunk instance:
-
-```bash
-python3 scripts/export-kv-templates.py
-```
 
 ---
 

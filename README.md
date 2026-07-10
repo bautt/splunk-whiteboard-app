@@ -16,71 +16,41 @@ Draw architecture diagrams, workshop sketches, and presentation flows **inside S
 
 ## Get started
 
+<p align="center">
+  <img src="assets/screenshot-board-list.png" alt="Whiteboard App board list with thumbnail previews, starter boards, and import/export actions" width="900" />
+</p>
+
 1. Open **Apps → Whiteboard App** (or go to `/en-US/app/whiteboard_app/whiteboard`).
 2. Enter a name and click **Create board** to start from a blank Excalidraw canvas.
 3. Draw with the Excalidraw toolbar. Your work **auto-saves** every few seconds.
 
-From the board list you can search boards, rename them, copy a shareable link, or delete boards you no longer need.
+From the board list you can search boards, filter by visibility, import or export boards, copy a shareable link, or delete boards you no longer need. Each card shows a thumbnail preview of the canvas. Use **Export all** to download every accessible board as individual `.whiteboard.json` files in a ZIP — handy for backup or moving boards to another instance.
 
 ---
 
 ## Drawing with Excalidraw
 
-The canvas is a full Excalidraw editor embedded in Splunk Web. Use the toolbar at the top of the canvas:
+The canvas is a full Excalidraw editor embedded in Splunk Web. Use the toolbar at the top of the canvas. Double-click any shape to edit its label. Drag elements freely; hold `Shift` to constrain angles. Group elements with Excalidraw's built-in grouping (`Ctrl+G`). Keyboard shortcuts speed up common tools — see [Keyboard shortcuts](#keyboard-shortcuts) below.
 
-| Tool | Shortcut |
-|---|---|
-| Select / Move | `V` or `1` |
-| Text | `T` or `2` |
-| Rectangle | `R` or `3` |
-| Diamond | `D` or `4` |
-| Ellipse | `O` or `5` |
-| Arrow | `A` or `6` |
-| Line | `L` or `7` |
-| Free-draw | `P` or `8` |
-| Eraser | `E` or `0` |
-| Zoom in / out | `Ctrl +` / `Ctrl -` |
-| Fit canvas | `Shift 1` |
-
-Double-click any shape to edit its label. Drag elements freely; hold `Shift` to constrain angles. Group elements with Excalidraw's built-in grouping (`Ctrl+G`).
-
-The right sidebar adds Splunk-specific panels on top of Excalidraw — shapes, templates, libraries, build steps, history, and export. Drag the left edge of the sidebar to resize it; your preference is remembered.
+The right sidebar adds Splunk-specific panels on top of Excalidraw — shapes, libraries, build steps, history, and export. Drag the left edge of the sidebar to resize it; your preference is remembered.
 
 ---
 
-## Start from scratch or use a template
+## Start from scratch, a starter, or a copy
 
 ### Blank board
 
 The fastest path: **Create board** on the home screen. You get an empty Excalidraw canvas. Add Splunk shapes from the sidebar, draw freehand, or import content (see [Export & import](#export--import) below).
 
-### Built-in examples
+### Starter boards
 
-Open the **Templates** tab in the sidebar. Shipped examples include:
+The board list shows a **Starter boards** section with ready-made architecture diagrams — Splunk Platform, Cisco Data Fabric, and SVA (C1/C11, C3/C13) reference architectures. Click **Use** to create your own editable copy as a private board and open it.
 
-| Template | What it's for |
-|---|---|
-| Splunk Platform (dark canvas) | Splunk platform architecture on a dark canvas; works well with Present / Build mode |
-| Cisco Data Fabric | Cisco Data Fabric architecture overview |
-| Cisco Data Fabric (MDL) | Cisco Data Fabric with MDL layer detail |
+Starter boards are shipped with the app and never change your work: **Use** always clones, so app updates that refresh the starters can't overwrite a board you've edited.
 
-Click **Replace board** on a template card to load it onto the canvas. **This replaces everything on the canvas** — save your current board first if you need to keep it.
+### Duplicate any board
 
-### Save your own templates
-
-Reuse a layout across workshops or teams:
-
-1. Draw or load the board you want to reuse.
-2. In the **Templates** tab, click **Save current board as template**.
-3. Enter a name (and optional description) and press **Save template**.
-
-Saved templates appear under **Saved templates** and are visible to all users on the Splunk instance.
-
-**Update** a saved template to overwrite it with the current canvas. The app keeps the last 30 versions automatically — open **History** on a template card to restore an older version.
-
-**Delete** removes a template permanently (trash icon on the card).
-
-> **Tip:** Templates capture the canvas content (elements and embedded images), not the board name. Use **Replace board** to apply a template to your current board, then save the board normally.
+Every board card has a **Duplicate** action that creates a private copy (`<name> (copy)`). Use it to branch off an existing board — including one you made from a starter — or to keep a shared board as your own working copy. To reuse a layout across a team, make a board, share it (**Everyone**), and colleagues can duplicate it.
 
 ---
 
@@ -117,7 +87,9 @@ Open the **Libraries** tab to browse [libraries.excalidraw.com](https://librarie
 
 ## Export & import
 
-Open the **Export** tab in the sidebar.
+From the board list, **Export** on a card downloads that board as `<name>.whiteboard.json`. **Export all** downloads every accessible board as individual JSON files inside a ZIP archive — ideal for backup or migration. **Import board…** loads one or more `.whiteboard.json` files (or a legacy collection export) as new private boards.
+
+On the canvas, open the **Export** tab in the sidebar.
 
 ### Board backup (move between instances)
 
@@ -175,8 +147,6 @@ When you create a board, visibility defaults to **Just me**. Open the board and 
 
 > **Note on private boards:** "Just me" uses your Splunk user KV Store namespace, so other standard users cannot see it. Splunk administrators with the `admin_all_objects` capability can still view all users' private boards. Private boards are for separation and tidiness, not for storing sensitive secrets.
 
-**Templates** remain shared for all users on the instance (unchanged).
-
 To restrict who can write shared boards, see [DEVELOPER.md](DEVELOPER.md) (KV Store ACLs).
 
 ---
@@ -192,6 +162,23 @@ To restrict who can write shared boards, see [DEVELOPER.md](DEVELOPER.md) (KV St
 
 ---
 
+## Reset & uninstall
+
+The **About** tab has a *Danger zone* with **Delete all whiteboard data** — a guarded, type-to-confirm action that purges all boards, version history, snapshots, and preview thumbnails from KV Store. Use it to:
+
+- **Clean up before uninstalling** the app, so no board data is left behind.
+- **Reset to factory defaults** — because the shipped **starter boards** live in the app bundle (not KV Store), they survive the purge. After a cleanup you're left with a clean board list and the starters ready to clone again.
+
+The purge clears all **shared** boards (for every user) plus **your own private** boards. Other users' private boards live in their own KV namespaces and are removed automatically when an admin uninstalls the app. **This cannot be undone** — export anything you want to keep first.
+
+---
+
 ## For developers
 
-Build, deploy, extend shapes, add shipped templates, and repository layout: **[DEVELOPER.md](DEVELOPER.md)**.
+Build, deploy, extend shapes, add starter boards, and repository layout: **[DEVELOPER.md](DEVELOPER.md)**.
+
+---
+
+## Keyboard shortcuts
+
+Excalidraw keyboard shortcuts work on the canvas: `V` select, `T` text, `R` rectangle, `A` arrow, `P` free-draw, `E` eraser, `Ctrl +/-` zoom, `Shift 1` fit canvas, and more. Tool buttons show their shortcut keys on hover.

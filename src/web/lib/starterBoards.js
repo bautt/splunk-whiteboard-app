@@ -1,6 +1,11 @@
 /**
- * Shipped example templates (from assets/prebuilt-templates/).
- * Regenerate: python3 scripts/export-kv-templates.py
+ * Starter boards shipped with the app (from assets/prebuilt-templates/).
+ *
+ * These are immutable, in-bundle boards. Opening one always CLONES it into a
+ * new private board (see BoardListPage), so app upgrades that refresh these
+ * bundles never touch a user's saved copy.
+ *
+ * Regenerate the underlying bundles: python3 scripts/export-kv-templates.py
  */
 import { sanitizeElementsForPersistence } from './build';
 
@@ -12,9 +17,9 @@ import svaC1c11SingleSite from '../../../assets/prebuilt-templates/sva-c1c11-sin
 
 function fromBundle(bundle, overrides = {}) {
     const board = bundle.board || {};
-    // Templates may declare an intended canvas appearance (theme + background).
-    // Shipped bundles currently persist an empty appState, so allow an explicit
-    // override; fall back to whatever the bundle stored.
+    // Starter boards may declare an intended canvas appearance (theme +
+    // background). Shipped bundles currently persist an empty appState, so
+    // allow an explicit override; fall back to whatever the bundle stored.
     const appState = overrides.appState
         ?? (Object.keys(board.appState || {}).length ? board.appState : null);
     return {
@@ -27,7 +32,7 @@ function fromBundle(bundle, overrides = {}) {
     };
 }
 
-export const PREBUILT_TEMPLATES = [
+export const STARTER_BOARDS = [
     // Splunk Platform on a dark charcoal canvas.
     fromBundle(plattformWbDark, {
         id: 'plattform-wb-dark',
@@ -65,4 +70,4 @@ export const PREBUILT_TEMPLATES = [
     }),
 ];
 
-export default PREBUILT_TEMPLATES;
+export default STARTER_BOARDS;
