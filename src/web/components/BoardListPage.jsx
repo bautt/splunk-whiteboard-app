@@ -15,7 +15,8 @@ import ControlGroup from '@splunk/react-ui/ControlGroup';
 import { useBoards, useBoardMutations } from '../hooks/useKVStore';
 import { BOARD_VISIBILITY, visibilityLabel } from '../lib/boardScope';
 import { buildShareLink } from '../lib/url';
-import { buildBoardBundle, buildBoardCollection, parseBoardImport } from '../lib/boardBundle';
+import { buildBoardBundle, parseBoardImport } from '../lib/boardBundle';
+import { buildBoardsZipBlob } from '../lib/exportBoardZip';
 import { APP_VERSION } from '../lib/version';
 import { generateThumbnailDataUrl, boardHasContent } from '../lib/thumbnail';
 import { getThumbnail, saveThumbnail } from '../lib/thumbnailStore';
@@ -33,8 +34,7 @@ function safeFileName(name) {
     return (name || 'whiteboard').replace(/[^a-zA-Z0-9._-]+/g, '_');
 }
 
-function downloadJson(obj, fileName) {
-    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+function downloadBlob(blob, fileName) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -45,6 +45,10 @@ function downloadJson(obj, fileName) {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }, 0);
+}
+
+function downloadJson(obj, fileName) {
+    downloadBlob(new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }), fileName);
 }
 
 const FILTER_ALL = 'all';
@@ -241,12 +245,12 @@ export default function BoardListPage({ onOpen }) {
     const handleExportAll = () => {
         if (!boards.length) return;
         try {
-            const collection = buildBoardCollection(boards, APP_VERSION);
             const stamp = new Date().toISOString().slice(0, 10);
-            downloadJson(collection, `whiteboards-export-${stamp}.json`);
+            const zipBlob = buildBoardsZipBlob(boards, APP_VERSION);
+            downloadBlob(zipBlob, `whiteboards-export-${stamp}.zip`);
             setNotice({
                 type: 'success',
-                text: `Exported ${boards.length} board${boards.length !== 1 ? 's' : ''} to JSON.`,
+                text: `Exported ${boards.length} board${boards.length !== 1 ? 's' : ''} as individual JSON files in a ZIP.`,
             });
         } catch (e) {
             setNotice({ type: 'error', text: `Export failed: ${e.message}` });

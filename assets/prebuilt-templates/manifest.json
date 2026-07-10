@@ -16,5 +16,17 @@
     "label": "Cisco Data Fabric (MDL)",
     "description": "Cisco Data Fabric with MDL layer detail.",
     "file": "data-fabric-mdl.whiteboard.json"
+  },
+  {
+    "id": "sva-c3c13-shc-single-site",
+    "label": "SVA C3/C13 — SHC Single Site",
+    "description": "Splunk Validated Architecture: distributed clustered deployment with Search Head Cluster (single site).",
+    "file": "sva-c3c13-shc-single-site.whiteboard.json"
+  },
+  {
+    "id": "sva-c1c11-single-site",
+    "label": "SVA C1/C11 — Single Site",
+    "description": "Splunk Validated Architecture: distributed clustered deployment with standalone search heads (single site, no SHC).",
+    "file": "sva-c1c11-single-site.whiteboard.json"
   }
 ]

@@ -7,6 +7,8 @@ import { sanitizeElementsForPersistence } from './build';
 import plattformWbDark from '../../../assets/prebuilt-templates/plattform-wb-dark.whiteboard.json';
 import dataFabric from '../../../assets/prebuilt-templates/data-fabric.whiteboard.json';
 import dataFabricMdl from '../../../assets/prebuilt-templates/data-fabric-mdl.whiteboard.json';
+import svaC3c13ShcSingleSite from '../../../assets/prebuilt-templates/sva-c3c13-shc-single-site.whiteboard.json';
+import svaC1c11SingleSite from '../../../assets/prebuilt-templates/sva-c1c11-single-site.whiteboard.json';
 
 function fromBundle(bundle, overrides = {}) {
     const board = bundle.board || {};
@@ -46,6 +48,20 @@ export const PREBUILT_TEMPLATES = [
     }),
     fromBundle(dataFabricMdl, {
         appState: { theme: 'dark', displayBackgroundColor: '#1e1e1e' },
+    }),
+    fromBundle(svaC3c13ShcSingleSite, {
+        appState: {
+            theme: 'light',
+            displayBackgroundColor: '#ffffff',
+            viewBackgroundColor: '#ffffff',
+        },
+    }),
+    fromBundle(svaC1c11SingleSite, {
+        appState: {
+            theme: 'light',
+            displayBackgroundColor: '#ffffff',
+            viewBackgroundColor: '#ffffff',
+        },
     }),
 ];
 

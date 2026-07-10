@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import random
 import string
@@ -11,6 +12,8 @@ import urllib.request
 
 HOST = "https://v37823.1blu.de:8089"
 APP = "whiteboard_app"
+
+LINE_HEIGHT = 1.25
 
 C = {
     "ink": "#1B1B1B",
@@ -60,36 +63,80 @@ def base_el(**kw) -> dict:
     return el
 
 
+def text_metrics(text: str, fs: int, lh: float = LINE_HEIGHT) -> tuple[int, int]:
+    """Return (height, baseline) tuned to match Excalidraw canvas measurements."""
+    lines = max(1, len((text or "").split("\n")))
+    height = max(20, math.ceil(lines * fs * lh))
+    baseline = math.ceil(fs * lh * max(lines - 0.25, 0.75))
+    return height, baseline
+
+
+def text_width(text: str, fs: int, pad: int = 12) -> int:
+    """Estimate a tight Excalidraw text box width (fontFamily 2 / Nunito)."""
+    longest = max(len(line) for line in (text or " ").split("\n"))
+    return max(int(math.ceil(longest * fs * 0.47) + pad), int(fs * 1.5))
+
+
+def text_el(
+    x,
+    y,
+    w,
+    text,
+    fs=16,
+    color=None,
+    step=None,
+    align="center",
+    valign="middle",
+    lh: float = LINE_HEIGHT,
+    container_id=None,
+):
+    th, baseline = text_metrics(text, fs, lh)
+    return {
+        **base_el(type="text"),
+        "id": nid(),
+        "x": x,
+        "y": y,
+        "width": w,
+        "height": th,
+        "strokeColor": color or C["ink"],
+        "backgroundColor": "transparent",
+        "text": text,
+        "fontSize": fs,
+        "fontFamily": 2,
+        "textAlign": align,
+        "verticalAlign": valign,
+        "containerId": container_id,
+        "originalText": text,
+        "lineHeight": lh,
+        "baseline": baseline,
+        "roundness": None,
+        **({"customData": {"build": {"step": step}}} if step else {}),
+    }
+
+
 def rect(x, y, w, h, stroke, bg, sw=1.5, step=None, label=None, fs=16, label_y_offset=0):
     rid = nid()
     elements = []
     bound = []
     if label:
         tid = nid()
-        lines = label.split("\n")
-        th = max(20, len(lines) * int(fs * 1.25))
+        tw = text_width(label, fs)
+        th, _ = text_metrics(label, fs)
+        tx = x + (w - tw) / 2
         ty = y + h / 2 - th / 2 + label_y_offset
         bound = [{"type": "text", "id": tid}]
         elements.append(
             {
-                **base_el(type="text"),
+                **text_el(
+                    tx,
+                    ty,
+                    tw,
+                    label,
+                    fs=fs,
+                    step=step,
+                    container_id=rid,
+                ),
                 "id": tid,
-                "x": x + 8,
-                "y": ty,
-                "width": w - 16,
-                "height": th,
-                "strokeColor": C["ink"],
-                "backgroundColor": "transparent",
-                "text": label,
-                "fontSize": fs,
-                "fontFamily": 2,
-                "textAlign": "center",
-                "verticalAlign": "middle",
-                "containerId": rid,
-                "originalText": label,
-                "lineHeight": 1.25,
-                "roundness": None,
-                **({"customData": {"build": {"step": step}}} if step else {}),
             }
         )
     custom = {"build": {"step": step}} if step else None
@@ -112,28 +159,24 @@ def rect(x, y, w, h, stroke, bg, sw=1.5, step=None, label=None, fs=16, label_y_o
     return elements, rid
 
 
-def text_block(x, y, w, text, fs=16, color=None, step=None, align="center"):
-    lines = text.split("\n")
-    th = max(20, len(lines) * int(fs * 1.25))
-    return {
-        **base_el(type="text"),
-        "id": nid(),
-        "x": x,
-        "y": y,
-        "width": w,
-        "height": th,
-        "strokeColor": color or C["ink"],
-        "backgroundColor": "transparent",
-        "text": text,
-        "fontSize": fs,
-        "fontFamily": 2,
-        "textAlign": align,
-        "verticalAlign": "middle",
-        "originalText": text,
-        "lineHeight": 1.25,
-        "roundness": None,
-        **({"customData": {"build": {"step": step}}} if step else {}),
-    }
+def text_block(x, y, w, text, fs=16, color=None, step=None, align="center", valign="middle", lh: float = LINE_HEIGHT):
+    return text_el(x, y, w, text, fs=fs, color=color, step=step, align=align, valign=valign, lh=lh)
+
+
+def fit_text(x, y, text, fs=16, color=None, step=None, align="center", valign="middle", lh: float = LINE_HEIGHT):
+    """Standalone text with a tight content-fit width."""
+    tw = text_width(text, fs)
+    if align == "center":
+        pass  # x is already the left edge when pre-centered by caller
+    elif align == "right":
+        x = x - tw
+    return text_el(x, y, tw, text, fs=fs, color=color, step=step, align=align, valign=valign, lh=lh)
+
+
+def fit_text_centered(cx, y, text, fs=16, color=None, step=None, valign="middle", lh: float = LINE_HEIGHT):
+    """Standalone text centered on cx."""
+    tw = text_width(text, fs)
+    return fit_text(cx - tw / 2, y, text, fs=fs, color=color, step=step, align="center", valign=valign, lh=lh)
 
 
 def image(x, y, size, file_id, step=None):
@@ -226,6 +269,30 @@ def token() -> str:
     path = os.path.expanduser("~/.cursor/mcp.json")
     with open(path) as f:
         return json.load(f)["mcpServers"]["splunk-mcp-server"]["env"]["SPLUNK_TOKEN"]
+
+
+def update_board(board_id: str, bundle: dict) -> None:
+    board = bundle["board"]
+    payload = {
+        "name": bundle["name"],
+        "updated_at": int(time.time() * 1000),
+        "elements_json": json.dumps(
+            {"elements": board["elements"], "appState": board["appState"], "files": board["files"]}
+        ),
+    }
+    url = (
+        f"{HOST}/servicesNS/nobody/{APP}/storage/collections/data/whiteboards/"
+        f"{board_id}?output_mode=json"
+    )
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode(),
+        method="POST",
+        headers={"Authorization": f"Bearer {token()}", "Content-Type": "application/json"},
+    )
+    ctx = __import__("ssl")._create_unverified_context()
+    with urllib.request.urlopen(req, context=ctx) as res:
+        res.read()
 
 
 def create_board(name: str, bundle: dict, tags: str = "") -> str:

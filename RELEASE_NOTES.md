@@ -4,6 +4,18 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.68 — 2026-07-10
+
+**SVA architecture templates**
+- New prebuilt templates: **SVA C3/C13 — SHC Single Site** (Search Head Cluster) and **SVA C1/C11 — Single Site** (standalone search heads), with Splunk shape icons and doc links.
+- Board generators (`scripts/generate-c3c13-shc-board.py`, `scripts/generate-c1c11-board.py`) and shared layout helpers for tight-fit text and baselines.
+
+**Export all as ZIP**
+- **Export all** now downloads a `.zip` archive with one `<name>.whiteboard.json` file per board (same format as single-board **Export**), instead of a single combined collection JSON.
+- Legacy collection exports can still be imported via **Import board…**.
+
+---
+
 ## v0.3.65 — 2026-07-10
 
 **Board previews in the list**
@@ -16,9 +28,9 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 ## v0.3.64 — 2026-07-10
 
 **Import & export from the board list**
-- **Import board…** in the list toolbar loads one or more `.json` exports (single board or an "export all" collection), creating them as private boards. Multiple files can be selected at once.
+- **Import board…** in the list toolbar loads one or more `.json` exports (single board or a legacy "export all" collection), creating them as private boards. Multiple files can be selected at once.
 - **Export** on each board card downloads that board as `<name>.whiteboard.json`.
-- **Export all** downloads every accessible board into a single JSON collection file for backup or migration.
+- **Export all** downloads every accessible board as individual `.whiteboard.json` files inside a ZIP archive.
 
 ---
 
