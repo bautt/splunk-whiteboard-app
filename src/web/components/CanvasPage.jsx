@@ -44,8 +44,8 @@ import {
     storedBackgroundColor,
 } from '../lib/canvasAppearance';
 import { debug } from '../lib/log';
-import { filesToMap } from '../lib/boardFiles';
-import { sanitizeElementsForPersistence } from '../lib/build';
+import { filesToMap, rehydrateMissingFiles, registerBoardFiles } from '../lib/boardFiles';
+import { sanitizeElementsForPersistence, prepareRevealSnapshot, restoreSnapshot } from '../lib/build';
 import {
     insertRevision,
     MAX_REVISIONS_PER_BOARD,
@@ -469,10 +469,8 @@ export default function CanvasPage({ boardId, onClose }) {
     );    const handleApplyTemplate = useCallback(
         (templateElements, templateFiles) => {
             if (!excalidrawAPI) return;
-            // Register any image files bundled with the template
-            if (templateFiles && templateFiles.length) {
-                excalidrawAPI.addFiles(templateFiles);
-            }
+            const files = rehydrateMissingFiles(templateElements, templateFiles);
+            registerBoardFiles(excalidrawAPI, files);
             excalidrawAPI.updateScene({
                 elements: restoreElements(templateElements, null),
             });
@@ -502,9 +500,8 @@ export default function CanvasPage({ boardId, onClose }) {
                         label: 'Before restore',
                     });
                 }
-                if (entry.files?.length) {
-                    excalidrawAPI.addFiles(entry.files);
-                }
+                const files = rehydrateMissingFiles(entry.elements, entry.files);
+                registerBoardFiles(excalidrawAPI, files);
                 const appState = defaultCanvasAppState({
                     ...(entry.appState || {}),
                     gridSize: entry.appState?.gridSize ?? null,
@@ -518,7 +515,7 @@ export default function CanvasPage({ boardId, onClose }) {
                 await updateBoard(boardId, {
                     elements: entry.elements,
                     appState: serializableCanvasAppState(appState),
-                    files: entry.files,
+                    files,
                     saveSource: REVISION_SOURCES.MANUAL_SAVE,
                 });
                 await refreshRevisions();
@@ -557,6 +554,12 @@ export default function CanvasPage({ boardId, onClose }) {
 
     const enterPresentation = () => {
         if (!excalidrawAPI) return;
+        // Exit any in-progress preview/reveal state so Present snapshots the full board.
+        excalidrawAPI.updateScene({
+            elements: restoreSnapshot(
+                prepareRevealSnapshot(excalidrawAPI.getSceneElements())
+            ),
+        });
         setPresenting(true);
     };
 
@@ -565,9 +568,8 @@ export default function CanvasPage({ boardId, onClose }) {
     const handleImportBoard = useCallback(
         async (parsed) => {
             if (!excalidrawAPI || !boardId) return;
-            if (parsed.files?.length) {
-                excalidrawAPI.addFiles(parsed.files);
-            }
+            const files = rehydrateMissingFiles(parsed.elements, parsed.files);
+            registerBoardFiles(excalidrawAPI, files);
             const appState = defaultCanvasAppState({
                 ...(parsed.appState || {}),
                 gridSize: parsed.appState?.gridSize ?? null,
@@ -583,7 +585,7 @@ export default function CanvasPage({ boardId, onClose }) {
                 name: parsed.name || name,
                 elements: parsed.elements,
                 appState: serializableCanvasAppState(appState),
-                files: parsed.files,
+                files,
                 saveSource: REVISION_SOURCES.MANUAL_SAVE,
             });
             await refreshRevisions();

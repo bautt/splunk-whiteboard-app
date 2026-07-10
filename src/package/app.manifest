@@ -5,7 +5,7 @@
         "id": {
             "group": null,
             "name": "whiteboard_app",
-            "version": "0.3.54"
+            "version": "0.3.58"
         },
         "author": [
             {
@@ -14,7 +14,7 @@
                 "company": "Splunk"
             }
         ],
-        "releaseDate": "2026-06-22",
+        "releaseDate": "2026-07-10",
         "description": "Collaborative Excalidraw whiteboard inside Splunk for platform architecture and workshop diagrams. Splunk shapes, templates, and KV Store persistence — no external infrastructure.",
         "classification": {
             "intendedAudience": "Splunk administrators and architects",

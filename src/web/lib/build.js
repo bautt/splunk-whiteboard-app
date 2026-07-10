@@ -21,8 +21,21 @@ function bumpVersion(el) {
 
 /** The build step an element belongs to (0 = always-visible base layer). */
 export function getStep(el) {
-    const s = el?.customData?.build?.step;
-    return typeof s === 'number' && s > 0 ? s : BASE_STEP;
+    const raw = el?.customData?.build?.step;
+    const s = typeof raw === 'number' ? raw : Number(raw);
+    return Number.isFinite(s) && s > 0 ? s : BASE_STEP;
+}
+
+/** Opacity to use when revealing — ignore transient hide state from preview/present. */
+function authoredOpacity(el, step) {
+    if (typeof el.opacity !== 'number') return 100;
+    if (step > 0 && el.opacity === 0 && el.locked) return 100;
+    return el.opacity;
+}
+
+/** True when element was hidden by computeReveal (not user-authored lock). */
+function wasRevealHidden(el, step) {
+    return step > 0 && el.opacity === 0 && el.locked;
 }
 
 /** Highest build step present in the scene (0 if none defined). */
@@ -254,14 +267,18 @@ export function computeReveal(snapshot, current, opts = {}) {
     const { fadingStep = null, fadeFactor = 1 } = opts;
     return snapshot.map((el) => {
         const s = getStep(el);
-        const baseOpacity = typeof el.opacity === 'number' ? el.opacity : 100;
+        const baseOpacity = authoredOpacity(el, s);
         let out;
         if (s <= current) {
             const op =
                 fadingStep != null && s === fadingStep && s > 0
                     ? Math.max(0, Math.min(baseOpacity, baseOpacity * fadeFactor))
                     : baseOpacity;
-            out = { ...el, opacity: op, locked: !!el.locked };
+            out = {
+                ...el,
+                opacity: op,
+                locked: wasRevealHidden(el, s) ? false : !!el.locked,
+            };
         } else {
             out = { ...el, opacity: 0, locked: true };
         }
@@ -272,6 +289,14 @@ export function computeReveal(snapshot, current, opts = {}) {
 /** Restore the original scene (used on presentation exit). */
 export function restoreSnapshot(snapshot) {
     return snapshot.map((el) => bumpVersion({ ...el }));
+}
+
+/**
+ * Canonical scene for reveal math — strips transient opacity/lock left by
+ * preview or a prior Present session so computeReveal can restore visibility.
+ */
+export function prepareRevealSnapshot(elements) {
+    return sanitizeElementsForPersistence(elements);
 }
 
 /**

@@ -24,6 +24,10 @@ build:
 	# sent (the app registers no tracker); this only renames the property key
 	# consistently across the built JS, preserving behaviour.
 	find dist/appserver/static -name '*.js' -exec perl -pi -e 's/trackEvent/trackEvnt/g' {} +
+	@VER=$$(grep "APP_VERSION" src/web/lib/version.js | sed -n "s/.*['\"]\\([^'\"]*\\)['\"].*/\\1/p"); \
+		for f in dist/appserver/templates/*.html; do \
+			perl -pi -e "s/__WB_APP_VERSION__/$$VER/g" "$$f"; \
+		done
 
 package: build
 	rm -rf /tmp/$(APP_ID)
@@ -50,9 +54,9 @@ deploy: package
 		sudo systemctl restart Splunkd && \
 		echo done"
 
-# Deploy without restarting Splunkd. Use for JS-only / static-asset changes;
-# you'll need to hard-refresh the browser to bust the bundle cache. Splunk will
-# not pick up changes to .conf files until the next restart.
+# Deploy without restarting Splunkd. Bundle URLs include ?v=<appVersion> so
+# browsers fetch the new JS; if Splunk Web still serves stale assets, visit
+# /en-US/_bump once (or use `make deploy` which restarts Splunkd).
 deploy-norestart: package
 	scp $(APP_ID).tar.gz $(SPLUNK_HOST):~
 	ssh $(SPLUNK_HOST) "\

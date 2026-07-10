@@ -16,6 +16,7 @@ import {
     getStep,
     computeReveal,
     restoreSnapshot,
+    prepareRevealSnapshot,
     describeStep,
     getUntaggedMembers,
     getUntaggedIds,
@@ -88,7 +89,7 @@ export default function BuildPanel({
             const api = apiRef.current;
             if (!api) return;
             if (!canonicalRef.current) {
-                canonicalRef.current = api.getSceneElements();
+                canonicalRef.current = prepareRevealSnapshot(api.getSceneElements());
             }
             setPreviewStep(step);
             applyPreview(step, canonicalRef.current);

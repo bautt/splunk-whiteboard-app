@@ -52,6 +52,26 @@ function makeFile(id, dataURL, mimeType = 'image/svg+xml') {
     };
 }
 
+/** Register image files on the canvas, replacing any stale placeholders for the same ids. */
+export function registerBoardFiles(api, files) {
+    if (!api || !files?.length) return;
+    const arr = filesToArray(files).filter((f) => f?.id && f?.dataURL);
+    if (!arr.length) return;
+    const now = Date.now();
+    const fileMap = { ...(api.getFiles?.() || {}) };
+    arr.forEach((f) => {
+        fileMap[f.id] = {
+            ...f,
+            created: f.created ?? fileMap[f.id]?.created ?? now,
+            lastRetrieved: now,
+        };
+    });
+    api.addFiles(arr);
+    if (api.updateScene) {
+        api.updateScene({ files: fileMap });
+    }
+}
+
 /** Rebuild missing image files from known DRP / marketing icon libraries. */
 export function rehydrateMissingFiles(elements, files) {
     const arr = filesToArray(files);

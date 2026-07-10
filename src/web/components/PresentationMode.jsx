@@ -7,6 +7,7 @@ import {
     hasBuild,
     computeReveal,
     restoreSnapshot,
+    prepareRevealSnapshot,
 } from '../lib/build';
 
 const FADE_MS = 240;
@@ -30,7 +31,7 @@ export default function PresentationMode({ excalidrawAPI, onExit, suppressSaveRe
     const fadeRafRef = useRef(null);
 
     if (snapshotRef.current === null && excalidrawAPI) {
-        snapshotRef.current = excalidrawAPI.getSceneElements() || [];
+        snapshotRef.current = prepareRevealSnapshot(excalidrawAPI.getSceneElements() || []);
     }
 
     const snapshot = snapshotRef.current || [];

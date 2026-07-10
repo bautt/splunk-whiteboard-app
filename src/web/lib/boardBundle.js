@@ -1,4 +1,4 @@
-import { filesToArray } from './boardFiles';
+import { filesToArray, rehydrateMissingFiles } from './boardFiles';
 import { sanitizeElementsForPersistence } from './build';
 
 export const BUNDLE_FORMAT = 'whiteboard-bundle';
@@ -46,11 +46,12 @@ export function parseBoardBundle(text) {
     }
 
     const elements = sanitizeElementsForPersistence(board.elements || []);
+    const files = rehydrateMissingFiles(elements, filesToArray(board.files));
 
     return {
         name: data.name || null,
         elements,
         appState: board.appState || {},
-        files: filesToArray(board.files),
+        files,
     };
 }
