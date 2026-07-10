@@ -93,12 +93,14 @@ Any Splunk user who can access the app can create and edit boards. KV Store REST
 
 ## Installation
 
+**Restart required:** The app sets `state_change_requires_restart = true` in `app.conf`. After install or upgrade, Splunk Web shows **Restart Required** — complete the restart before opening Whiteboard App. Opening the app before restart can return HTTP 500 (template not found).
+
 ### Splunkbase (Splunk Enterprise)
 
 1. Log in to [Splunkbase](https://splunkbase.splunk.com) and open the Whiteboard App listing.
 2. Click **Download** and save `whiteboard_app.spl` (or `.tar.gz`).
 3. In Splunk Web, go to **Apps → Manage Apps → Install app via upload**.
-4. Upload the package and restart Splunk when prompted.
+4. Upload the package. When Splunk shows **Restart Required**, restart Splunk before opening the app.
 5. Open **Apps → Whiteboard App**, or navigate to `/en-US/app/whiteboard_app/whiteboard`.
 
 ### Splunk Cloud
@@ -134,6 +136,11 @@ Upload the newer package over the existing app and restart Splunk (or follow you
 ---
 
 ## Troubleshooting
+
+### HTTP 500 immediately after install
+
+- Splunk Web may not register the app's HTML template until Splunk restarts. The app declares `state_change_requires_restart = true` so Manager should show **Restart Required** after install — complete that restart before opening Whiteboard App.
+- If you opened the app before restarting, restart Splunk (`splunk restart` or **Settings → Server controls → Restart**), then try again.
 
 ### Blank page or "Loading…" never finishes
 

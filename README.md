@@ -162,6 +162,14 @@ Open the **History** tab. **Save snapshot** captures a named checkpoint; **Resto
 
 ---
 
+## Sharing & access
+
+Boards and saved templates are **shared on the whole Splunk instance** — there are no per-user private whiteboards. When you create a board, your username is stored as the owner (shown on the board card), but **any user** who can open the app can view, edit, and delete any board or template. This is intentional for collaborative workshops; use **History** snapshots or **Export → Download board JSON** if you need a backup before shared editing.
+
+To restrict who can write boards, see [DEVELOPER.md](DEVELOPER.md) (KV Store ACLs).
+
+---
+
 ## Requirements
 
 | | |
@@ -169,7 +177,7 @@ Open the **History** tab. **Save snapshot** captures a named checkpoint; **Resto
 | Splunk Enterprise | ≥ 9.0.0 |
 | Splunk Cloud (Victoria) | ≥ 9.0.0 |
 
-Boards are stored in Splunk KV Store and are visible to all users on the instance by default. Any user can view, edit, or delete any board — suitable for collaborative workshops. See [DEVELOPER.md](DEVELOPER.md) if you need to restrict write access.
+**After install or upgrade:** restart Splunk when Manager shows **Restart Required** (`state_change_requires_restart` in the app package). Opening the app before restart can return HTTP 500.
 
 ---
 
