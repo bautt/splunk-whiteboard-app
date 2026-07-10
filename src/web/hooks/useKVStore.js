@@ -96,6 +96,27 @@ export function useBoardMutations() {
         };
     }, []);
 
+    const importBoard = useCallback(async ({
+        name = 'Imported board',
+        tags = '',
+        elements = [],
+        appState = {},
+        files = [],
+        visibility = BOARD_VISIBILITY.PRIVATE,
+    }) => {
+        const scopeKey = scopeForVisibility(visibility);
+        const doc = {
+            name,
+            tags,
+            owner: getCurrentUser(),
+            visibility,
+            updated_at: Date.now(),
+            elements_json: serializeBoardPayload({ elements, appState, files }),
+        };
+        const result = await kv.insert(COLLECTIONS.boards, doc, scopeKey);
+        return { id: result?._key, scope: scopeKey, visibility };
+    }, []);
+
     const updateBoard = useCallback(async (id, patch, scopeKey = BOARD_SCOPE.SHARED, options = {}) => {
         const existing = await kv.get(COLLECTIONS.boards, id, scopeKey);
         if (!existing) throw new Error(`Board ${id} not found`);
@@ -199,7 +220,7 @@ export function useBoardMutations() {
         };
     }, []);
 
-    return { createBoard, updateBoard, deleteBoard, shareBoard };
+    return { createBoard, importBoard, updateBoard, deleteBoard, shareBoard };
 }
 
 export function useAutoSave(boardId, scopeKey, getElementsAndState, options = {}) {

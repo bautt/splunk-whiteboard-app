@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import Card from '@splunk/react-ui/Card';
 import CardLayout from '@splunk/react-ui/CardLayout';
@@ -15,6 +15,8 @@ import ControlGroup from '@splunk/react-ui/ControlGroup';
 import { useBoards, useBoardMutations } from '../hooks/useKVStore';
 import { BOARD_VISIBILITY, visibilityLabel } from '../lib/boardScope';
 import { buildShareLink } from '../lib/url';
+import { buildBoardBundle, buildBoardCollection, parseBoardImport } from '../lib/boardBundle';
+import { APP_VERSION } from '../lib/version';
 
 function formatDate(ts) {
     if (!ts) return '';
@@ -23,6 +25,24 @@ function formatDate(ts) {
     } catch {
         return String(ts);
     }
+}
+
+function safeFileName(name) {
+    return (name || 'whiteboard').replace(/[^a-zA-Z0-9._-]+/g, '_');
+}
+
+function downloadJson(obj, fileName) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 0);
 }
 
 const FILTER_ALL = 'all';
@@ -52,13 +72,16 @@ function FilterTabs({ value, onChange }) {
 
 export default function BoardListPage({ onOpen }) {
     const { boards, loading, error, refresh } = useBoards();
-    const { createBoard, deleteBoard } = useBoardMutations();
+    const { createBoard, importBoard, deleteBoard } = useBoardMutations();
     const [query, setQuery] = useState('');
     const [newName, setNewName] = useState('');
     const [newVisibility, setNewVisibility] = useState(BOARD_VISIBILITY.PRIVATE);
     const [filter, setFilter] = useState(FILTER_ALL);
     const [pendingDelete, setPendingDelete] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const [notice, setNotice] = useState(null);
+    const [importing, setImporting] = useState(false);
+    const importInputRef = useRef(null);
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -94,6 +117,80 @@ export default function BoardListPage({ onOpen }) {
             await navigator.clipboard.writeText(buildShareLink(board.id));
         } catch {
             // ignore
+        }
+    };
+
+    const handleExportBoard = (board) => {
+        try {
+            const bundle = buildBoardBundle({
+                name: board.name,
+                elements: board.elements,
+                appState: board.appState,
+                files: board.files,
+                appVersion: APP_VERSION,
+            });
+            downloadJson(bundle, `${safeFileName(board.name)}.whiteboard.json`);
+        } catch (e) {
+            setNotice({ type: 'error', text: `Export failed: ${e.message}` });
+        }
+    };
+
+    const handleExportAll = () => {
+        if (!boards.length) return;
+        try {
+            const collection = buildBoardCollection(boards, APP_VERSION);
+            const stamp = new Date().toISOString().slice(0, 10);
+            downloadJson(collection, `whiteboards-export-${stamp}.json`);
+            setNotice({
+                type: 'success',
+                text: `Exported ${boards.length} board${boards.length !== 1 ? 's' : ''} to JSON.`,
+            });
+        } catch (e) {
+            setNotice({ type: 'error', text: `Export failed: ${e.message}` });
+        }
+    };
+
+    const triggerImport = () => importInputRef.current?.click();
+
+    const handleImportFiles = async (e) => {
+        const files = Array.from(e.target.files || []);
+        e.target.value = '';
+        if (!files.length) return;
+        setImporting(true);
+        setNotice(null);
+        let imported = 0;
+        try {
+            for (const file of files) {
+                // eslint-disable-next-line no-await-in-loop
+                const text = await file.text();
+                const parsedBoards = parseBoardImport(text);
+                const fallbackName = file.name.replace(/\.whiteboard\.json$|\.json$/i, '');
+                for (const parsed of parsedBoards) {
+                    // eslint-disable-next-line no-await-in-loop
+                    await importBoard({
+                        name: parsed.name || fallbackName || 'Imported board',
+                        elements: parsed.elements,
+                        appState: parsed.appState,
+                        files: parsed.files,
+                        visibility: BOARD_VISIBILITY.PRIVATE,
+                    });
+                    imported += 1;
+                }
+            }
+            await refresh();
+            setNotice({
+                type: 'success',
+                text: `Imported ${imported} board${imported !== 1 ? 's' : ''} as private.`,
+            });
+        } catch (err) {
+            setNotice({
+                type: 'error',
+                text: `Import failed: ${err.message}`
+                    + (imported ? ` (${imported} board(s) imported before the error).` : ''),
+            });
+            await refresh();
+        } finally {
+            setImporting(false);
         }
     };
 
@@ -146,7 +243,33 @@ export default function BoardListPage({ onOpen }) {
                     style={{ width: 320 }}
                 />
                 <FilterTabs value={filter} onChange={setFilter} />
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+                    <Button onClick={triggerImport} disabled={importing}>
+                        {importing ? 'Importing…' : 'Import board…'}
+                    </Button>
+                    <Button onClick={handleExportAll} disabled={boards.length === 0}>
+                        Export all
+                    </Button>
+                </div>
+                <input
+                    ref={importInputRef}
+                    type="file"
+                    accept=".json,application/json"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={handleImportFiles}
+                />
             </div>
+
+            {notice && (
+                <Message
+                    type={notice.type}
+                    onRequestRemove={() => setNotice(null)}
+                    style={{ marginBottom: 16 }}
+                >
+                    {notice.text}
+                </Message>
+            )}
 
             {error && (
                 <Message type="error">Failed to load whiteboards: {error}</Message>
@@ -187,6 +310,14 @@ export default function BoardListPage({ onOpen }) {
                                     Open
                                 </Button>
                                 <div style={{ display: 'flex', gap: 8 }}>
+                                    <Link
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleExportBoard(b);
+                                        }}
+                                    >
+                                        Export
+                                    </Link>
                                     {b.visibility === BOARD_VISIBILITY.SHARED && (
                                         <Link
                                             onClick={(e) => {

@@ -4,6 +4,15 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.64 — 2026-07-10
+
+**Import & export from the board list**
+- **Import board…** in the list toolbar loads one or more `.json` exports (single board or an "export all" collection), creating them as private boards. Multiple files can be selected at once.
+- **Export** on each board card downloads that board as `<name>.whiteboard.json`.
+- **Export all** downloads every accessible board into a single JSON collection file for backup or migration.
+
+---
+
 ## v0.3.63 — 2026-07-10
 
 **Smarter entry page**
