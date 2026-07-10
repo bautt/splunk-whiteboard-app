@@ -4,6 +4,16 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.63 — 2026-07-10
+
+**Smarter entry page**
+- First run (no saved boards) now opens straight onto an empty whiteboard instead of an empty list. Once any board exists, the app opens on the board list.
+
+**About tab as a quick guide**
+- The About tab now embeds a concise user guide with a **TL;DR** (build a whiteboard, use shapes & libraries, group & assign order, present) plus sections for getting started, drawing/shapes/libraries, grouping & presenting, and export/sharing — with links to the full README, release notes, and developer guide.
+
+---
+
 ## v0.3.62 — 2026-07-10
 
 **Theme reliability (readable in dark or light)**
