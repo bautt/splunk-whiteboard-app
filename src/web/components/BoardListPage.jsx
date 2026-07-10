@@ -7,6 +7,10 @@ import Text from '@splunk/react-ui/Text';
 import P from '@splunk/react-ui/Paragraph';
 import Message from '@splunk/react-ui/Message';
 import Link from '@splunk/react-ui/Link';
+import Modal from '@splunk/react-ui/Modal';
+import RadioBar from '@splunk/react-ui/RadioBar';
+import TabBar from '@splunk/react-ui/TabBar';
+import ControlGroup from '@splunk/react-ui/ControlGroup';
 
 import { useBoards, useBoardMutations } from '../hooks/useKVStore';
 import { BOARD_VISIBILITY, visibilityLabel } from '../lib/boardScope';
@@ -26,56 +30,23 @@ const FILTER_SHARED = 'shared';
 const FILTER_PRIVATE = 'private';
 
 function VisibilityToggle({ value, onChange }) {
-    const options = [
-        { value: BOARD_VISIBILITY.PRIVATE, label: 'Just me' },
-        { value: BOARD_VISIBILITY.SHARED, label: 'Everyone' },
-    ];
     return (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12, opacity: 0.75 }}>Visibility:</span>
-            <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: '1px solid var(--gray60, #c3cbd4)' }}>
-                {options.map(({ value: optValue, label }) => (
-                    <button
-                        key={optValue}
-                        type="button"
-                        onClick={() => onChange(optValue)}
-                        style={{
-                            all: 'unset',
-                            padding: '4px 10px',
-                            fontSize: 12,
-                            cursor: 'pointer',
-                            background: value === optValue ? 'var(--interactive-color, #5a4fcf)' : 'transparent',
-                            color: value === optValue ? '#fff' : 'inherit',
-                            fontWeight: value === optValue ? 600 : 400,
-                        }}
-                    >
-                        {label}
-                    </button>
-                ))}
-            </div>
-        </div>
+        <ControlGroup label="Visibility" labelPosition="left" style={{ marginBottom: 0 }}>
+            <RadioBar value={value} onChange={(_, { value: v }) => onChange(v)}>
+                <RadioBar.Option value={BOARD_VISIBILITY.PRIVATE} label="Just me" />
+                <RadioBar.Option value={BOARD_VISIBILITY.SHARED} label="Everyone" />
+            </RadioBar>
+        </ControlGroup>
     );
 }
 
 function FilterTabs({ value, onChange }) {
-    const tabs = [
-        { value: FILTER_ALL, label: 'All' },
-        { value: FILTER_SHARED, label: 'Shared' },
-        { value: FILTER_PRIVATE, label: 'My private' },
-    ];
     return (
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {tabs.map((tab) => (
-                <Button
-                    key={tab.value}
-                    size="small"
-                    appearance={value === tab.value ? 'primary' : 'default'}
-                    onClick={() => onChange(tab.value)}
-                >
-                    {tab.label}
-                </Button>
-            ))}
-        </div>
+        <TabBar activeTabId={value} onChange={(_, { selectedTabId }) => onChange(selectedTabId)}>
+            <TabBar.Tab label="All" tabId={FILTER_ALL} />
+            <TabBar.Tab label="Shared" tabId={FILTER_SHARED} />
+            <TabBar.Tab label="My private" tabId={FILTER_PRIVATE} />
+        </TabBar>
     );
 }
 
@@ -86,6 +57,8 @@ export default function BoardListPage({ onOpen }) {
     const [newName, setNewName] = useState('');
     const [newVisibility, setNewVisibility] = useState(BOARD_VISIBILITY.PRIVATE);
     const [filter, setFilter] = useState(FILTER_ALL);
+    const [pendingDelete, setPendingDelete] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -103,11 +76,16 @@ export default function BoardListPage({ onOpen }) {
         if (created?.id) onOpen(created.id);
     };
 
-    const handleDelete = async (board) => {
-        // eslint-disable-next-line no-alert
-        if (!window.confirm(`Delete board "${board.name}"? This cannot be undone.`)) return;
-        await deleteBoard(board.id, board.scope);
-        await refresh();
+    const confirmDelete = async () => {
+        if (!pendingDelete) return;
+        setDeleting(true);
+        try {
+            await deleteBoard(pendingDelete.id, pendingDelete.scope);
+            await refresh();
+        } finally {
+            setDeleting(false);
+            setPendingDelete(null);
+        }
     };
 
     const handleCopyLink = async (board) => {
@@ -222,7 +200,7 @@ export default function BoardListPage({ onOpen }) {
                                     <Link
                                         onClick={(e) => {
                                             e.preventDefault();
-                                            handleDelete(b);
+                                            setPendingDelete(b);
                                         }}
                                     >
                                         Delete
@@ -233,6 +211,40 @@ export default function BoardListPage({ onOpen }) {
                     ))}
                 </CardLayout>
             )}
+
+            <Modal
+                open={Boolean(pendingDelete)}
+                onRequestClose={() => (deleting ? null : setPendingDelete(null))}
+                returnFocus={() => {}}
+                style={{ width: 440 }}
+            >
+                <Modal.Header
+                    title="Delete board?"
+                    onRequestClose={() => (deleting ? null : setPendingDelete(null))}
+                />
+                <Modal.Body>
+                    <P>
+                        Delete <strong>{pendingDelete?.name}</strong>? This permanently removes the
+                        board and its version history and cannot be undone.
+                    </P>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        appearance="secondary"
+                        onClick={() => setPendingDelete(null)}
+                        disabled={deleting}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        appearance="destructive"
+                        onClick={confirmDelete}
+                        disabled={deleting}
+                    >
+                        {deleting ? 'Deleting…' : 'Delete board'}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 }

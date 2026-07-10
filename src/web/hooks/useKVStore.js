@@ -7,6 +7,8 @@ import {
     BOARD_VISIBILITY,
     scopeForVisibility,
     canShareBoard,
+    BoardConflictError,
+    isConflictError,
 } from '../lib/boardScope';
 import {
     fetchBoard,
@@ -94,9 +96,21 @@ export function useBoardMutations() {
         };
     }, []);
 
-    const updateBoard = useCallback(async (id, patch, scopeKey = BOARD_SCOPE.SHARED) => {
+    const updateBoard = useCallback(async (id, patch, scopeKey = BOARD_SCOPE.SHARED, options = {}) => {
         const existing = await kv.get(COLLECTIONS.boards, id, scopeKey);
         if (!existing) throw new Error(`Board ${id} not found`);
+
+        // Optimistic-concurrency guard: refuse to overwrite a version newer than
+        // the one the caller last synced (another user/tab saved in between).
+        const { expectedUpdatedAt } = options;
+        if (expectedUpdatedAt != null) {
+            const currentUpdatedAt = Number(existing.updated_at) || 0;
+            if (currentUpdatedAt > Number(expectedUpdatedAt)) {
+                throw new BoardConflictError(
+                    'This board was changed elsewhere since you opened it.'
+                );
+            }
+        }
 
         const hasCanvasPatch =
             patch.elements !== undefined || patch.appState !== undefined || patch.files !== undefined;
@@ -109,6 +123,7 @@ export function useBoardMutations() {
             }
             await revisionBeforeBoardWrite(id, parsed, patch.saveSource, scopeKey);
         }
+        const updatedAt = Date.now();
         const next = {
             name: patch.name ?? existing.name,
             tags: patch.tags ?? existing.tags,
@@ -116,7 +131,7 @@ export function useBoardMutations() {
             visibility: existing.visibility || (scopeKey === BOARD_SCOPE.PRIVATE
                 ? BOARD_VISIBILITY.PRIVATE
                 : BOARD_VISIBILITY.SHARED),
-            updated_at: Date.now(),
+            updated_at: updatedAt,
             elements_json: hasCanvasPatch
                 ? serializeBoardPayload({
                     elements: patch.elements ?? parsed.elements,
@@ -126,6 +141,7 @@ export function useBoardMutations() {
                 : existing.elements_json,
         };
         await kv.update(COLLECTIONS.boards, id, next, scopeKey);
+        return { updatedAt };
     }, []);
 
     const deleteBoard = useCallback(async (id, scopeKey = BOARD_SCOPE.SHARED) => {
@@ -151,14 +167,35 @@ export function useBoardMutations() {
             elements_json: existing.elements_json,
         };
 
-        await kv.update(COLLECTIONS.boards, board.id, sharedDoc, BOARD_SCOPE.SHARED);
-        await migrateBoardHistory(board.id, BOARD_SCOPE.PRIVATE, BOARD_SCOPE.SHARED);
-        await kv.remove(COLLECTIONS.boards, board.id, BOARD_SCOPE.PRIVATE);
+        // 1. Write the shared copy FIRST so data is never lost, even if a later
+        //    step fails. upsert preserves the board's _key (stable share links).
+        await kv.upsert(COLLECTIONS.boards, board.id, sharedDoc, BOARD_SCOPE.SHARED);
+
+        // 2. Best-effort history migration — a failure here must not lose the
+        //    board itself; the shared copy already exists.
+        let warning = null;
+        try {
+            await migrateBoardHistory(board.id, BOARD_SCOPE.PRIVATE, BOARD_SCOPE.SHARED);
+        } catch (e) {
+            logWarn('Board history migration failed during share', e);
+            warning = 'Board shared, but its revision history could not be migrated.';
+        }
+
+        // 3. Remove the private copy. If this fails the board is still shared;
+        //    surface a warning rather than reporting a hard failure.
+        try {
+            await kv.remove(COLLECTIONS.boards, board.id, BOARD_SCOPE.PRIVATE);
+        } catch (e) {
+            logWarn('Removing private board copy failed during share', e);
+            warning = 'Board shared, but a private copy could not be removed. '
+                + 'Delete it from the board list if it still appears.';
+        }
 
         return {
             id: board.id,
             scope: BOARD_SCOPE.SHARED,
             visibility: BOARD_VISIBILITY.SHARED,
+            warning,
         };
     }, []);
 
@@ -166,19 +203,38 @@ export function useBoardMutations() {
 }
 
 export function useAutoSave(boardId, scopeKey, getElementsAndState, options = {}) {
-    const { intervalMs = 30_000, isCanvasReady = () => true } = options;
+    const {
+        intervalMs = 30_000,
+        isCanvasReady = () => true,
+        getExpectedUpdatedAt = () => null,
+        onSaved = () => {},
+        onConflict = () => {},
+    } = options;
     const timerRef = useRef(null);
     const dirtyRef = useRef(false);
+    // Once a conflict is detected we stop auto-overwriting to avoid clobbering
+    // another user's changes; the user must reload the board to resume.
+    const pausedRef = useRef(false);
     const { updateBoard } = useBoardMutations();
 
     const markDirty = useCallback(() => {
         dirtyRef.current = true;
     }, []);
 
+    // Resume auto-save after a conflict was resolved (e.g. user force-saved).
+    const resume = useCallback(() => {
+        pausedRef.current = false;
+    }, []);
+
+    useEffect(() => {
+        // Reset the conflict pause whenever the board (re)loads.
+        pausedRef.current = false;
+    }, [boardId, scopeKey]);
+
     useEffect(() => {
         if (!boardId || !scopeKey) return undefined;
         timerRef.current = setInterval(async () => {
-            if (!dirtyRef.current) return;
+            if (!dirtyRef.current || pausedRef.current) return;
             try {
                 const { elements, appState, files } = getElementsAndState();
                 const ready = isCanvasReady();
@@ -187,19 +243,35 @@ export function useAutoSave(boardId, scopeKey, getElementsAndState, options = {}
                     return;
                 }
                 debug(`autosave firing with ${elements.length} elements`);
-                await updateBoard(boardId, {
+                const result = await updateBoard(boardId, {
                     elements,
                     appState,
                     files,
                     saveSource: 'autosave',
-                }, scopeKey);
+                }, scopeKey, { expectedUpdatedAt: getExpectedUpdatedAt() });
                 dirtyRef.current = false;
+                if (result?.updatedAt) onSaved(result.updatedAt);
             } catch (e) {
+                if (isConflictError(e)) {
+                    pausedRef.current = true;
+                    onConflict(e);
+                    return;
+                }
                 logWarn('Autosave failed', e);
             }
         }, intervalMs);
         return () => clearInterval(timerRef.current);
-    }, [boardId, scopeKey, getElementsAndState, intervalMs, isCanvasReady, updateBoard]);
+    }, [
+        boardId,
+        scopeKey,
+        getElementsAndState,
+        intervalMs,
+        isCanvasReady,
+        updateBoard,
+        getExpectedUpdatedAt,
+        onSaved,
+        onConflict,
+    ]);
 
-    return { markDirty };
+    return { markDirty, resume };
 }

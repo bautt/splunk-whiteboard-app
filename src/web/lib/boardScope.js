@@ -49,3 +49,16 @@ export function canShareBoard(board) {
 export function visibilityLabel(visibility) {
     return visibility === BOARD_VISIBILITY.SHARED ? 'Shared' : 'Private';
 }
+
+/** Thrown when a board write would clobber a newer version saved elsewhere. */
+export class BoardConflictError extends Error {
+    constructor(message = 'Board was changed elsewhere') {
+        super(message);
+        this.name = 'BoardConflictError';
+        this.code = 'conflict';
+    }
+}
+
+export function isConflictError(err) {
+    return err?.code === 'conflict' || err?.name === 'BoardConflictError';
+}

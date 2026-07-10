@@ -15,6 +15,20 @@ export function setBoardIdInUrl(boardId) {
     window.history.replaceState({}, '', url.toString());
 }
 
+/**
+ * Open a board by PUSHING a new history entry so the browser Back button
+ * returns to the board list (rather than leaving the whiteboard view).
+ */
+export function pushBoardIdInUrl(boardId) {
+    const url = new URL(window.location.href);
+    if (boardId) {
+        url.searchParams.set('id', boardId);
+    } else {
+        url.searchParams.delete('id');
+    }
+    window.history.pushState({}, '', url.toString());
+}
+
 export function buildShareLink(boardId) {
     const url = new URL(window.location.href);
     url.search = '';

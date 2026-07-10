@@ -69,6 +69,18 @@ export const kv = {
             { method: 'POST', body: JSON.stringify(doc) }
         );
     },
+    // Insert-or-update preserving a caller-supplied _key. Used when promoting a
+    // board into a namespace where its key may or may not already exist.
+    async upsert(collection, key, doc, scopeKey = BOARD_SCOPE.SHARED) {
+        const existing = await this.get(collection, key, scopeKey).catch((e) => {
+            if (String(e?.message || '').includes('404')) return null;
+            throw e;
+        });
+        if (existing) {
+            return this.update(collection, key, doc, scopeKey);
+        }
+        return this.insert(collection, { ...doc, _key: key }, scopeKey);
+    },
     remove(collection, key, scopeKey = BOARD_SCOPE.SHARED) {
         return send(
             withOutputModeJson(endpoint(collection, `/${encodeURIComponent(key)}`, scopeKey)),

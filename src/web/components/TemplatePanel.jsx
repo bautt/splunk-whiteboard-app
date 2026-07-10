@@ -304,7 +304,7 @@ export default function TemplatePanel({ onApply, getElementsAndState }) {
         if (!window.confirm(`Replace the current board with "${tpl.label}"? Unsaved changes will be lost.`)) return;
         try {
             const files = rehydrateMissingFiles(tpl.elements, tpl.files);
-            onApply(tpl.elements, files);
+            onApply(tpl.elements, files, tpl.appState || null);
         } catch (e) {
             window.alert('Failed to load template: ' + e.message);
         }

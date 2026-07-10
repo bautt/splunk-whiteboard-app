@@ -130,6 +130,8 @@ New boards default to **private**. The owner can **Share with everyone** from th
 
 Board documents include a `visibility` field (`private` | `shared`). Legacy boards in the shared namespace without `visibility` are treated as shared.
 
+> **Privacy caveat:** Private boards rely on Splunk's per-user KV namespace, which hides them from other standard users. Administrators holding `admin_all_objects` can still read every user's private boards. Treat "Just me" as isolation, not confidentiality.
+
 All collections grant read/write to every Splunk user (`access = read : [ * ], write : [ * ]` in `metadata/default.meta`). Private boards rely on Splunk's user-scoped KV namespace for access control; tighten shared-collection ACLs in `metadata/default.meta` if your deployment requires restricted write access to shared boards.
 
 ---

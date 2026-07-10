@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Excalidraw, exportToBlob, restoreElements, restoreAppState } from '@excalidraw/excalidraw';
+import { Excalidraw, exportToBlob, restoreElements, restoreAppState, useHandleLibrary } from '@excalidraw/excalidraw';
 import '../excalidraw-overrides.css';
 
 import Button from '@splunk/react-ui/Button';
 import Text from '@splunk/react-ui/Text';
 import Message from '@splunk/react-ui/Message';
+import Modal from '@splunk/react-ui/Modal';
+import P from '@splunk/react-ui/Paragraph';
 
 import LayoutPanels from '@splunk/react-icons/LayoutPanels';
 import FloppyDisk from '@splunk/react-icons/FloppyDisk';
@@ -33,7 +35,7 @@ import ExcalidrawPreferences, {
 import { useBoard, useBoardMutations, useAutoSave } from '../hooks/useKVStore';
 import { useVersions } from '../hooks/useVersions';
 import { useRevisions } from '../hooks/useRevisions';
-import { BOARD_SCOPE, BOARD_VISIBILITY, canShareBoard, visibilityLabel } from '../lib/boardScope';
+import { BOARD_SCOPE, BOARD_VISIBILITY, canShareBoard, visibilityLabel, isConflictError } from '../lib/boardScope';
 import { nanoid } from '../lib/nanoid';
 import {
     applyCanvasAppearance,
@@ -153,6 +155,8 @@ export default function CanvasPage({ boardId, onClose }) {
     const [saveStatus, setSaveStatus] = useState(null);
     const [shareStatus, setShareStatus] = useState(null);
     const [sharing, setSharing] = useState(false);
+    const [shareModalOpen, setShareModalOpen] = useState(false);
+    const [conflict, setConflict] = useState(false);
     const [selectedIds, setSelectedIds] = useState({});
     const [canvasAppState, setCanvasAppState] = useState(() => defaultCanvasAppState());
 
@@ -166,11 +170,21 @@ export default function CanvasPage({ boardId, onClose }) {
     const closingMermaidRef = useRef(false);
     const appearanceSyncRef = useRef(false);
     const canvasReadyRef = useRef(false);
+    // Last board `updated_at` this client has synced with, for conflict detection.
+    const syncedAtRef = useRef(0);
+    const shareButtonRef = useRef(null);
 
     const handleExcalidrawAPI = useCallback((api) => {
         apiRef.current = api;
         setExcalidrawAPI((prev) => (prev === api ? prev : api));
     }, []);
+
+    // Enable Excalidraw's library install flow: consumes the `addLibrary` token
+    // returned by libraries.excalidraw.com ("Add to Excalidraw") and persists
+    // installed/imported library items across reloads. Without this hook the
+    // native "Browse libraries" button dead-ends (opens the site but nothing
+    // installs the chosen library back into the canvas).
+    useHandleLibrary({ excalidrawAPI });
 
     /**
      * Compute the scene-space insert position for a new element of size (w × h).
@@ -213,11 +227,25 @@ export default function CanvasPage({ boardId, onClose }) {
     }, [board]);
 
     useEffect(() => {
+        if (board) {
+            syncedAtRef.current = board.updatedAt || 0;
+            setConflict(false);
+        }
+    }, [board?.id, board?.updatedAt]);
+
+    useEffect(() => {
         if (!board) return;
         setCanvasAppState(defaultCanvasAppState(board.appState || {}));
     }, [board?.id]);
 
     const canvasTheme = normalizeTheme(canvasAppState);
+
+    // Where libraries.excalidraw.com returns after "Add to Excalidraw". Strip any
+    // existing hash so the returned #addLibrary token isn't compounded.
+    const libraryReturnUrl = useMemo(
+        () => (typeof window !== 'undefined' ? window.location.href.split('#')[0] : undefined),
+        []
+    );
 
     // Build Excalidraw initialData once per board; theme/background come from saved appState.
     const initialData = useMemo(() => {
@@ -266,7 +294,17 @@ export default function CanvasPage({ boardId, onClose }) {
 
     const isCanvasReady = useCallback(() => canvasReadyRef.current, []);
 
-    const { markDirty } = useAutoSave(boardId, boardScope, getElementsAndState, { isCanvasReady });
+    const { markDirty, resume: resumeAutoSave } = useAutoSave(
+        boardId,
+        boardScope,
+        getElementsAndState,
+        {
+            isCanvasReady,
+            getExpectedUpdatedAt: () => syncedAtRef.current,
+            onSaved: (ts) => { syncedAtRef.current = ts; },
+            onConflict: () => setConflict(true),
+        }
+    );
 
     // One-shot sync after Excalidraw mounts — ensures saved theme/bg apply to the live scene.
     useEffect(() => {
@@ -366,26 +404,35 @@ export default function CanvasPage({ boardId, onClose }) {
         }
     }, [markDirty]);
 
-    const handleSaveNow = useCallback(async () => {
+    const handleSaveNow = useCallback(async (options = {}) => {
         if (!boardId || !board) return;
+        const { force = false } = options;
         const { elements, appState, files } = getElementsAndState();
         debug('saving', elements.length, 'elements');
         try {
-            await updateBoard(boardId, {
+            const result = await updateBoard(boardId, {
                 name,
                 tags,
                 elements,
                 appState,
                 files,
                 saveSource: REVISION_SOURCES.MANUAL_SAVE,
-            }, board.scope);
+            }, board.scope, force ? {} : { expectedUpdatedAt: syncedAtRef.current });
+            if (result?.updatedAt) syncedAtRef.current = result.updatedAt;
+            setConflict(false);
+            resumeAutoSave();
             setSaveStatus({ type: 'success', text: `Saved ${elements.length} elements.` });
             refreshRevisions();
             setTimeout(() => setSaveStatus(null), 2000);
         } catch (e) {
+            if (isConflictError(e)) {
+                setConflict(true);
+                setSaveStatus(null);
+                return;
+            }
             setSaveStatus({ type: 'error', text: e.message });
         }
-    }, [boardId, board, getElementsAndState, name, tags, updateBoard, refreshRevisions]);
+    }, [boardId, board, getElementsAndState, name, tags, updateBoard, refreshRevisions, resumeAutoSave]);
 
     const handleAddShape = useCallback(
         (newElements) => {
@@ -471,16 +518,25 @@ export default function CanvasPage({ boardId, onClose }) {
         },
         [computeInsertPos, markDirty]
     );    const handleApplyTemplate = useCallback(
-        (templateElements, templateFiles) => {
+        (templateElements, templateFiles, templateAppState) => {
             if (!excalidrawAPI) return;
             const files = rehydrateMissingFiles(templateElements, templateFiles);
             registerBoardFiles(excalidrawAPI, files);
             excalidrawAPI.updateScene({
                 elements: restoreElements(templateElements, null),
             });
+            // Templates may declare an intended theme/background (e.g. the dark
+            // Splunk Platform canvas). Apply it so the board doesn't inherit the
+            // previous board's appearance.
+            if (templateAppState && (templateAppState.theme || templateAppState.displayBackgroundColor)) {
+                handleAppearanceChange({
+                    theme: normalizeTheme(templateAppState),
+                    displayBackgroundColor: templateAppState.displayBackgroundColor,
+                });
+            }
             markDirty();
         },
-        [excalidrawAPI, markDirty]
+        [excalidrawAPI, markDirty, handleAppearanceChange]
     );
 
     const handleSnapshot = useCallback(
@@ -516,12 +572,15 @@ export default function CanvasPage({ boardId, onClose }) {
                     elements: restoreElements(entry.elements, null),
                     appState,
                 });
-                await updateBoard(boardId, {
+                const result = await updateBoard(boardId, {
                     elements: entry.elements,
                     appState: serializableCanvasAppState(appState),
                     files,
                     saveSource: REVISION_SOURCES.MANUAL_SAVE,
                 }, board.scope);
+                if (result?.updatedAt) syncedAtRef.current = result.updatedAt;
+                setConflict(false);
+                resumeAutoSave();
                 await refreshRevisions();
                 setSaveStatus({
                     type: 'success',
@@ -534,7 +593,7 @@ export default function CanvasPage({ boardId, onClose }) {
                 setRestoring(false);
             }
         },
-        [excalidrawAPI, boardId, board, getElementsAndState, updateBoard, refreshRevisions]
+        [excalidrawAPI, boardId, board, getElementsAndState, updateBoard, refreshRevisions, resumeAutoSave]
     );
 
     const getExportable = useCallback(async () => {
@@ -585,13 +644,16 @@ export default function CanvasPage({ boardId, onClose }) {
                 appState,
             });
             if (parsed.name) setName(parsed.name);
-            await updateBoard(boardId, {
+            const result = await updateBoard(boardId, {
                 name: parsed.name || name,
                 elements: parsed.elements,
                 appState: serializableCanvasAppState(appState),
                 files,
                 saveSource: REVISION_SOURCES.MANUAL_SAVE,
             }, board.scope);
+            if (result?.updatedAt) syncedAtRef.current = result.updatedAt;
+            setConflict(false);
+            resumeAutoSave();
             await refreshRevisions();
             setSaveStatus({
                 type: 'success',
@@ -599,18 +661,12 @@ export default function CanvasPage({ boardId, onClose }) {
             });
             setTimeout(() => setSaveStatus(null), 3000);
         },
-        [excalidrawAPI, boardId, board, name, updateBoard, refreshRevisions]
+        [excalidrawAPI, boardId, board, name, updateBoard, refreshRevisions, resumeAutoSave]
     );
 
     const handleShareWithEveryone = useCallback(async () => {
         if (!board || !canShareBoard(board)) return;
-        // eslint-disable-next-line no-alert
-        if (!window.confirm(
-            'Share this board with everyone on this Splunk instance? '
-            + 'All users with access to Whiteboard App will be able to view and edit it.'
-        )) {
-            return;
-        }
+        setShareModalOpen(false);
         setSharing(true);
         setShareStatus(null);
         try {
@@ -622,10 +678,9 @@ export default function CanvasPage({ boardId, onClose }) {
             } : prev));
             await refreshBoard();
             await refreshRevisions();
-            setShareStatus({
-                type: 'success',
-                text: 'Board is now shared with everyone on this instance.',
-            });
+            setShareStatus(shared.warning
+                ? { type: 'warning', text: shared.warning }
+                : { type: 'success', text: 'Board is now shared with everyone on this instance.' });
         } catch (e) {
             setShareStatus({ type: 'error', text: e.message });
         } finally {
@@ -754,11 +809,16 @@ export default function CanvasPage({ boardId, onClose }) {
                     placeholder="Tags (comma-separated)"
                     style={{ width: 220 }}
                 />
-                <Button appearance="primary" onClick={handleSaveNow}>
+                <Button appearance="primary" onClick={() => handleSaveNow()}>
                     Save
                 </Button>
                 {canShareBoard(board) && (
-                    <Button appearance="secondary" onClick={handleShareWithEveryone} disabled={sharing}>
+                    <Button
+                        elementRef={shareButtonRef}
+                        appearance="secondary"
+                        onClick={() => setShareModalOpen(true)}
+                        disabled={sharing}
+                    >
                         {sharing ? 'Sharing…' : 'Share with everyone'}
                     </Button>
                 )}
@@ -767,7 +827,11 @@ export default function CanvasPage({ boardId, onClose }) {
                     <span
                         style={{
                             fontSize: 12,
-                            color: shareStatus.type === 'error' ? '#DC4E41' : '#53A051',
+                            color: shareStatus.type === 'error'
+                                ? '#DC4E41'
+                                : shareStatus.type === 'warning'
+                                    ? '#CBA700'
+                                    : '#53A051',
                         }}
                     >
                         {shareStatus.text}
@@ -784,6 +848,31 @@ export default function CanvasPage({ boardId, onClose }) {
                     </span>
                 )}
             </div>
+
+            {conflict && (
+                <Message
+                    appearance="fill"
+                    type="warning"
+                    onRequestRemove={() => setConflict(false)}
+                >
+                    This board was changed elsewhere since you opened it. Auto-save is paused to
+                    avoid overwriting those changes.{' '}
+                    <Button
+                        inline
+                        appearance="secondary"
+                        onClick={() => window.location.reload()}
+                    >
+                        Reload latest
+                    </Button>{' '}
+                    <Button
+                        inline
+                        appearance="secondary"
+                        onClick={() => handleSaveNow({ force: true })}
+                    >
+                        Overwrite with my changes
+                    </Button>
+                </Message>
+            )}
 
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
                 <div
@@ -802,6 +891,7 @@ export default function CanvasPage({ boardId, onClose }) {
                             onChange={onChange}
                             theme={canvasTheme}
                             initialData={initialData}
+                            libraryReturnUrl={libraryReturnUrl}
                             UIOptions={{
                                 canvasActions: {
                                     toggleTheme: true,
@@ -835,6 +925,33 @@ export default function CanvasPage({ boardId, onClose }) {
                     </SidebarIconTabs>
                 </ResizableSidebar>
             </div>
+
+            <Modal
+                open={shareModalOpen}
+                onRequestClose={() => setShareModalOpen(false)}
+                returnFocus={shareButtonRef}
+                style={{ width: 460 }}
+            >
+                <Modal.Header
+                    title="Share with everyone?"
+                    onRequestClose={() => setShareModalOpen(false)}
+                />
+                <Modal.Body>
+                    <P>
+                        This moves the board to the shared area of this Splunk instance.
+                        Every user who can open Whiteboard App will be able to view and edit it.
+                    </P>
+                    <P>Sharing cannot be undone from the app. Continue?</P>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button appearance="secondary" onClick={() => setShareModalOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button appearance="primary" onClick={handleShareWithEveryone} disabled={sharing}>
+                        Share with everyone
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 }

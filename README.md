@@ -173,6 +173,8 @@ Boards can be **private** (default) or **shared**:
 
 When you create a board, visibility defaults to **Just me**. Open the board and click **Share with everyone** to move it to the shared namespace. Shareable links and the board list copy-link action work only for shared boards.
 
+> **Note on private boards:** "Just me" uses your Splunk user KV Store namespace, so other standard users cannot see it. Splunk administrators with the `admin_all_objects` capability can still view all users' private boards. Private boards are for separation and tidiness, not for storing sensitive secrets.
+
 **Templates** remain shared for all users on the instance (unchanged).
 
 To restrict who can write shared boards, see [DEVELOPER.md](DEVELOPER.md) (KV Store ACLs).

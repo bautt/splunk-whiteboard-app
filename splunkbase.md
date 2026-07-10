@@ -64,7 +64,7 @@ All application data is stored in Splunk KV Store collections in the `whiteboard
 | `whiteboard_templates` | User-saved templates |
 | `whiteboard_template_revisions` | Automatic revision history per template |
 
-**Board visibility:** New boards default to **Just me** (private) in the current user's KV namespace. Choose **Everyone** when creating a board, or open a private board and click **Share with everyone** to move it to the shared app namespace. Shareable URLs work only for shared boards. **Templates** remain shared for all users.
+**Board visibility:** New boards default to **Just me** (private) in the current user's KV namespace. Choose **Everyone** when creating a board, or open a private board and click **Share with everyone** to move it to the shared app namespace. Shareable URLs work only for shared boards. **Templates** remain shared for all users. Note that Splunk administrators with `admin_all_objects` can view all users' private boards — "Just me" provides isolation, not confidentiality.
 
 By default, all Splunk users can read and write shared boards and templates (`access = read : [ * ], write : [ * ]`). Private boards are isolated per user via Splunk's user-scoped KV Store. Tighten ACLs in `metadata/default.meta` before deployment if your organisation requires restricted write access to shared content.
 
