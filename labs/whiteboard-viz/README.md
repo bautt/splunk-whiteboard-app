@@ -28,9 +28,11 @@ The visualization is fed by a Dashboard Studio **kvstore-lookup dataSource**:
 | inputlookup whiteboards where _key="<board id>"
 ```
 
-The `whiteboards` KV Store collection is owned and exported system-wide by the main
-app; this app re-declares only the lookup transform (`package/default/transforms.conf`)
-to stay self-contained. The row's `elements_json` field carries the serialized
+**Prerequisite: the main `whiteboard_app` must be installed.** It owns the
+`whiteboards` KV collection *and* exports the `whiteboards` lookup system-wide, so
+this app relies on that global lookup rather than declaring its own (a local
+transform would shadow the global one and fail to open the collection from the
+`whiteboard_viz` context). The row's `elements_json` field carries the serialized
 Excalidraw board, which is parsed and drawn read-only via `exportToSvg`.
 
 Icon rehydration reuses the main app's **data-only** icon libraries
@@ -47,8 +49,7 @@ labs/whiteboard-viz/
 ├── build-plugins/               # css inline + asset-size warnings
 ├── package/
 │   ├── app/app.conf             # app identity (id, version, label) — source of truth
-│   ├── default/transforms.conf  # whiteboards KV lookup
-│   ├── metadata/default.meta    # viz + transforms exports
+│   ├── metadata/default.meta    # visualization export
 │   ├── static/                  # app icons
 │   └── LICENSE
 └── visualizations/whiteboard_viz/

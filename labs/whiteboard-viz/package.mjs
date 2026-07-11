@@ -223,10 +223,10 @@ function generateAppManifest(appInfo) {
     return manifest;
 }
 
-// Stage extra app files the base packager doesn't handle: custom .conf files
-// (e.g. the whiteboards KV lookup transform), the app icons, and LICENSE. Also
-// ensures the transforms lookup is exported system-wide so a Dashboard Studio
-// kvstore-lookup dataSource can resolve it from any app context.
+// Stage extra app files the base packager doesn't handle: any custom .conf
+// files under package/default/, the app icons, and LICENSE. (The whiteboards KV
+// lookup is intentionally NOT redeclared here — the viz relies on the main
+// whiteboard_app's system-exported `whiteboards` lookup so it doesn't shadow it.)
 function stageExtras(projectRoot, stageAppDir) {
     const pkgDir = join(projectRoot, 'package');
 
@@ -256,15 +256,6 @@ function stageExtras(projectRoot, stageAppDir) {
     if (existsSync(licensePath)) {
         copyFileSync(licensePath, join(stageAppDir, 'LICENSE'));
         console.log(colors.dim('  + LICENSE'));
-    }
-
-    const metaPath = join(stageAppDir, 'metadata', 'default.meta');
-    if (existsSync(metaPath)) {
-        const meta = readFileSync(metaPath, 'utf-8');
-        if (!/\[transforms\]/.test(meta)) {
-            writeFileSync(metaPath, `${meta}\n\n[transforms]\nexport = system\n`);
-            console.log(colors.dim('  + metadata: [transforms] export = system'));
-        }
     }
 }
 
