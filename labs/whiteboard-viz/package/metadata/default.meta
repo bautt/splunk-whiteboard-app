@@ -1,0 +1,10 @@
+[]
+access = read : [ * ], write : [ admin, power ]
+
+[visualizations/whiteboard_viz]
+export = system
+
+# The whiteboards KV lookup must be globally visible so a Dashboard Studio
+# kvstore-lookup dataSource can resolve it from any app context.
+[transforms]
+export = system

@@ -1,0 +1,24 @@
+{
+  "showTitleAndDescription": true,
+  "includeInToolbar": true,
+  "includeInVizSwitcher": true,
+  "showDrilldown": false,
+  "canSetTokens": [],
+  "hasEventHandlers": false,
+  "config": {
+    "name": "Whiteboard",
+    "description": "Renders Whiteboard App boards live inside Dashboard Studio (experimental, Splunk 10.4+)",
+    "category": "Custom",
+    "icon": null,
+    "dataContract": {
+      "requiredDataSources": ["primary"],
+      "optionalDataSources": []
+    },
+    "size": {
+      "initialWidth": 800,
+      "initialHeight": 500
+    },
+    "optionsSchema": {},
+    "editorConfig": []
+  }
+}
