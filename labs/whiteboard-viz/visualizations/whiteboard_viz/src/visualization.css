@@ -1,3 +1,13 @@
+/* The extension iframe's html/body/#root default to auto height; without this
+   the 100% chain collapses to 0 and the rendered SVG is clipped to nothing. */
+html,
+body,
+#root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
 .viz-container {
     width: 100%;
     height: 100%;

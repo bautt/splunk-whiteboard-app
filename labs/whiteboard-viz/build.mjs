@@ -115,6 +115,14 @@ const buildOptions = {
     minify: isProduction,
     sourcemap: !isProduction,
     ...(useJsx && { jsx: 'automatic' }),
+    // Browser bundles have no Node globals. React/Excalidraw read
+    // process.env.NODE_ENV (and some CJS deps touch `global`), so define
+    // NODE_ENV for dead-code elimination and shim `process`/`global` at runtime.
+    define: {
+        'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
+        global: 'globalThis',
+    },
+    banner: { js: 'var process=globalThis.process||{env:{}};' },
     plugins: [splunkCjsInteropPlugin, cssInjectAndSizeWarnPlugin],
     loader: {
         '.png': 'dataurl',

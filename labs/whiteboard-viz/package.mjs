@@ -263,7 +263,35 @@ function stageExtras(projectRoot, stageAppDir) {
 // Staging
 // ---------------------------------------------------------------------------
 
-function stageVisualizations(vizs, stageAppDir) {
+// Self-host Excalidraw's runtime assets next to visualization.js so nothing is
+// fetched from the unpkg.com CDN (which fails offline / in Splunk Cloud).
+// visualization.jsx sets window.EXCALIDRAW_ASSET_PATH to this bundle's dir, and
+// Excalidraw appends "excalidraw-assets/<file>". We stage the top-level asset
+// files: the woff2 fonts AND the lazy-loaded vendor-*.js chunk (the `locales/`
+// subfolder is UI-only and not needed for read-only SVG export, so it's skipped
+// to keep the package small).
+function stageExcalidrawAssets(projectRoot, destDir) {
+    const src = join(
+        projectRoot,
+        'node_modules',
+        '@excalidraw',
+        'excalidraw',
+        'dist',
+        'excalidraw-assets'
+    );
+    if (!existsSync(src)) return;
+    const assetsDest = join(destDir, 'excalidraw-assets');
+    mkdirSync(assetsDest, { recursive: true });
+    let count = 0;
+    for (const entry of readdirSync(src, { withFileTypes: true })) {
+        if (!entry.isFile()) continue; // skip locales/ subdir
+        copyFileSync(join(src, entry.name), join(assetsDest, entry.name));
+        count += 1;
+    }
+    if (count) console.log(colors.dim(`  + excalidraw-assets/ (${count} files)`));
+}
+
+function stageVisualizations(vizs, stageAppDir, projectRoot) {
     console.log(colors.info('Copying visualizations...'));
     for (const viz of vizs) {
         console.log(colors.dim(`  Packaging ${viz.name}...`));
@@ -281,6 +309,8 @@ function stageVisualizations(vizs, stageAppDir) {
         }
 
         writeFileSync(join(destDir, 'config.json'), JSON.stringify(viz.config, null, 2));
+
+        stageExcalidrawAssets(projectRoot, destDir);
     }
 }
 
@@ -410,7 +440,7 @@ async function main({ cwd }) {
     }
 
     try {
-        stageVisualizations(vizs, stageAppDir);
+        stageVisualizations(vizs, stageAppDir, projectRoot);
     } catch (err) {
         console.error(colors.error(`Error: ${err instanceof Error ? err.message : String(err)}`));
         process.exit(1);
