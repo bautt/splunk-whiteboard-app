@@ -18,8 +18,12 @@ const config = merge(baseConfig.default, {
         about: './web/about.jsx',
     },
     output: {
-        filename: '[name].bundle.js',
-        chunkFilename: '[name].[contenthash].chunk.js',
+        // Splunk's first-party `pages/splunk_ui_app.html` template resolves the entry
+        // script as /static/app/<app>/pages/<view>.js, so entry names must match the
+        // view names in default/data/ui/views. Async chunks sit in the same directory
+        // because `publicPath: 'auto'` derives their base URL from the entry script.
+        filename: 'pages/[name].js',
+        chunkFilename: 'pages/[name].[contenthash].chunk.js',
         path: path.join(distFolder, 'appserver', 'static'),
         publicPath: 'auto',
         clean: true,

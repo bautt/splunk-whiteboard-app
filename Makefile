@@ -25,13 +25,10 @@ build:
 	# consistently across the built JS, preserving behaviour.
 	find dist/appserver/static -name '*.js' -exec perl -pi -e 's/trackEvent/trackEvnt/g' {} +
 	# Single source of truth for the version is src/web/lib/version.js. Sync it
-	# into the injected HTML, default/app.conf, and app.manifest so they can
-	# never drift — a mismatch here fails Splunk Cloud SLIM/semver validation.
+	# into default/app.conf and app.manifest so they can never drift — a mismatch
+	# here fails Splunk Cloud SLIM/semver validation.
 	@VER=$$(grep "APP_VERSION" src/web/lib/version.js | sed -n "s/.*['\"]\\([^'\"]*\\)['\"].*/\\1/p"); \
 		BUILD=$${VER##*.}; \
-		for f in dist/appserver/templates/*.html; do \
-			perl -pi -e "s/__WB_APP_VERSION__/$$VER/g" "$$f"; \
-		done; \
 		perl -pi -e "s/^version = .*/version = $$VER/" dist/default/app.conf; \
 		perl -pi -e "s/^build = .*/build = $$BUILD/" dist/default/app.conf; \
 		perl -pi -e "s/\"version\": \"[^\"]*\"/\"version\": \"$$VER\"/" dist/app.manifest; \
@@ -62,16 +59,22 @@ deploy: package
 		sudo systemctl restart Splunkd && \
 		echo done"
 
-# Deploy without restarting Splunkd. Bundle URLs include ?v=<appVersion> so
-# browsers fetch the new JS; if Splunk Web still serves stale assets, visit
-# /en-US/_bump once (or use `make deploy` which restarts Splunkd).
+# Deploy without restarting Splunkd. Entry bundles now live at the fixed path
+# /static/app/<app>/pages/<view>.js required by Splunk's splunk_ui_app.html
+# template, so they carry no version query string of their own. Cache busting
+# instead rides on Splunk's own /static/@<build>.<bump>/ URL segment, which is
+# what incrementing push-version.txt below changes. Splunk Web re-reads that
+# file at most every 30s, so allow a moment before the new JS is served.
 deploy-norestart: package
 	scp $(APP_ID).tar.gz $(SPLUNK_HOST):~
 	ssh $(SPLUNK_HOST) "\
 		cd /opt/splunk/etc/apps && \
 		sudo tar xzf ~/$(APP_ID).tar.gz && \
 		sudo chown -R splunk:splunk /opt/splunk/etc/apps/$(APP_ID) && \
-		echo done"
+		sudo sh -c 'P=/opt/splunk/var/run/splunk/push-version.txt; \
+			echo \$$(( \$$(cat \$$P 2>/dev/null || echo 0) + 1 )) > \$$P; \
+			chown splunk:splunk \$$P' && \
+		echo \"done (bumped to \$$(sudo cat /opt/splunk/var/run/splunk/push-version.txt))\""
 
 clean:
 	rm -rf dist /tmp/$(APP_ID) $(APP_ID).tar.gz

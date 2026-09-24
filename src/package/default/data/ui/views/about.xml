@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
-<view template="whiteboard_app:/templates/about.html" type="html">
+<view template="pages/splunk_ui_app.html" type="html">
     <label>About</label>
 </view>
