@@ -1,6 +1,6 @@
 // PDF export from an Excalidraw PNG blob via jsPDF.
 
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 
 export async function exportCanvasToPDF(blob, fileName = 'whiteboard.pdf') {
     const dataUrl = await blobToDataURL(blob);

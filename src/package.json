@@ -12,7 +12,7 @@
         "@splunk/react-ui": "^5.9.1",
         "@splunk/themes": "^0.18.0",
         "fflate": "^0.8.3",
-        "jspdf": "^2.5.2",
+        "jspdf": "^4.2.1",
         "process": "^0.11.10",
         "react": "^17",
         "react-dom": "^17",
@@ -43,6 +43,7 @@
         "websocket-driver": "^0.7.5",
         "browserslist": "^4.28.7",
         "baseline-browser-mapping": "^2.11.0",
-        "moment": "^2.31.0"
+        "moment": "^2.31.0",
+        "dompurify": "^3.4.13"
     }
 }
