@@ -102,6 +102,27 @@ function interpolateTemplate(content, vars) {
     });
 }
 
+// [manifest] is authoring metadata for app.manifest, not an app.conf stanza, and
+// requires_splunk is not in the app.conf spec. Shipping either makes splunkd log
+// "Invalid key in stanza" on every startup, so keep them out of the staged conf.
+const NON_SPEC_STANZAS = new Set(['manifest']);
+const NON_SPEC_KEYS = new Set(['requires_splunk']);
+
+function stripNonSpecStanzas(content) {
+    let stanza = '';
+    const kept = content.split('\n').filter((line) => {
+        const header = line.match(/^\s*\[([^\]]+)\]\s*$/);
+        if (header) {
+            stanza = header[1].trim().toLowerCase();
+            return !NON_SPEC_STANZAS.has(stanza);
+        }
+        if (NON_SPEC_STANZAS.has(stanza)) return false;
+        const key = line.match(/^\s*([a-z_.]+)\s*=/i);
+        return !(key && NON_SPEC_KEYS.has(key[1].toLowerCase()));
+    });
+    return `${kept.join('\n').replace(/\n{3,}/g, '\n\n').trimEnd()}\n`;
+}
+
 // ---------------------------------------------------------------------------
 // Visualization discovery
 // ---------------------------------------------------------------------------
@@ -332,7 +353,7 @@ function stageAppConf(projectRoot, buildNumber) {
 
     const stageDefaultDir = join(join(projectRoot, 'stage', appInfo.id), 'default');
     mkdirSync(stageDefaultDir, { recursive: true });
-    writeFileSync(join(stageDefaultDir, 'app.conf'), interpolated);
+    writeFileSync(join(stageDefaultDir, 'app.conf'), stripNonSpecStanzas(interpolated));
 
     return appInfo;
 }
