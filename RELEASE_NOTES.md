@@ -4,6 +4,43 @@ Highlights of recent Whiteboard App releases. For the full change list of any ve
 
 ---
 
+## v0.3.75 — 2026-10-10
+
+**Splunkbase AppInspect fixes**
+- Cleared the "public IP `3.57.65.44`" rejection. There is no address: SVG path data lets numbers run together, because a second decimal point always begins a new number, so that run is the three coordinates `3.57`, `0.65` and `0.44`. All 20 hits came from icon artwork inside Excalidraw.
+- The build now separates those runs at a boundary the parser already recognised, leaving rendering untouched — across the 14 affected paths the parsed number sequences are identical before and after. `scripts/space-svg-path-numbers.py` is confined to `d="..."` attributes and **fails the build** if an IP-shaped string survives outside path data.
+- Removed `[install] state_change_requires_restart`, which forced a splunkd restart on every enable/disable. No `[triggers]` stanza replaces it: that is only for an app's own custom conf files, and configuring it for `collections.conf`/`transforms.conf` is itself an AppInspect failure.
+- AppInspect precert is now **0 errors, 0 failures, 100 success**. The 5 remaining warnings need no action — three are telemetry notices whose own text says to ignore them, `check_collections_conf` states "No action required", and the deprecated-`headerview` match is a CSS selector inside `@splunk/react-page` reading Splunk's own header from the DOM, not an import.
+
+**ESLint, and the two bugs it found**
+- Wired up Splunk's shared ESLint config, which the codebase was already written against but never actually ran. 137 findings down to 40 remaining style opinions.
+- **Present mode could exit through a stale callback**: the Escape handler subscribed on `[go]` while closing over `handleExit`, so a change to `onExit` without a change to `go` left the listener holding the previous one.
+- **The presentation snapshot defeated its own memos**: its fallback allocated a fresh `[]` every render, invalidating all four `useMemo` hooks depending on it.
+- Also fixed three buttons defaulting to `type=submit`, two colour swatches with no accessible name, and three components defined inside `ShapesPanel`'s render — which handed React a new type each pass and tore down the icon grid along with its focus and scroll position.
+
+**Shape library**
+- Inserts as **SVG Icon** by default, listed first, with *Elements* relabelled **Text**. Sticky notes and zones have no icon artwork and still insert as editable elements.
+- The toggle row wraps instead of compressing: `all: unset` strips the buttons' sizing, so without `flex-shrink: 0` the label spilled out of its own highlight.
+
+---
+
+## v0.3.74 — 2026-10-10
+
+**New example board: Cisco Data Fabric — Architecture (Portal)**
+- The full architecture transcribed 1:1 from the [CDF Portal](https://splunk.github.io/CDF_Portal/cisco-data-fabric.html), with exact corner radii and text baselines, a 14-step build order, and detail copy on all 28 nodes.
+- Renders on the **light** theme by design: the colours are the portal's literal values, and the dark theme is a canvas-wide invert filter that would wreck them. A near-black canvas supplies the dark look instead.
+- New scripts under `scripts/` reproduce the board end to end from the portal SVG: cascade and transform flattening, tinted icon assets, colour maths, and the generator itself.
+
+**Node detail panel**
+- Selecting any part of an annotated node — card, label or icon — opens a panel with its layer, title, description and demo link. This replaces Excalidraw's native link field, whose badge is painted directly onto the canvas and **ignores element opacity**, so it announced nodes the build had not revealed yet.
+
+**Present mode is actually fullscreen**
+- Present fullscreens the canvas container instead of the document, promoting it to the browser's top layer — the Splunk header and app bar are gone rather than merely covered, and the page's fixed 120px chrome allowance no longer applies.
+- Excalidraw's editing UI is hidden while presenting, but element selection keeps working so the detail panel stays usable. The board is restored on every exit path, including the browser's own fullscreen escape.
+- `computeReveal` now **parks** a hidden element's link rather than clearing it, so the badge disappears without a save during preview permanently losing the URL.
+
+---
+
 ## v0.3.71 — 2026-07-10
 
 **Splunk Cloud compatibility fix**
