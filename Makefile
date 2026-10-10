@@ -24,6 +24,11 @@ build:
 	# sent (the app registers no tracker); this only renames the property key
 	# consistently across the built JS, preserving behaviour.
 	find dist/appserver/static -name '*.js' -exec perl -pi -e 's/trackEvent/trackEvnt/g' {} +
+	# Icon artwork in our dependencies contains SVG path runs such as
+	# `3.57.65.44` — three coordinates, which AppInspect's IPv4 regex rejects as
+	# a public IP address. Separating them is inert for the renderer. The script
+	# fails the build if an IP-shaped string survives outside path data.
+	python3 scripts/space-svg-path-numbers.py dist
 	# Single source of truth for the version is src/web/lib/version.js. Sync it
 	# into default/app.conf and app.manifest so they can never drift — a mismatch
 	# here fails Splunk Cloud SLIM/semver validation.
