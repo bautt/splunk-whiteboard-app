@@ -17,6 +17,8 @@ const FADE_MS = 240;
 //     each click reveals the next step (PowerPoint-style), with optional
 //     fade-in and camera-follow. The scene is restored untouched on exit.
 //  2. Frame mode  — otherwise, step through Excalidraw frames as slides.
+const NO_ELEMENTS = [];
+
 export default function PresentationMode({ excalidrawAPI, onExit, suppressSaveRef }) {
     const [index, setIndex] = useState(0);
     const [fade, setFade] = useState(true);
@@ -34,7 +36,9 @@ export default function PresentationMode({ excalidrawAPI, onExit, suppressSaveRe
         snapshotRef.current = prepareRevealSnapshot(excalidrawAPI.getSceneElements() || []);
     }
 
-    const snapshot = snapshotRef.current || [];
+    // A module constant, not a fresh `[]`: the fallback is a dependency of
+    // four memos, and a new array each render would defeat all of them.
+    const snapshot = snapshotRef.current || NO_ELEMENTS;
     const buildMode = useMemo(() => hasBuild(snapshot), [snapshot]);
     const maxStep = useMemo(() => getMaxStep(snapshot), [snapshot]);
 
@@ -131,6 +135,14 @@ export default function PresentationMode({ excalidrawAPI, onExit, suppressSaveRe
     }, []);
 
     // Keyboard.
+    const handleExit = useCallback(() => {
+        cancelFade();
+        if (excalidrawAPI && snapshotRef.current) {
+            excalidrawAPI.updateScene({ elements: restoreSnapshot(snapshotRef.current) });
+        }
+        onExit();
+    }, [excalidrawAPI, onExit]);
+
     useEffect(() => {
         const onKey = (e) => {
             if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
@@ -145,8 +157,7 @@ export default function PresentationMode({ excalidrawAPI, onExit, suppressSaveRe
         };
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [go]);
+    }, [go, handleExit]);
 
     // Fullscreen is owned by CanvasPage: it fullscreens the canvas container,
     // which must be requested from the Present click to keep user activation.
@@ -180,14 +191,6 @@ export default function PresentationMode({ excalidrawAPI, onExit, suppressSaveRe
             }
         };
     }, [suppressSaveRef]);
-
-    const handleExit = useCallback(() => {
-        cancelFade();
-        if (excalidrawAPI && snapshotRef.current) {
-            excalidrawAPI.updateScene({ elements: restoreSnapshot(snapshotRef.current) });
-        }
-        onExit();
-    }, [excalidrawAPI, onExit]);
 
     const statusText = buildMode
         ? `Step ${index} / ${maxStep}`

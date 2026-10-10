@@ -4,8 +4,8 @@ import Heading from '@splunk/react-ui/Heading';
 
 import { parseColorInput } from '../lib/canvasAppearance';
 import { SHAPE_CATEGORIES, buildShape } from '../lib/shapes';
-import MARKETING_ICONS from '../lib/marketingIcons';
-import BRAND_ICONS from '../lib/brandIcons';
+import { MARKETING_ICONS } from '../lib/marketingIcons';
+import { BRAND_ICONS } from '../lib/brandIcons';
 import { SHAPE_ICONS, getShapeSvgMarkup } from '../lib/shapeIcons';
 import { normalizeIconColor } from '../lib/iconFiles';
 import { iconToDataUrl } from '../lib/tintSvg';
@@ -39,8 +39,9 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
         setIconColorText(parsed);
         setIconColorError('');
     }, [iconColorText]);
-    // 'elements' = insert as grouped Excalidraw shapes; 'svg' = insert as tinted SVG image
-    const [shapeMode, setShapeMode] = useState('elements');
+    // 'svg' = insert as a tinted SVG image (the default); 'elements' = insert
+    // as grouped Excalidraw shapes, which stay editable as text.
+    const [shapeMode, setShapeMode] = useState('svg');
 
     const handle = (id) => {
         const elements = buildShape(id, 100, 100);
@@ -51,9 +52,16 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
 
     const COLOR_PRESETS = ['#000000', '#ef4444', '#f97316', '#3b82f6', '#22c55e', '#9333ea', '#65737e'];
 
-    const IconGrid = ({ icons, showColor }) => (
+    // Render functions, deliberately not components: defining a component
+    // inside render gives React a brand-new type on every pass, so it tears the
+    // whole subtree down and rebuilds it — losing focus and scroll position in
+    // the icon grid. Inlined this way there is no component type to compare.
+    const renderIconGrid = ({ icons, showColor }) => (
         <>
-            {showColor && <ColorRow />}
+            {/* Declared further down, but only ever called from the returned
+                JSX — by then every const in this scope is initialised. */}
+            {/* eslint-disable-next-line no-use-before-define */}
+            {showColor && renderColorRow()}
             <div
                 style={{
                     display: 'grid',
@@ -65,6 +73,7 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
                     const preview = tintedDataURL(icon, iconColor);
                     return (
                         <button
+                            type="button"
                             key={icon.id}
                             title={icon.label}
                             onClick={() => onAddImage({ ...icon, color: icon.tintable === false ? undefined : iconColor })}
@@ -114,8 +123,9 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
         </>
     );
 
-    const SectionToggle = ({ expanded, onToggle, label }) => (
+    const renderSectionToggle = ({ expanded, onToggle, label }) => (
         <button
+            type="button"
             onClick={onToggle}
             style={{
                 all: 'unset',
@@ -136,7 +146,7 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
         </button>
     );
 
-    const ColorRow = () => (
+    const renderColorRow = () => (
         <div style={{ marginBottom: 10 }}>
             <div
                 style={{
@@ -190,9 +200,12 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
                 />
                 {COLOR_PRESETS.map((c) => (
                     <button
+                        type="button"
                         key={c}
                         onClick={() => setIconColorSafe(c)}
                         title={c}
+                        // A bare colour swatch has no text for a screen reader.
+                        aria-label={`Use icon color ${c}`}
                         style={{
                             all: 'unset', width: 16, height: 16, borderRadius: '50%',
                             background: c, cursor: 'pointer', flexShrink: 0,
@@ -215,14 +228,18 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
             <Heading level={3}>Shape library</Heading>
 
             {/* ── Insert mode toggle ──────────────────────── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Wraps rather than compresses: `all: unset` strips the buttons'
+                default sizing, so without an explicit no-shrink they squeeze
+                and the label spills out of its own highlight. */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 12, opacity: 0.7 }}>Insert as:</span>
-                <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: '1px solid var(--gray60, #c3cbd4)' }}>
+                <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', border: '1px solid var(--gray60, #c3cbd4)', flexShrink: 0 }}>
                     {[
-                        { value: 'elements', label: 'Elements' },
                         { value: 'svg', label: 'SVG Icon' },
+                        { value: 'elements', label: 'Text' },
                     ].map(({ value, label }) => (
                         <button
+                            type="button"
                             key={value}
                             onClick={() => setShapeMode(value)}
                             style={{
@@ -230,6 +247,8 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
                                 padding: '3px 10px',
                                 fontSize: 12,
                                 cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0,
                                 background: shapeMode === value ? 'var(--interactive-color, #5a4fcf)' : 'transparent',
                                 color: shapeMode === value ? '#fff' : 'inherit',
                                 fontWeight: shapeMode === value ? 600 : 400,
@@ -240,11 +259,13 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
                     ))}
                 </div>
                 {shapeMode === 'svg' && (
-                    <span style={{ fontSize: 11, opacity: 0.55 }}>pick color below</span>
+                    <span style={{ fontSize: 11, opacity: 0.55, whiteSpace: 'nowrap' }}>
+                        pick color below
+                    </span>
                 )}
             </div>
 
-            {shapeMode === 'svg' && <ColorRow />}
+            {shapeMode === 'svg' && renderColorRow()}
 
             {SHAPE_CATEGORIES.map((cat) => (
                 <div key={cat.name}>
@@ -273,7 +294,11 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
                                     onClick={handleClick}
                                     style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: 4 }}
                                     icon={Icon ? <Icon size={1.2} /> : undefined}
-                                    title={isSvgMode ? `Insert ${s.label} as SVG icon` : `Insert ${s.label} as elements`}
+                                    title={
+                                        isSvgMode
+                                            ? `Insert ${s.label} as SVG icon`
+                                            : `Insert ${s.label} as editable text shapes`
+                                    }
                                 >
                                     {s.label}
                                 </Button>
@@ -285,29 +310,29 @@ export default function ShapesPanel({ onAdd, onAddImage }) {
 
             {/* ── Brand logos ─────────────────────────────── */}
             <div>
-                <SectionToggle
-                    expanded={brandExpanded}
-                    onToggle={() => setBrandExpanded((v) => !v)}
-                    label={`Brand logos (${BRAND_ICONS.length})`}
-                />
+                {renderSectionToggle({
+                    expanded: brandExpanded,
+                    onToggle: () => setBrandExpanded((v) => !v),
+                    label: `Brand logos (${BRAND_ICONS.length})`,
+                })}
                 {brandExpanded && (
                     <>
                         <p style={{ fontSize: 11, opacity: 0.65, margin: '0 0 8px' }}>
                             Official brand colors (not tintable).
                         </p>
-                        <IconGrid icons={BRAND_ICONS} showColor={false} />
+                        {renderIconGrid({ icons: BRAND_ICONS, showColor: false })}
                     </>
                 )}
             </div>
 
             {/* ── Marketing Icons ─────────────────────────── */}
             <div>
-                <SectionToggle
-                    expanded={mktgExpanded}
-                    onToggle={() => setMktgExpanded((v) => !v)}
-                    label={`Splunk Marketing Icons (${MARKETING_ICONS.length})`}
-                />
-                {mktgExpanded && <IconGrid icons={MARKETING_ICONS} showColor />}
+                {renderSectionToggle({
+                    expanded: mktgExpanded,
+                    onToggle: () => setMktgExpanded((v) => !v),
+                    label: `Splunk Marketing Icons (${MARKETING_ICONS.length})`,
+                })}
+                {mktgExpanded && renderIconGrid({ icons: MARKETING_ICONS, showColor: true })}
             </div>
         </div>
     );

@@ -1,8 +1,8 @@
 import { DRP_ICONS } from './drpIcons';
-import MARKETING_ICONS from './marketingIcons';
-import BRAND_ICONS from './brandIcons';
+import { MARKETING_ICONS } from './marketingIcons';
+import { BRAND_ICONS } from './brandIcons';
 import { getShapeSvgMarkup } from './shapeIcons';
-import { iconToDataUrl, svgMarkupToDataUrl, tintSvgDataUrl } from './tintSvg';
+import { iconToDataUrl, tintSvgDataUrl } from './tintSvg';
 
 /** Old board file ids → current brand icon id (rehydration only). */
 const LEGACY_BRAND_FILE_IDS = {

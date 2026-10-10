@@ -14,8 +14,6 @@ const NEUTRAL = '#5C5C5C';
 
 const FONT_SIZE = 14;
 const LINE_HEIGHT = 1.25;
-// Per-line pixel height at FONT_SIZE 14 with LINE_HEIGHT 1.25
-const LINE_PX = Math.ceil(FONT_SIZE * LINE_HEIGHT); // 18px
 
 const COMMON = {
     angle: 0,

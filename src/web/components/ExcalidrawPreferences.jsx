@@ -87,10 +87,9 @@ export function defaultCanvasAppState(overrides = {}) {
         gridSize: null,
         objectsSnapModeEnabled: true,
         isBindingEnabled: true,
-        displayBackgroundColor: display,
-        viewBackgroundColor: stored,
-        theme,
         ...overrides,
+        // Re-asserted after the spread: appearance has to come out normalised
+        // and internally consistent, whatever the caller passed in.
         theme,
         displayBackgroundColor: overrides.displayBackgroundColor || display,
         viewBackgroundColor: overrides.viewBackgroundColor || stored,

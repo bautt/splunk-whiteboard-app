@@ -10,6 +10,7 @@
         "@splunk/react-icons": "^5.12.0",
         "@splunk/react-page": "^8.3.1",
         "@splunk/react-ui": "^5.9.1",
+        "@splunk/splunk-utils": "^3.4.0",
         "@splunk/themes": "^0.18.0",
         "fflate": "^0.8.3",
         "jspdf": "^4.2.1",
@@ -19,11 +20,20 @@
         "styled-components": "^5"
     },
     "devDependencies": {
+        "@babel/eslint-parser": "^7.16",
         "@splunk/babel-preset": "^4.0.0",
+        "@splunk/eslint-config": "^5.1",
         "@splunk/webpack-configs": "^7.0.3",
         "babel-loader": "^8.2.5",
         "copy-webpack-plugin": "^14.0.0",
         "css-loader": "^6.7.1",
+        "eslint": "^8",
+        "eslint-config-airbnb": "^19",
+        "eslint-config-prettier": "^8",
+        "eslint-plugin-import": "^2",
+        "eslint-plugin-jsx-a11y": "^6",
+        "eslint-plugin-react": "^7",
+        "eslint-plugin-react-hooks": "^4",
         "style-loader": "^3.3.1",
         "webpack": "^5.74.0",
         "webpack-cli": "^4.10.0",
@@ -31,7 +41,9 @@
     },
     "scripts": {
         "build": "NODE_ENV=production webpack --config webpack.config.mjs",
-        "watch": "webpack --config webpack.config.mjs --watch"
+        "watch": "webpack --config webpack.config.mjs --watch",
+        "lint": "eslint web --ext .js,.jsx",
+        "lint:fix": "eslint web --ext .js,.jsx --fix"
     },
     "resolutions": {
         "postcss": "^8.5.18",

@@ -13,6 +13,8 @@ OUT = ROOT / "src/web/lib/brandIcons.js"
 ENTRIES = [
     ("brand-splunk-transition-black", "Splunk, a Cisco company (black)", "splunk-transition-black.png"),
     ("brand-splunk-transition-white", "Splunk, a Cisco company (white)", "splunk-transition-white.png"),
+    ("brand-splunk-corporate-black", "Splunk, a Cisco company — corporate (black)", "splunk-corporate-black.png"),
+    ("brand-splunk-corporate-white", "Splunk, a Cisco company — corporate (white)", "splunk-corporate-white.png"),
     ("brand-splunk-mark", "Splunk mark", "splunk-mark.png"),
     ("brand-cisco", "Cisco", "cisco-color.png"),
     ("brand-opentelemetry", "OpenTelemetry", "opentelemetry-color.png"),

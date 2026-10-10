@@ -19,7 +19,7 @@ export default function NodeDetailPanel({ api, selectedIds }) {
         const picked = new Map();
         (api.getSceneElements() || []).forEach((el) => {
             if (!sel[el.id] || el.isDeleted) return;
-            const cdf = (el.customData || {}).cdf;
+            const { cdf } = el.customData || {};
             if (cdf && cdf.key && !picked.has(cdf.key)) picked.set(cdf.key, cdf);
         });
         // A marquee across several nodes has no single subject — stay quiet.
@@ -72,12 +72,13 @@ export default function NodeDetailPanel({ api, selectedIds }) {
                         {detail.title || detail.key}
                     </div>
                 </div>
+                {/* `label` on a Splunk Button is visible text, not the
+                    accessible name — it would render beside the glyph. */}
                 <Button
                     inline
                     appearance="subtle"
-                    size="small"
                     onClick={dismiss}
-                    label="Close details"
+                    aria-label="Close details"
                 >
                     ✕
                 </Button>

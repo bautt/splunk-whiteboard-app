@@ -140,6 +140,9 @@ function BoardThumbnail({ board }) {
             cancelled = true;
         };
         // Regenerate when the board's content changes (updatedAt) or scope flips.
+        // Depending on the element arrays themselves would re-export the
+        // thumbnail on every render.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible, board.id, board.updatedAt]);
 
     return (
@@ -212,6 +215,8 @@ function ExampleThumbnail({ example }) {
         return () => {
             cancelled = true;
         };
+        // Examples are static bundled data; id is a sufficient key.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [visible, example.id]);
 
     return (

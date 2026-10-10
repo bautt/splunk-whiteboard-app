@@ -45,6 +45,8 @@ function hexToRgb(hex) {
     if (h.length !== 6) return null;
     const n = parseInt(h, 16);
     if (Number.isNaN(n)) return null;
+    // Unpacking a packed 24-bit colour is what bitwise ops are for.
+    // eslint-disable-next-line no-bitwise
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 

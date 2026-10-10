@@ -237,11 +237,15 @@ export default function CanvasPage({ boardId, onClose }) {
             syncedAtRef.current = board.updatedAt || 0;
             setConflict(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [board?.id, board?.updatedAt]);
 
     useEffect(() => {
         if (!board) return;
         setCanvasAppState(defaultCanvasAppState(board.appState || {}));
+        // Keyed on identity only: re-running after an autosave would
+        // discard appearance changes made since that save.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [board?.id]);
 
     const canvasTheme = normalizeTheme(canvasAppState);
@@ -274,6 +278,9 @@ export default function CanvasPage({ boardId, onClose }) {
             ),
             scrollToContent: restored.length > 0,
         };
+        // initialData is read once per board; recomputing would reset the
+        // live scene and throw away unsaved work.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [board?.id]);
 
     const getElementsAndState = useCallback(() => {
@@ -354,7 +361,7 @@ export default function CanvasPage({ boardId, onClose }) {
     // One-shot sync after Excalidraw mounts — ensures saved theme/bg apply to the live scene.
     useEffect(() => {
         const api = apiRef.current;
-        if (!api || !board) return;
+        if (!api || !board) return undefined;
         const appearance = boardAppearanceState(board.appState || {});
         const timer = window.setTimeout(() => {
             const cur = api.getAppState();
@@ -368,6 +375,8 @@ export default function CanvasPage({ boardId, onClose }) {
             applyCanvasAppearance(api, appearance);
         }, 0);
         return () => window.clearTimeout(timer);
+        // Deliberately one-shot per board, see the comment above.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [excalidrawAPI, board?.id]);
 
     const handleAppearanceChange = useCallback(
@@ -486,7 +495,10 @@ export default function CanvasPage({ boardId, onClose }) {
             const restored = restoreElements(newElements, null);
 
             // Compute bounding box of the incoming elements (they originate at ~0,0)
-            let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+            let x0 = Infinity;
+            let y0 = Infinity;
+            let x1 = -Infinity;
+            let y1 = -Infinity;
             restored.forEach((el) => {
                 if (el.x != null) {
                     x0 = Math.min(x0, el.x);
@@ -495,7 +507,10 @@ export default function CanvasPage({ boardId, onClose }) {
                     y1 = Math.max(y1, el.y + (el.height || 0));
                 }
             });
-            if (!isFinite(x0)) { x0 = y0 = 0; }
+            if (!Number.isFinite(x0)) {
+                x0 = 0;
+                y0 = 0;
+            }
             const w = Math.max(x1 - x0, 1);
             const h = Math.max(y1 - y0, 1);
 
@@ -1067,6 +1082,7 @@ function ToolBtn({ children, title, onClick }) {
     const [hov, setHov] = React.useState(false);
     return (
         <button
+            type="button"
             title={title}
             onClick={onClick}
             onMouseEnter={() => setHov(true)}
@@ -1114,7 +1130,7 @@ function BrandColorButton({ onPick }) {
     const popoverRef = useRef(null);
 
     useEffect(() => {
-        if (!open) return;
+        if (!open) return undefined;
         const onDocClick = (e) => {
             if (popoverRef.current && !popoverRef.current.contains(e.target)) setOpen(false);
         };
@@ -1155,6 +1171,7 @@ function BrandColorButton({ onPick }) {
                                         key={c.id}
                                         type="button"
                                         title={`${c.label} (${c.hex})`}
+                                        aria-label={`${c.label} (${c.hex})`}
                                         onClick={() => {
                                             onPick(c.hex);
                                             setOpen(false);
@@ -1266,7 +1283,7 @@ function SelectionToolbar({ api, selectedIds }) {
         api.updateScene({
             elements: all.map((el) => {
                 if (!sel2[el.id]) return el;
-                const b = bbs.find((b) => b.id === el.id);
+                const b = bbs.find((bb) => bb.id === el.id);
                 switch (axis) {
                     case 'left':   return { ...el, x: ref };
                     case 'right':  return { ...el, x: ref - b.w };

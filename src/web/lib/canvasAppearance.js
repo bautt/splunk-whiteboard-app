@@ -46,6 +46,8 @@ function hexToRgb(hex) {
     if (h.length !== 6) return null;
     const n = parseInt(h, 16);
     if (Number.isNaN(n)) return null;
+    // Unpacking a packed 24-bit colour is what bitwise ops are for.
+    // eslint-disable-next-line no-bitwise
     return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
@@ -88,17 +90,17 @@ export function parseColorInput(input) {
 /** Excalidraw dark-theme canvas CSS filter (see excalidraw theme styles). */
 const DARK_CANVAS_FILTER = 'invert(93%) hue-rotate(180deg)';
 
-let _filterCanvasCtx;
+let cachedFilterCtx;
 
 function filterCanvasCtx() {
     if (typeof document === 'undefined') return null;
-    if (!_filterCanvasCtx) {
+    if (!cachedFilterCtx) {
         const canvas = document.createElement('canvas');
         canvas.width = 1;
         canvas.height = 1;
-        _filterCanvasCtx = canvas.getContext('2d', { willReadFrequently: true });
+        cachedFilterCtx = canvas.getContext('2d', { willReadFrequently: true });
     }
-    return _filterCanvasCtx;
+    return cachedFilterCtx;
 }
 
 function clampByte(value) {
