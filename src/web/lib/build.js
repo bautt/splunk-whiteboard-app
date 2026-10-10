@@ -258,6 +258,30 @@ export function reorderSteps(elements, draggedStep, insertBeforeStep) {
 }
 
 /**
+ * Park an element's link while it is hidden.
+ *
+ * Excalidraw paints the link badge straight onto the canvas and gates it on
+ * `element.link` alone — element opacity is ignored — so a hidden element would
+ * otherwise still announce itself with a badge. Clearing `link` outright would
+ * be destructive: a save during preview or presentation would persist the hole.
+ * The URL is therefore stashed alongside the build metadata and put back by
+ * `unhideElement`.
+ */
+function stashLink(el) {
+    if (!el.link) return el;
+    const build = { ...((el.customData || {}).build || {}), hiddenLink: el.link };
+    return { ...el, link: null, customData: { ...(el.customData || {}), build } };
+}
+
+/** Put a parked link back and drop the stash. No-op for everything else. */
+function unstashLink(el) {
+    const build = (el.customData || {}).build || {};
+    if (!build.hiddenLink) return el;
+    const { hiddenLink, ...rest } = build;
+    return { ...el, link: hiddenLink, customData: { ...el.customData, build: rest } };
+}
+
+/**
  * Compute the element array to show at a given build step.
  *  - step <= current  → visible at base opacity (original locked state restored)
  *  - step  > current  → hidden (opacity 0, locked so it can't be clicked)
@@ -274,13 +298,13 @@ export function computeReveal(snapshot, current, opts = {}) {
                 fadingStep != null && s === fadingStep && s > 0
                     ? Math.max(0, Math.min(baseOpacity, baseOpacity * fadeFactor))
                     : baseOpacity;
-            out = {
+            out = unstashLink({
                 ...el,
                 opacity: op,
                 locked: wasRevealHidden(el, s) ? false : !!el.locked,
-            };
+            });
         } else {
-            out = { ...el, opacity: 0, locked: true };
+            out = stashLink({ ...el, opacity: 0, locked: true });
         }
         return bumpVersion(out);
     });
@@ -301,15 +325,15 @@ export function prepareRevealSnapshot(elements) {
 
 /**
  * Strip transient reveal/preview mutations before persisting or after loading.
- * computeReveal hides future steps with opacity 0 + locked; if that state is
- * saved, elements re-open invisible on the canvas.
+ * computeReveal hides future steps with opacity 0 + locked and parks their
+ * link; if that state is saved, elements re-open invisible and linkless.
  */
 export function sanitizeElementsForPersistence(elements) {
     return (elements || []).map((el) => {
         if (!el || el.isDeleted) return el;
         if (el.opacity === 0 && el.locked) {
             return {
-                ...el,
+                ...unstashLink(el),
                 opacity: 100,
                 locked: false,
                 version: (el.version || 1) + 1,

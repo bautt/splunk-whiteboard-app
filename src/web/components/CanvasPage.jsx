@@ -23,6 +23,7 @@ import HistoryPanel from './HistoryPanel';
 import ExportPanel from './ExportPanel';
 import LibraryPanel from './LibraryPanel';
 import PresentationMode from './PresentationMode';
+import NodeDetailPanel from './NodeDetailPanel';
 import PanelErrorBoundary from './PanelErrorBoundary';
 import SidebarIconTabs from './SidebarIconTabs';
 import ExcalidrawPreferences, {
@@ -35,6 +36,7 @@ import { useVersions } from '../hooks/useVersions';
 import { useRevisions } from '../hooks/useRevisions';
 import { BOARD_SCOPE, BOARD_VISIBILITY, canShareBoard, visibilityLabel, isConflictError } from '../lib/boardScope';
 import { nanoid } from '../lib/nanoid';
+import { BRAND_COLOR_GROUPS, lightenBrandColor } from '../lib/brandColors';
 import {
     applyCanvasAppearance,
     boardAppearanceState,
@@ -44,7 +46,7 @@ import {
     resolveAppearancePatch,
     storedBackgroundColor,
 } from '../lib/canvasAppearance';
-import { debug } from '../lib/log';
+import { debug, logWarn } from '../lib/log';
 import { filesToMap, rehydrateMissingFiles, registerBoardFiles } from '../lib/boardFiles';
 import { sanitizeElementsForPersistence, prepareRevealSnapshot, restoreSnapshot } from '../lib/build';
 import {
@@ -174,6 +176,9 @@ export default function CanvasPage({ boardId, onClose }) {
     // Last board `updated_at` this client has synced with, for conflict detection.
     const syncedAtRef = useRef(0);
     const shareButtonRef = useRef(null);
+    // The canvas container. Present mode lifts this element out of the Splunk
+    // page chrome and hands it to the Fullscreen API.
+    const surfaceRef = useRef(null);
 
     const handleExcalidrawAPI = useCallback((api) => {
         apiRef.current = api;
@@ -645,9 +650,44 @@ export default function CanvasPage({ boardId, onClose }) {
             ),
         });
         setPresenting(true);
+        // Fullscreen the canvas container rather than the document: the element
+        // is promoted to the browser's top layer, so the Splunk header, app bar
+        // and this page's own chrome are gone rather than merely covered.
+        // Requested straight from the click so the user activation still holds.
+        const surface = surfaceRef.current;
+        if (surface && surface.requestFullscreen) {
+            surface.requestFullscreen().catch((err) => {
+                // The fixed overlay still gives a full browser window.
+                logWarn('fullscreen request denied, presenting windowed', err);
+            });
+        }
     };
 
-    const exitPresentation = () => setPresenting(false);
+    const exitPresentation = useCallback(() => {
+        setPresenting(false);
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        }
+    }, []);
+
+    // Leaving fullscreen by browser means (Esc, F11) must also end the
+    // presentation, otherwise the app keeps believing it is presenting.
+    useEffect(() => {
+        if (!presenting) return undefined;
+        const onFullscreenChange = () => {
+            if (!document.fullscreenElement) setPresenting(false);
+        };
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+    }, [presenting]);
+
+    // The container changes size dramatically on both edges of presenting;
+    // Excalidraw sizes its canvas from a cached measurement, so force a re-read.
+    useEffect(() => {
+        if (!excalidrawAPI) return undefined;
+        const id = requestAnimationFrame(() => excalidrawAPI.refresh());
+        return () => cancelAnimationFrame(id);
+    }, [presenting, excalidrawAPI]);
 
     const handleImportBoard = useCallback(
         async (parsed) => {
@@ -895,7 +935,8 @@ export default function CanvasPage({ boardId, onClose }) {
 
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
                 <div
-                    className="excalidraw-app-surface"
+                    ref={surfaceRef}
+                    className={`excalidraw-app-surface${presenting ? ' is-presenting' : ''}`}
                     style={{
                         flex: 1,
                         minWidth: 0,
@@ -933,6 +974,8 @@ export default function CanvasPage({ boardId, onClose }) {
                     )}
                     {/* Floating alignment / group toolbar — visible when elements are selected */}
                     <SelectionToolbar api={excalidrawAPI} selectedIds={selectedIds} />
+                    {/* Detail copy for generated boards that annotate their nodes */}
+                    <NodeDetailPanel api={excalidrawAPI} selectedIds={selectedIds} />
                 </div>
                 <ResizableSidebar>
                     <SidebarIconTabs
@@ -1062,6 +1105,81 @@ function TBSep() {
     );
 }
 
+// ── Brand color quick-recolor popover ────────────────────────────────────────
+
+const FILLABLE_SHAPE_TYPES = new Set(['rectangle', 'ellipse', 'diamond', 'frame']);
+
+function BrandColorButton({ onPick }) {
+    const [open, setOpen] = useState(false);
+    const popoverRef = useRef(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const onDocClick = (e) => {
+            if (popoverRef.current && !popoverRef.current.contains(e.target)) setOpen(false);
+        };
+        document.addEventListener('mousedown', onDocClick);
+        return () => document.removeEventListener('mousedown', onDocClick);
+    }, [open]);
+
+    return (
+        <span style={{ position: 'relative' }} ref={popoverRef}>
+            <ToolBtn title="Apply a Splunk brand color" onClick={() => setOpen((v) => !v)}>
+                🎨 Color
+            </ToolBtn>
+            {open && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        bottom: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        marginBottom: 8,
+                        background: 'var(--color-surface, #fff)',
+                        border: '1px solid var(--gray60, #c3cbd4)',
+                        borderRadius: 8,
+                        padding: '8px 10px',
+                        boxShadow: '0 2px 10px rgba(0,0,0,0.18)',
+                        color: 'var(--color-on-background, #1b1b1b)',
+                        width: 176,
+                    }}
+                >
+                    {BRAND_COLOR_GROUPS.map((group) => (
+                        <div key={group.id} style={{ marginBottom: 6 }}>
+                            <div style={{ fontSize: 10, fontWeight: 600, opacity: 0.5, marginBottom: 4 }}>
+                                {group.label}
+                            </div>
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                {group.colors.map((c) => (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        title={`${c.label} (${c.hex})`}
+                                        onClick={() => {
+                                            onPick(c.hex);
+                                            setOpen(false);
+                                        }}
+                                        style={{
+                                            all: 'unset',
+                                            cursor: 'pointer',
+                                            width: 20,
+                                            height: 20,
+                                            borderRadius: '50%',
+                                            background: c.hex,
+                                            border: '1px solid rgba(0,0,0,0.15)',
+                                            flexShrink: 0,
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </span>
+    );
+}
+
 // ── SelectionToolbar ──────────────────────────────────────────────────────────
 
 function SelectionToolbar({ api, selectedIds }) {
@@ -1100,6 +1218,25 @@ function SelectionToolbar({ api, selectedIds }) {
             elements: all.map((el) => {
                 const has = (el.groupIds || []).some((g) => gids.has(g));
                 return has ? { ...el, groupIds: (el.groupIds || []).filter((g) => !gids.has(g)) } : el;
+            }),
+        });
+    };
+
+    const recolor = (hex) => {
+        const sel = getSelected();
+        if (sel.length === 0) return;
+        const tint = lightenBrandColor(hex);
+        const all = api.getSceneElements();
+        api.updateScene({
+            elements: all.map((el) => {
+                if (!selectedIds[el.id]) return el;
+                const patch = { strokeColor: hex };
+                // Only re-tint an existing fill — never force a fill onto a
+                // transparent shape the author deliberately left unfilled.
+                if (FILLABLE_SHAPE_TYPES.has(el.type) && el.backgroundColor !== 'transparent') {
+                    patch.backgroundColor = tint;
+                }
+                return { ...el, ...patch };
             }),
         });
     };
@@ -1168,6 +1305,8 @@ function SelectionToolbar({ api, selectedIds }) {
             </span>
             <ToolBtn title="Group elements (Ctrl+G)" onClick={group}>⊞ Group</ToolBtn>
             <ToolBtn title="Ungroup (Ctrl+Shift+G)" onClick={ungroup}>⊟ Ungroup</ToolBtn>
+            <TBSep />
+            <BrandColorButton onPick={recolor} />
             {ids.length >= 2 && (
                 <>
                     <TBSep />

@@ -11,3 +11,35 @@
 .excalidraw-app-surface {
     height: 100%;
 }
+
+/*
+ * Present mode.
+ *
+ * The page reserves a fixed slice of the viewport for the Splunk header, so a
+ * canvas left in the normal flow can never fill the screen. Taking it out of
+ * flow covers the surrounding chrome; the Fullscreen API request in CanvasPage
+ * then promotes the same element to the browser's top layer. The two are
+ * independent on purpose — if fullscreen is refused, this still yields a full
+ * browser window.
+ */
+.excalidraw-app-surface.is-presenting {
+    position: fixed;
+    inset: 0;
+    /* @splunk/react-page's own loading overlay sits at 10000. */
+    z-index: 10001;
+}
+
+.excalidraw-app-surface.is-presenting:fullscreen {
+    width: 100%;
+    height: 100%;
+}
+
+/*
+ * Hide Excalidraw's editing UI while presenting. `.layer-ui__wrapper` is an
+ * absolutely positioned overlay above the canvas, so this leaves drawing and
+ * element selection intact — which the node detail panel depends on. Using
+ * the viewModeEnabled prop instead would disable selection altogether.
+ */
+.excalidraw-app-surface.is-presenting .excalidraw .layer-ui__wrapper {
+    display: none;
+}

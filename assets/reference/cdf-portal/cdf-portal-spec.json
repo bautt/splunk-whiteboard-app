@@ -1,0 +1,3332 @@
+{
+  "source": "https://splunk.github.io/CDF_Portal/cisco-data-fabric.html",
+  "viewBox": [
+    0.0,
+    0.0,
+    2040.0,
+    1288.0
+  ],
+  "details": {
+    "edge": {
+      "layer": "Customer data sources",
+      "title": "Edge, Branch, and OT",
+      "description": "Capture signals close to the source, from branch infrastructure and operational technology through Edge Processor and Universal Forwarder."
+    },
+    "datacenter": {
+      "layer": "Customer data sources",
+      "title": "Private Data Center",
+      "description": "Bring application, virtualization, database, Kubernetes, network, and mainframe signals into the fabric."
+    },
+    "cloud": {
+      "layer": "Customer data sources",
+      "title": "Public Cloud",
+      "description": "Connect cloud services, containers, serverless workloads, and cloud logs while keeping each source in context."
+    },
+    "saas": {
+      "layer": "Customer data sources",
+      "title": "SaaS and Security",
+      "description": "Connect security, identity, email, CI/CD, and ticketing signals through APIs and reusable connectors."
+    },
+    "lakehouse": {
+      "layer": "Customer data sources",
+      "title": "Lakehouse and Archive",
+      "description": "Use open file and lakehouse connections to bring archived and analytical data into governed investigations."
+    },
+    "management": {
+      "layer": "Data Management",
+      "title": "Data Management",
+      "description": "Collect, filter, mask, transform, and route data before it reaches the catalog and downstream search layers."
+    },
+    "ai": {
+      "layer": "AI and collaboration",
+      "title": "AI and Collaboration Layer",
+      "description": "Give people and agents governed fabric context for exploration, reasoning, collaboration, and reviewed action."
+    },
+    "as": {
+      "layer": "Data Management",
+      "title": "Auto-Schematization",
+      "description": "Use representative events to recommend mappings and generate reviewable field-extraction logic.",
+      "href": "https://cisco-full-stack-observability.navattic.com/ASAFE"
+    },
+    "go": {
+      "layer": "Data Management",
+      "title": "Guided Onboarding",
+      "description": "Plan an onboarding strategy from intent and context, with a focused task list for bringing new data into the fabric.",
+      "href": "https://cisco-full-stack-observability.navattic.com/AIDMGOB"
+    },
+    "shp": {
+      "layer": "Data Management",
+      "title": "Self-Healing Pipelines",
+      "description": "Detect schema drift and CIM compliance issues, then propose reviewable, non-destructive corrections.",
+      "href": "https://cisco-full-stack-observability.navattic.com/SHP"
+    },
+    "ep": {
+      "layer": "Data Management",
+      "title": "Edge Processor (EP)",
+      "description": "Filter, mask, transform, and route data close to where it is generated before it enters the platform.",
+      "href": "aidmasafe.html?demo=ep"
+    },
+    "ip": {
+      "layer": "Data Management",
+      "title": "Ingest Processor (IP)",
+      "description": "Apply scalable ingest-time processing and data shaping as signals enter the platform.",
+      "href": "aidmasafe.html?demo=ip"
+    },
+    "catalog": {
+      "layer": "Discovery and governance",
+      "title": "Catalog",
+      "description": "Create a single, RBAC-aware inventory of datasets, fields, lineage, retention, ownership, and lifecycle.",
+      "href": "sources1.html"
+    },
+    "mdl": {
+      "layer": "Data layer",
+      "title": "Machine Data Lake",
+      "description": "Store data in Splunk-managed MDL Raw Storage, then promote it to Splunk Index or customer-defined MDL Analytics Tables.",
+      "href": "https://cisco-full-stack-observability.navattic.com/6o6m0nkd"
+    },
+    "platform": {
+      "layer": "Center of the data fabric",
+      "title": "Machine Data Analytics",
+      "description": "At the center of the data fabric, turn promoted data into search, dashboards, alerts, and repeated high-performance investigations.",
+      "href": "https://cisco-full-stack-observability.navattic.com/splunkppdemo"
+    },
+    "federated": {
+      "layer": "Data layer",
+      "title": "Federated Search",
+      "description": "Query supported external data where it lives through SPL2, without unnecessary movement or duplication.",
+      "href": "https://cisco-full-stack-observability.navattic.com/t69j0lzb"
+    },
+    "edl": {
+      "layer": "Federated Search destinations",
+      "title": "External Data Lakes",
+      "description": "Connect to supported external data lakes, including Amazon S3, Azure Data Lake, Snowflake, and Databricks, while keeping data at rest.",
+      "href": "aidm.html#federated"
+    },
+    "assistant": {
+      "layer": "AI and collaboration",
+      "title": "Splunk AI Assistant",
+      "description": "Use governed context discovery, natural-language assistance, and reviewed actions across the fabric.",
+      "href": "https://cisco-full-stack-observability.navattic.com/saiaconf26"
+    },
+    "mcp": {
+      "layer": "AI and collaboration",
+      "title": "Splunk MCP Server",
+      "description": "Connect external agents to approved Splunk capabilities while preserving existing access controls and auditability.",
+      "href": "https://cisco-full-stack-observability.navattic.com/p4s0fhj"
+    },
+    "launchpad": {
+      "layer": "AI and collaboration",
+      "title": "Agent Launchpad",
+      "description": "Build governed agents with objectives, prompts, guardrails, permissions, and enterprise connectors.",
+      "href": "https://cisco-full-stack-observability.navattic.com/ujs0pag"
+    },
+    "canvas": {
+      "layer": "AI and collaboration",
+      "title": "AI Canvas in Cisco Cloud Control",
+      "description": "Collaborate across domains with live reasoning, contextual widgets, and reviewed operational actions.",
+      "href": "ai4.html"
+    },
+    "cloud-control": {
+      "layer": "Cisco Cloud Control",
+      "title": "Cisco Cloud Control",
+      "description": "Coordinate AI-assisted operations across domains with Splunk context, shared workflows, and governed action.",
+      "href": "ai4.html"
+    },
+    "outcome-alerts": {
+      "layer": "Business outcome",
+      "title": "Alerts raised",
+      "description": "Turn governed signals into timely operational alerts that help teams detect and respond to what matters."
+    },
+    "outcome-dashboards": {
+      "layer": "Business outcome",
+      "title": "Dashboards",
+      "description": "Give teams reusable dashboards built from trusted, contextualized data across the fabric."
+    },
+    "outcome-agents": {
+      "layer": "Business outcome",
+      "title": "AI agents act",
+      "description": "Enable agents to reason over governed context and take reviewed actions with the right guardrails."
+    },
+    "outcome-tco": {
+      "layer": "Business outcome",
+      "title": "Lower TCO",
+      "description": "Reduce unnecessary data movement, duplication, and indexing while preserving useful access to data."
+    },
+    "outcome-workloads": {
+      "layer": "Business outcome",
+      "title": "BI / AI workloads",
+      "description": "Support analytics and AI workloads with trusted data that remains discoverable, usable, and governed."
+    },
+    "outcome-reuse": {
+      "layer": "Business outcome",
+      "title": "Governed reuse",
+      "description": "Reuse curated data products, context, and controls across teams without losing ownership or oversight."
+    }
+  },
+  "assets": {
+    "symbols": {
+      "source-icon-bars": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z\"/>"
+      },
+      "source-icon-shield": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z\"/>"
+      },
+      "source-icon-cloud": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z\"/>"
+      },
+      "source-icon-search": {
+        "viewBox": "0 0 24 24",
+        "inner": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\" fill=\"none\"/><path d=\"m15.3 15.3 5.2 5.2\" fill=\"none\"/>"
+      },
+      "source-icon-mdl-cloud-search": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M5.5 18.5h12a4 4 0 0 0 .6-7.95A6.5 6.5 0 0 0 5.1 8.9 4.8 4.8 0 0 0 5.5 18.5Z\" fill=\"none\"/><circle cx=\"11.2\" cy=\"12.4\" r=\"3.15\" fill=\"none\"/><path d=\"m13.5 14.7 2.8 2.8\" fill=\"none\"/>"
+      },
+      "source-icon-eye": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z\"/>"
+      },
+      "source-icon-device": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M17 1.01 7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z\"/>"
+      },
+      "source-icon-app": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z\"/>"
+      },
+      "source-icon-user": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z\"/>"
+      },
+      "source-icon-mail": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z\"/>"
+      },
+      "source-icon-folder": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z\"/>"
+      },
+      "source-icon-database": {
+        "viewBox": "0 0 24 24",
+        "inner": "<ellipse cx=\"12\" cy=\"5\" rx=\"8\" ry=\"3\"/><path d=\"M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3\"/>"
+      },
+      "source-icon-catalog": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M4 6.5A3.5 3.5 0 0 1 7.5 3H20v18H7.5A3.5 3.5 0 0 1 4 17.5V6.5Z\"/><path d=\"M4 7h16M8 11h7M8 15h9\"/><path d=\"M4 17.5A3.5 3.5 0 0 1 7.5 14H20\"/>"
+      },
+      "federated-logo-aws": {
+        "viewBox": "0 0 36 24",
+        "inner": "<text x=\"18\" y=\"11\" text-anchor=\"middle\" fill=\"#fff\" font-family=\"Arial,sans-serif\" font-size=\"10\" font-weight=\"700\">aws</text><path d=\"M5 15c7 5 17 5 26 0\" fill=\"none\" stroke=\"#ff9900\" stroke-width=\"2\" stroke-linecap=\"round\"/><path d=\"m25 14 5 1-4 3\" fill=\"none\" stroke=\"#ff9900\" stroke-width=\"1.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/>"
+      },
+      "federated-logo-s3": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M5 3h5l2 2v14l-2 2H5V3Z\" fill=\"#ff9900\"/><path d=\"M12 5h4l3 2v10l-3 2h-4V5Z\" fill=\"#e05225\"/><path d=\"M8 7h3M8 11h3M8 15h3\" fill=\"none\" stroke=\"#fff\" stroke-width=\"1.2\" stroke-linecap=\"round\" opacity=\".9\"/>"
+      },
+      "federated-logo-azure": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M13 2 4 21h5l4-10 4 10h5L13 2Z\" fill=\"#0089d6\"/><path d=\"M10 16h6l-2-5-2 3-2-3-2 5Z\" fill=\"#35b8f2\"/>"
+      },
+      "federated-logo-google": {
+        "viewBox": "0 0 28 24",
+        "inner": "<path d=\"M14 4a7 7 0 0 1 6.6 4.6A5.8 5.8 0 0 1 21 20H7a5 5 0 0 1-.5-10A8 8 0 0 1 14 4Z\" fill=\"none\" stroke=\"#4285f4\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M5.7 10.1A8 8 0 0 1 14 4\" fill=\"none\" stroke=\"#34a853\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M20.6 8.6A5.8 5.8 0 0 1 21 20\" fill=\"none\" stroke=\"#fbbc05\" stroke-width=\"3\" stroke-linecap=\"round\"/><path d=\"M7 20h14\" fill=\"none\" stroke=\"#ea4335\" stroke-width=\"3\" stroke-linecap=\"round\"/>"
+      },
+      "federated-logo-snowflake": {
+        "viewBox": "0 0 24 24",
+        "inner": "<g fill=\"none\" stroke=\"#29b5e8\" stroke-width=\"1.6\" stroke-linecap=\"round\"><path d=\"M12 2v20M2 12h20M5 5l14 14M19 5 5 19\"/><path d=\"m12 2-2 3m2-3 2 3m0 14-2 3m2-3 2 3M2 12l3-2m-3 2 3 2m14-2 3-2m-3 2 3 2M5 5l4 1m-4-1 1 4m13-4-4 1m4-1-1 4M5 19l4-1m-4 1 1-4m13 4-4-1m4 1-1-4\"/></g>"
+      },
+      "federated-logo-databricks": {
+        "viewBox": "0 0 24 24",
+        "inner": "<g fill=\"#ff3621\"><path d=\"m12 2 10 5-10 5L2 7l10-5Z\"/><path d=\"m2 10 10 5 10-5v4l-10 5L2 14v-4Z\"/><path d=\"m2 17 10 5 10-5v-4l-10 5-10-5v4Z\"/></g>"
+      },
+      "federated-logo-delta": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M12 3 2 21h20L12 3Z\" fill=\"#0f766e\"/><path d=\"m12 9-4 8h8l-4-8Z\" fill=\"#082b3f\"/><path d=\"M5 19h14\" fill=\"none\" stroke=\"#54d6c8\" stroke-width=\"1.5\" stroke-linecap=\"round\"/>"
+      },
+      "federated-logo-iceberg": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"m12 3 9 18H3L12 3Z\" fill=\"#6e56cf\"/><path d=\"m12 3 3 6-3 3-3-3 3-6Z\" fill=\"#a99bea\"/><path d=\"m8 15 4-3 4 3-2 2h-4l-2-2Z\" fill=\"#d3ccff\"/>"
+      }
+    },
+    "sourceIcons": {
+      "edge": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M12 3v5M6 8h12M6 8v5M18 8v5M12 8v13M4 13h4v6H4zM16 13h4v6h-4z\"/>"
+      },
+      "private": {
+        "viewBox": "0 0 24 24",
+        "inner": "<rect x=\"3\" y=\"3\" width=\"18\" height=\"5\" rx=\"1\"/><rect x=\"3\" y=\"10\" width=\"18\" height=\"5\" rx=\"1\"/><rect x=\"3\" y=\"17\" width=\"18\" height=\"5\" rx=\"1\"/><path d=\"M6 5.5h.1M6 12.5h.1M6 19.5h.1\"/>"
+      },
+      "cloud": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"M5 19h13a4 4 0 0 0 .6-7.95A6.5 6.5 0 0 0 6.1 9.4 4.8 4.8 0 0 0 5 19Z\"/>"
+      },
+      "security": {
+        "viewBox": "0 0 24 24",
+        "inner": "<path d=\"m12 2 8 3v6c0 5-3.3 8.4-8 11-4.7-2-8-5-8-10V5l8-3Z\"/><path d=\"m8 12 2.6 2.6L16 9.2\"/>"
+      },
+      "lake": {
+        "viewBox": "0 0 24 24",
+        "inner": "<ellipse cx=\"12\" cy=\"5\" rx=\"8\" ry=\"3\"/><path d=\"M4 5v11c0 1.7 3.6 3 8 3s8-1.3 8-3V5\"/><ellipse cx=\"12\" cy=\"16\" rx=\"8\" ry=\"3\"/>"
+      }
+    },
+    "gradients": {
+      "fabric-gradient": {
+        "coords": {
+          "x1": "0",
+          "y1": "0",
+          "x2": "1",
+          "y2": "0"
+        },
+        "stops": [
+          {
+            "offset": "0",
+            "color": "#ff9000"
+          },
+          {
+            "offset": ".34",
+            "color": "#ff007f"
+          },
+          {
+            "offset": ".68",
+            "color": "#02c8ff"
+          },
+          {
+            "offset": "1",
+            "color": "#0a60ff"
+          }
+        ]
+      },
+      "source-fade": {
+        "coords": {
+          "x1": "0",
+          "y1": "0",
+          "x2": "0",
+          "y2": "1"
+        },
+        "stops": [
+          {
+            "offset": "0",
+            "color": "#02c8ff"
+          },
+          {
+            "offset": ".4",
+            "color": "#02c8ff"
+          },
+          {
+            "offset": ".78",
+            "color": "#02c8ff"
+          },
+          {
+            "offset": "1",
+            "color": "#02c8ff"
+          }
+        ]
+      },
+      "glass-sheen": {
+        "coords": {
+          "x1": "0",
+          "y1": "0",
+          "x2": "1",
+          "y2": "0"
+        },
+        "stops": [
+          {
+            "offset": "0",
+            "color": "#fff"
+          },
+          {
+            "offset": ".5",
+            "color": "#fff"
+          },
+          {
+            "offset": "1",
+            "color": "#fff"
+          }
+        ]
+      }
+    }
+  },
+  "images": [
+    "Assets/Splunklogo.png",
+    "Assets/azure-logo.png",
+    "Assets/cisco-cloud-control-logo.png",
+    "Assets/databricks-logo.png",
+    "Assets/datalakeicon.png",
+    "Assets/magicon.png",
+    "Assets/s3-logo.png",
+    "Assets/snowflake-logo.png"
+  ],
+  "items": [
+    {
+      "kind": "rect",
+      "x": 797.5,
+      "y": 1020.0,
+      "w": 5.0,
+      "h": 46.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 809.5,
+      "y": 1020.0,
+      "w": 5.0,
+      "h": 46.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 24.0,
+      "y": 208.0,
+      "w": 1552.0,
+      "h": 812.0,
+      "rx": 30.0,
+      "fill": "url(#fabric-gradient)",
+      "stroke": "url(#fabric-gradient)",
+      "strokeWidth": 6.0,
+      "dash": null,
+      "classes": [
+        "platform-container"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 42.0,
+      "y": 0.0,
+      "w": 284.0,
+      "h": 162.0,
+      "rx": 18.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#8d9bad",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "node-card",
+        "source-card"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "sourceIcon",
+      "x": 83.0,
+      "y": 10.400000000000006,
+      "size": 31.200000000000003,
+      "stroke": "#ff9000",
+      "strokeWidth": 1.8,
+      "classes": [
+        "source-icon",
+        "source-icon-edge"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "text",
+      "x": 117.0,
+      "baseline": 33.0,
+      "text": "Edge / Branch / OT",
+      "anchor": "start",
+      "fill": "#fff",
+      "fontSize": 18.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "node-title"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "text",
+      "x": 184.0,
+      "baseline": 55.0,
+      "text": "Edge Processor + UF",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "icon",
+      "x": 60.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-bars",
+      "fill": "#ff9000",
+      "stroke": "#ff9000",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-orange"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "text",
+      "x": 82.0,
+      "baseline": 92.0,
+      "text": "syslog",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "icon",
+      "x": 152.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-device",
+      "fill": "#ff9000",
+      "stroke": "#ff9000",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-orange"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "text",
+      "x": 174.0,
+      "baseline": 92.0,
+      "text": "IoT / OT",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "icon",
+      "x": 244.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-bars",
+      "fill": "#ff9000",
+      "stroke": "#ff9000",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-orange"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "text",
+      "x": 266.0,
+      "baseline": 92.0,
+      "text": "NetFlow",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "icon",
+      "x": 60.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-shield",
+      "fill": "#ff9000",
+      "stroke": "#ff9000",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-orange"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "text",
+      "x": 82.0,
+      "baseline": 120.0,
+      "text": "firewall",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "icon",
+      "x": 152.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-app",
+      "fill": "#ff9000",
+      "stroke": "#ff9000",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-orange"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "text",
+      "x": 174.0,
+      "baseline": 120.0,
+      "text": "POS",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "icon",
+      "x": 244.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-eye",
+      "fill": "#ff9000",
+      "stroke": "#ff9000",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-orange"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "text",
+      "x": 266.0,
+      "baseline": 120.0,
+      "text": "sensors",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "edge"
+    },
+    {
+      "kind": "rect",
+      "x": 350.0,
+      "y": 0.0,
+      "w": 284.0,
+      "h": 162.0,
+      "rx": 18.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#8d9bad",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "node-card",
+        "source-card"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "sourceIcon",
+      "x": 387.4,
+      "y": 10.400000000000006,
+      "size": 31.200000000000003,
+      "stroke": "#ff007f",
+      "strokeWidth": 1.8,
+      "classes": [
+        "source-icon",
+        "source-icon-private"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "text",
+      "x": 422.7,
+      "baseline": 33.0,
+      "text": "Private Data Center",
+      "anchor": "start",
+      "fill": "#fff",
+      "fontSize": 18.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "node-title"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "text",
+      "x": 492.0,
+      "baseline": 55.0,
+      "text": "EP + HF + UF",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "icon",
+      "x": 368.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-app",
+      "fill": "#ff007f",
+      "stroke": "#ff007f",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-pink"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "text",
+      "x": 390.0,
+      "baseline": 92.0,
+      "text": "apps",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "icon",
+      "x": 460.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-device",
+      "fill": "#ff007f",
+      "stroke": "#ff007f",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-pink"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "text",
+      "x": 482.0,
+      "baseline": 92.0,
+      "text": "VMs",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "icon",
+      "x": 552.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-bars",
+      "fill": "#ff007f",
+      "stroke": "#ff007f",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-pink"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "text",
+      "x": 574.0,
+      "baseline": 92.0,
+      "text": "DB",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "icon",
+      "x": 368.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-shield",
+      "fill": "#ff007f",
+      "stroke": "#ff007f",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-pink"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "text",
+      "x": 390.0,
+      "baseline": 120.0,
+      "text": "K8s",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "icon",
+      "x": 460.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-device",
+      "fill": "#ff007f",
+      "stroke": "#ff007f",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-pink"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "text",
+      "x": 482.0,
+      "baseline": 120.0,
+      "text": "mainframe",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "icon",
+      "x": 552.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-bars",
+      "fill": "#ff007f",
+      "stroke": "#ff007f",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-pink"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "text",
+      "x": 574.0,
+      "baseline": 120.0,
+      "text": "network",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "datacenter"
+    },
+    {
+      "kind": "rect",
+      "x": 658.0,
+      "y": 0.0,
+      "w": 284.0,
+      "h": 162.0,
+      "rx": 18.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#8d9bad",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "node-card",
+        "source-card"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "sourceIcon",
+      "x": 721.1,
+      "y": 10.400000000000006,
+      "size": 31.200000000000003,
+      "stroke": "#02c8ff",
+      "strokeWidth": 1.8,
+      "classes": [
+        "source-icon",
+        "source-icon-cloud"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "text",
+      "x": 763.2,
+      "baseline": 33.0,
+      "text": "Public Cloud",
+      "anchor": "start",
+      "fill": "#fff",
+      "fontSize": 18.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "node-title"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 55.0,
+      "text": "IP + HEC + add-ons",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "icon",
+      "x": 676.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-cloud",
+      "fill": "#02c8ff",
+      "stroke": "#02c8ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-cyan"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "text",
+      "x": 698.0,
+      "baseline": 92.0,
+      "text": "AWS",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "icon",
+      "x": 768.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-cloud",
+      "fill": "#02c8ff",
+      "stroke": "#02c8ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-cyan"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "text",
+      "x": 790.0,
+      "baseline": 92.0,
+      "text": "Azure",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "icon",
+      "x": 860.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-cloud",
+      "fill": "#02c8ff",
+      "stroke": "#02c8ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-cyan"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "text",
+      "x": 882.0,
+      "baseline": 92.0,
+      "text": "GCP",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "icon",
+      "x": 676.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-cloud",
+      "fill": "#02c8ff",
+      "stroke": "#02c8ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-cyan"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "text",
+      "x": 698.0,
+      "baseline": 120.0,
+      "text": "serverless",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "icon",
+      "x": 768.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-device",
+      "fill": "#02c8ff",
+      "stroke": "#02c8ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-cyan"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "text",
+      "x": 790.0,
+      "baseline": 120.0,
+      "text": "containers",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "icon",
+      "x": 860.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-bars",
+      "fill": "#02c8ff",
+      "stroke": "#02c8ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-cyan"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "text",
+      "x": 882.0,
+      "baseline": 120.0,
+      "text": "logs",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "cloud"
+    },
+    {
+      "kind": "rect",
+      "x": 966.0,
+      "y": 0.0,
+      "w": 284.0,
+      "h": 162.0,
+      "rx": 18.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#8d9bad",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "node-card",
+        "source-card"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "sourceIcon",
+      "x": 1023.8,
+      "y": 10.400000000000006,
+      "size": 31.200000000000003,
+      "stroke": "#0a60ff",
+      "strokeWidth": 1.8,
+      "classes": [
+        "source-icon",
+        "source-icon-security"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "text",
+      "x": 1055.2,
+      "baseline": 33.0,
+      "text": "SaaS / Security",
+      "anchor": "start",
+      "fill": "#fff",
+      "fontSize": 18.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "node-title"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "text",
+      "x": 1108.0,
+      "baseline": 55.0,
+      "text": "APIs + connectors",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "icon",
+      "x": 984.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-shield",
+      "fill": "#0a60ff",
+      "stroke": "#0a60ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-blue"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "text",
+      "x": 1006.0,
+      "baseline": 92.0,
+      "text": "EDR",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "icon",
+      "x": 1076.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-user",
+      "fill": "#0a60ff",
+      "stroke": "#0a60ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-blue"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "text",
+      "x": 1098.0,
+      "baseline": 92.0,
+      "text": "IdP",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "icon",
+      "x": 1168.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-shield",
+      "fill": "#0a60ff",
+      "stroke": "#0a60ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-blue"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "text",
+      "x": 1190.0,
+      "baseline": 92.0,
+      "text": "SASE",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "icon",
+      "x": 984.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-mail",
+      "fill": "#0a60ff",
+      "stroke": "#0a60ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-blue"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "text",
+      "x": 1006.0,
+      "baseline": 120.0,
+      "text": "email",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "icon",
+      "x": 1076.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-app",
+      "fill": "#0a60ff",
+      "stroke": "#0a60ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-blue"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "text",
+      "x": 1098.0,
+      "baseline": 120.0,
+      "text": "CI/CD",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "icon",
+      "x": 1168.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-folder",
+      "fill": "#0a60ff",
+      "stroke": "#0a60ff",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-blue"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "text",
+      "x": 1190.0,
+      "baseline": 120.0,
+      "text": "tickets",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "saas"
+    },
+    {
+      "kind": "rect",
+      "x": 1274.0,
+      "y": 0.0,
+      "w": 284.0,
+      "h": 162.0,
+      "rx": 18.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#8d9bad",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "node-card",
+        "source-card"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "sourceIcon",
+      "x": 1307.9,
+      "y": 12.700000000000003,
+      "size": 31.200000000000003,
+      "stroke": "#12275c",
+      "strokeWidth": 1.8,
+      "classes": [
+        "source-icon",
+        "source-icon-lake"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "text",
+      "x": 1341.9,
+      "baseline": 33.0,
+      "text": "Lakehouse / Archive",
+      "anchor": "start",
+      "fill": "#fff",
+      "fontSize": 18.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "node-title"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "text",
+      "x": 1416.0,
+      "baseline": 55.0,
+      "text": "FS connections",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "icon",
+      "x": 1292.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-folder",
+      "fill": "#12275c",
+      "stroke": "#12275c",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-green"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "text",
+      "x": 1314.0,
+      "baseline": 92.0,
+      "text": "S3",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "icon",
+      "x": 1384.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-folder",
+      "fill": "#12275c",
+      "stroke": "#12275c",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-green"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "text",
+      "x": 1406.0,
+      "baseline": 92.0,
+      "text": "BLOB",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "icon",
+      "x": 1476.0,
+      "y": 80.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-folder",
+      "fill": "#12275c",
+      "stroke": "#12275c",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-green"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "text",
+      "x": 1498.0,
+      "baseline": 92.0,
+      "text": "ADLS",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "icon",
+      "x": 1292.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-bars",
+      "fill": "#12275c",
+      "stroke": "#12275c",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-green"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "text",
+      "x": 1314.0,
+      "baseline": 120.0,
+      "text": "Snowflake",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "icon",
+      "x": 1384.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-bars",
+      "fill": "#12275c",
+      "stroke": "#12275c",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-green"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "text",
+      "x": 1406.0,
+      "baseline": 120.0,
+      "text": "Delta",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "icon",
+      "x": 1476.0,
+      "y": 108.0,
+      "w": 16.0,
+      "h": 16.0,
+      "symbol": "source-icon-bars",
+      "fill": "#12275c",
+      "stroke": "#12275c",
+      "strokeWidth": null,
+      "classes": [
+        "source-item-icon",
+        "source-item-icon-green"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "text",
+      "x": 1498.0,
+      "baseline": 120.0,
+      "text": "Iceberg",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.72)",
+      "fontSize": 11.0,
+      "fontWeight": 600,
+      "transform": null,
+      "classes": [
+        "source-items"
+      ],
+      "key": "lakehouse"
+    },
+    {
+      "kind": "rect",
+      "x": 92.0,
+      "y": 284.0,
+      "w": 1416.0,
+      "h": 116.0,
+      "rx": 20.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#02c8ff",
+      "strokeWidth": 4.0,
+      "dash": "2 9",
+      "classes": [
+        "band-card",
+        "band-management"
+      ],
+      "key": "management"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 316.0,
+      "text": "Data Management",
+      "anchor": "middle",
+      "fill": "#fff",
+      "fontSize": 20.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "band-title"
+      ],
+      "key": "management"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 339.0,
+      "text": "collect \u00b7 filter \u00b7 mask \u00b7 transform \u00b7 route \u00b7 logs-to-metrics",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.5)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "band-subtitle"
+      ],
+      "key": "management"
+    },
+    {
+      "kind": "rect",
+      "x": 797.5,
+      "y": 400.0,
+      "w": 5.0,
+      "h": 46.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 181.5,
+      "y": 162.0,
+      "w": 5.0,
+      "h": 120.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 489.5,
+      "y": 162.0,
+      "w": 5.0,
+      "h": 120.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 797.5,
+      "y": 162.0,
+      "w": 5.0,
+      "h": 120.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 1105.5,
+      "y": 162.0,
+      "w": 5.0,
+      "h": 120.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 1413.5,
+      "y": 162.0,
+      "w": 5.0,
+      "h": 120.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "icon",
+      "x": 398.0,
+      "y": 356.0,
+      "w": 22.0,
+      "h": 22.0,
+      "symbol": "source-icon-bars",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-management"
+      ],
+      "key": "as"
+    },
+    {
+      "kind": "text",
+      "x": 430.0,
+      "baseline": 372.0,
+      "text": "Auto-Schematization",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "as"
+    },
+    {
+      "kind": "icon",
+      "x": 584.0,
+      "y": 356.0,
+      "w": 22.0,
+      "h": 22.0,
+      "symbol": "source-icon-user",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-management"
+      ],
+      "key": "go"
+    },
+    {
+      "kind": "text",
+      "x": 616.0,
+      "baseline": 372.0,
+      "text": "Guided Onboarding",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "go"
+    },
+    {
+      "kind": "icon",
+      "x": 770.0,
+      "y": 356.0,
+      "w": 22.0,
+      "h": 22.0,
+      "symbol": "source-icon-shield",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-management"
+      ],
+      "key": "shp"
+    },
+    {
+      "kind": "text",
+      "x": 802.0,
+      "baseline": 372.0,
+      "text": "Self-Healing Pipelines",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "shp"
+    },
+    {
+      "kind": "icon",
+      "x": 976.0,
+      "y": 356.0,
+      "w": 22.0,
+      "h": 22.0,
+      "symbol": "source-icon-device",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-management"
+      ],
+      "key": "ep"
+    },
+    {
+      "kind": "text",
+      "x": 1008.0,
+      "baseline": 372.0,
+      "text": "Edge Processor",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "ep"
+    },
+    {
+      "kind": "icon",
+      "x": 1156.0,
+      "y": 356.0,
+      "w": 22.0,
+      "h": 22.0,
+      "symbol": "source-icon-bars",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-management"
+      ],
+      "key": "ip"
+    },
+    {
+      "kind": "text",
+      "x": 1188.0,
+      "baseline": 372.0,
+      "text": "Ingest Processor",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "ip"
+    },
+    {
+      "kind": "rect",
+      "x": 92.0,
+      "y": 446.0,
+      "w": 1416.0,
+      "h": 74.0,
+      "rx": 18.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#39d98a",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "catalog-card",
+        "node-card"
+      ],
+      "key": "catalog"
+    },
+    {
+      "kind": "icon",
+      "x": 740.0,
+      "y": 467.0,
+      "w": 20.0,
+      "h": 20.0,
+      "symbol": "source-icon-catalog",
+      "fill": "none",
+      "stroke": "#39d98a",
+      "strokeWidth": 2.2,
+      "classes": [
+        "catalog-icon"
+      ],
+      "key": "catalog"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 482.0,
+      "text": "Catalog",
+      "anchor": "middle",
+      "fill": "#fff",
+      "fontSize": 18.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "node-title"
+      ],
+      "key": "catalog"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 502.0,
+      "text": "single, RBAC-aware inventory: datasets \u00b7 fields \u00b7 lineage \u00b7 retention \u00b7 lifecycle",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "catalog"
+    },
+    {
+      "kind": "rect",
+      "x": 277.5,
+      "y": 520.0,
+      "w": 5.0,
+      "h": 46.0,
+      "rx": 0.0,
+      "fill": "#02c8ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 797.5,
+      "y": 520.0,
+      "w": 5.0,
+      "h": 46.0,
+      "rx": 0.0,
+      "fill": "#ff9000",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector",
+        "splunk-path-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 1317.5,
+      "y": 520.0,
+      "w": 5.0,
+      "h": 46.0,
+      "rx": 0.0,
+      "fill": "#0a60ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "federated-connector",
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "text",
+      "x": 510.0,
+      "baseline": 682.0,
+      "text": "Promote",
+      "anchor": "middle",
+      "fill": "#ff9000",
+      "fontSize": 8.0,
+      "fontWeight": 700,
+      "transform": "uppercase",
+      "classes": [
+        "promotion-label",
+        "splunk-path-label"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 480.0,
+      "y": 692.75,
+      "w": 60.0,
+      "h": 5.0,
+      "rx": 0.0,
+      "fill": "#ff9000",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector",
+        "splunk-path-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "text",
+      "x": 1090.0,
+      "baseline": 682.0,
+      "text": "SPL2",
+      "anchor": "middle",
+      "fill": "#ff9000",
+      "fontSize": 8.0,
+      "fontWeight": 700,
+      "transform": "uppercase",
+      "classes": [
+        "promotion-label",
+        "splunk-path-label"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 1060.0,
+      "y": 692.75,
+      "w": 60.0,
+      "h": 5.0,
+      "rx": 0.0,
+      "fill": "#ff9000",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector",
+        "splunk-path-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 797.5,
+      "y": 820.0,
+      "w": 5.0,
+      "h": 48.0,
+      "rx": 0.0,
+      "fill": "#a855f7",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 809.5,
+      "y": 820.0,
+      "w": 5.0,
+      "h": 48.0,
+      "rx": 0.0,
+      "fill": "#a855f7",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 80.0,
+      "y": 566.0,
+      "w": 400.0,
+      "h": 254.0,
+      "rx": 22.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#64e6ff",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "main-card",
+        "mdl-card",
+        "node-card"
+      ],
+      "key": "mdl"
+    },
+    {
+      "kind": "text",
+      "x": 280.0,
+      "baseline": 605.0,
+      "text": "Machine Data Lake",
+      "anchor": "middle",
+      "fill": "#fff",
+      "fontSize": 23.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "main-title",
+        "node-title"
+      ],
+      "key": "mdl"
+    },
+    {
+      "kind": "text",
+      "x": 280.0,
+      "baseline": 627.0,
+      "text": "Splunk-managed raw storage \u2192 Splunk Index or Analytics Tables",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "mdl"
+    },
+    {
+      "kind": "image",
+      "x": 239.5,
+      "y": 648.5,
+      "w": 81.0,
+      "h": 81.0,
+      "href": "Assets/datalakeicon.png",
+      "classes": [
+        "mdl-icon"
+      ],
+      "key": "mdl"
+    },
+    {
+      "kind": "icon",
+      "x": 125.0,
+      "y": 751.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-eye",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mdl-detail-icon",
+        "mdl-detail-icon-cyan"
+      ],
+      "key": "mdl"
+    },
+    {
+      "kind": "text",
+      "x": 157.0,
+      "baseline": 767.0,
+      "text": "MDL Raw Storage",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.78)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "mdl"
+    },
+    {
+      "kind": "icon",
+      "x": 330.0,
+      "y": 751.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-folder",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mdl-detail-icon",
+        "mdl-detail-icon-cyan"
+      ],
+      "key": "mdl"
+    },
+    {
+      "kind": "text",
+      "x": 362.0,
+      "baseline": 767.0,
+      "text": "retention",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.78)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "mdl"
+    },
+    {
+      "kind": "icon",
+      "x": 125.0,
+      "y": 783.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-bars",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mdl-detail-icon",
+        "mdl-detail-icon-cyan"
+      ],
+      "key": "mdl"
+    },
+    {
+      "kind": "text",
+      "x": 157.0,
+      "baseline": 799.0,
+      "text": "MDL Analytics Tables",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.78)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "mdl"
+    },
+    {
+      "kind": "icon",
+      "x": 330.0,
+      "y": 783.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-user",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mdl-detail-icon",
+        "mdl-detail-icon-cyan"
+      ],
+      "key": "mdl"
+    },
+    {
+      "kind": "text",
+      "x": 362.0,
+      "baseline": 799.0,
+      "text": "Opensharing",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.78)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "mdl"
+    },
+    {
+      "kind": "rect",
+      "x": 540.0,
+      "y": 566.0,
+      "w": 520.0,
+      "h": 254.0,
+      "rx": 22.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#64e6ff",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "main-card",
+        "node-card",
+        "platform-card"
+      ],
+      "key": "platform"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 605.0,
+      "text": "Machine Data Analytics",
+      "anchor": "middle",
+      "fill": "#fff",
+      "fontSize": 23.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "main-title",
+        "node-title",
+        "platform-name"
+      ],
+      "key": "platform"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 627.0,
+      "text": "promoted hot path for repeated high-performance searches",
+      "anchor": "middle",
+      "fill": "#ffb01a",
+      "fontSize": 11.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "accent-detail",
+        "node-subtitle",
+        "platform-subtitle"
+      ],
+      "key": "platform"
+    },
+    {
+      "kind": "icon",
+      "x": 593.0,
+      "y": 652.0,
+      "w": 54.0,
+      "h": 54.0,
+      "symbol": "source-icon-bars",
+      "fill": "#ff9000",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "platform-item-icon",
+        "platform-item-indexes"
+      ],
+      "key": "platform"
+    },
+    {
+      "kind": "text",
+      "x": 620.0,
+      "baseline": 730.0,
+      "text": "Splunk Indexes",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.82)",
+      "fontSize": 12.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "platform"
+    },
+    {
+      "kind": "icon",
+      "x": 723.0,
+      "y": 652.0,
+      "w": 54.0,
+      "h": 54.0,
+      "symbol": "source-icon-search",
+      "fill": "none",
+      "stroke": "#fff",
+      "strokeWidth": null,
+      "classes": [
+        "platform-item-icon",
+        "platform-item-search"
+      ],
+      "key": "platform"
+    },
+    {
+      "kind": "text",
+      "x": 750.0,
+      "baseline": 730.0,
+      "text": "Search",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.82)",
+      "fontSize": 12.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "platform"
+    },
+    {
+      "kind": "icon",
+      "x": 843.0,
+      "y": 652.0,
+      "w": 54.0,
+      "h": 54.0,
+      "symbol": "source-icon-app",
+      "fill": "#0a60ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "platform-item-dashboards",
+        "platform-item-icon"
+      ],
+      "key": "platform"
+    },
+    {
+      "kind": "text",
+      "x": 870.0,
+      "baseline": 730.0,
+      "text": "Dashboards",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.82)",
+      "fontSize": 12.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "platform"
+    },
+    {
+      "kind": "icon",
+      "x": 963.0,
+      "y": 652.0,
+      "w": 54.0,
+      "h": 54.0,
+      "symbol": "source-icon-shield",
+      "fill": "#ff007f",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "platform-item-alerts",
+        "platform-item-icon"
+      ],
+      "key": "platform"
+    },
+    {
+      "kind": "text",
+      "x": 990.0,
+      "baseline": 730.0,
+      "text": "Alerts",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.82)",
+      "fontSize": 12.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "platform"
+    },
+    {
+      "kind": "rect",
+      "x": 1120.0,
+      "y": 566.0,
+      "w": 400.0,
+      "h": 254.0,
+      "rx": 22.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#0a60ff",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "federated-card",
+        "main-card",
+        "node-card"
+      ],
+      "key": "federated"
+    },
+    {
+      "kind": "text",
+      "x": 1320.0,
+      "baseline": 605.0,
+      "text": "Federated Search",
+      "anchor": "middle",
+      "fill": "#fff",
+      "fontSize": 23.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "main-title",
+        "node-title"
+      ],
+      "key": "federated"
+    },
+    {
+      "kind": "text",
+      "x": 1320.0,
+      "baseline": 627.0,
+      "text": "SPL2 over external data at rest",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "federated"
+    },
+    {
+      "kind": "image",
+      "x": 1279.5,
+      "y": 648.5,
+      "w": 81.0,
+      "h": 81.0,
+      "href": "Assets/magicon.png",
+      "classes": [
+        "federated-cloud-search",
+        "federated-icon"
+      ],
+      "key": "federated"
+    },
+    {
+      "kind": "icon",
+      "x": 1165.0,
+      "y": 751.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-bars",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mdl-detail-icon",
+        "mdl-detail-icon-cyan"
+      ],
+      "key": "federated"
+    },
+    {
+      "kind": "text",
+      "x": 1197.0,
+      "baseline": 767.0,
+      "text": "SPL2 queries",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.78)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "federated"
+    },
+    {
+      "kind": "icon",
+      "x": 1370.0,
+      "y": 751.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-eye",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mdl-detail-icon",
+        "mdl-detail-icon-cyan"
+      ],
+      "key": "federated"
+    },
+    {
+      "kind": "text",
+      "x": 1402.0,
+      "baseline": 767.0,
+      "text": "query in place",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.78)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "federated"
+    },
+    {
+      "kind": "icon",
+      "x": 1165.0,
+      "y": 783.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-database",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mdl-detail-icon",
+        "mdl-detail-icon-cyan"
+      ],
+      "key": "federated"
+    },
+    {
+      "kind": "text",
+      "x": 1197.0,
+      "baseline": 799.0,
+      "text": "external sources",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.78)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "federated"
+    },
+    {
+      "kind": "icon",
+      "x": 1370.0,
+      "y": 783.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-shield",
+      "fill": "#02c8ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mdl-detail-icon",
+        "mdl-detail-icon-cyan"
+      ],
+      "key": "federated"
+    },
+    {
+      "kind": "text",
+      "x": 1402.0,
+      "baseline": 799.0,
+      "text": "no duplication",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.78)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "federated"
+    },
+    {
+      "kind": "rect",
+      "x": 1620.0,
+      "y": 566.0,
+      "w": 400.0,
+      "h": 254.0,
+      "rx": 22.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#0a60ff",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "federated-destinations-card",
+        "node-card"
+      ],
+      "key": "edl"
+    },
+    {
+      "kind": "text",
+      "x": 1820.0,
+      "baseline": 605.0,
+      "text": "External Data Lakes",
+      "anchor": "middle",
+      "fill": "#fff",
+      "fontSize": 23.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "federated-destinations-title",
+        "node-title"
+      ],
+      "key": "edl"
+    },
+    {
+      "kind": "text",
+      "x": 1820.0,
+      "baseline": 627.0,
+      "text": "Federated Search supported",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.56)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "node-subtitle"
+      ],
+      "key": "edl"
+    },
+    {
+      "kind": "image",
+      "x": 1654.0,
+      "y": 676.0,
+      "w": 32.0,
+      "h": 32.0,
+      "href": "Assets/s3-logo.png",
+      "classes": [
+        "federated-source-logo",
+        "s3-logo-image"
+      ],
+      "key": "edl"
+    },
+    {
+      "kind": "text",
+      "x": 1694.0,
+      "baseline": 698.0,
+      "text": "Amazon S3",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "edl"
+    },
+    {
+      "kind": "image",
+      "x": 1854.0,
+      "y": 676.0,
+      "w": 32.0,
+      "h": 32.0,
+      "href": "Assets/azure-logo.png",
+      "classes": [
+        "azure-logo-image",
+        "federated-source-logo"
+      ],
+      "key": "edl"
+    },
+    {
+      "kind": "text",
+      "x": 1892.0,
+      "baseline": 698.0,
+      "text": "Azure Data Lake",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "edl"
+    },
+    {
+      "kind": "image",
+      "x": 1654.0,
+      "y": 726.0,
+      "w": 32.0,
+      "h": 32.0,
+      "href": "Assets/snowflake-logo.png",
+      "classes": [
+        "federated-source-logo",
+        "snowflake-logo-image"
+      ],
+      "key": "edl"
+    },
+    {
+      "kind": "text",
+      "x": 1694.0,
+      "baseline": 748.0,
+      "text": "Snowflake",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "edl"
+    },
+    {
+      "kind": "image",
+      "x": 1854.0,
+      "y": 726.0,
+      "w": 32.0,
+      "h": 32.0,
+      "href": "Assets/databricks-logo.png",
+      "classes": [
+        "databricks-logo-image",
+        "federated-source-logo"
+      ],
+      "key": "edl"
+    },
+    {
+      "kind": "text",
+      "x": 1892.0,
+      "baseline": 748.0,
+      "text": "Databricks",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "edl"
+    },
+    {
+      "kind": "rect",
+      "x": 1520.0,
+      "y": 690.5,
+      "w": 100.0,
+      "h": 5.0,
+      "rx": 0.0,
+      "fill": "#0a60ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "federated-connector",
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 1520.0,
+      "y": 700.5,
+      "w": 100.0,
+      "h": 5.0,
+      "rx": 0.0,
+      "fill": "#0a60ff",
+      "stroke": "none",
+      "strokeWidth": null,
+      "dash": null,
+      "classes": [
+        "federated-connector",
+        "source-connector"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 92.0,
+      "y": 868.0,
+      "w": 1416.0,
+      "h": 106.0,
+      "rx": 20.0,
+      "fill": "rgba(4,25,43,.96)",
+      "stroke": "#a855f7",
+      "strokeWidth": 3.0,
+      "dash": null,
+      "classes": [
+        "band-ai",
+        "band-card"
+      ],
+      "key": "ai"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 900.0,
+      "text": "AI and Collaboration Layer",
+      "anchor": "middle",
+      "fill": "#fff",
+      "fontSize": 20.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "band-title"
+      ],
+      "key": "ai"
+    },
+    {
+      "kind": "text",
+      "x": 800.0,
+      "baseline": 922.0,
+      "text": "humans and agents work from governed fabric context",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.5)",
+      "fontSize": 11.0,
+      "fontWeight": 500,
+      "transform": null,
+      "classes": [
+        "band-subtitle"
+      ],
+      "key": "ai"
+    },
+    {
+      "kind": "icon",
+      "x": 388.0,
+      "y": 939.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-user",
+      "fill": "#a855f7",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-ai"
+      ],
+      "key": "assistant"
+    },
+    {
+      "kind": "text",
+      "x": 422.0,
+      "baseline": 957.0,
+      "text": "Splunk AI Assistant",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "assistant"
+    },
+    {
+      "kind": "icon",
+      "x": 618.0,
+      "y": 939.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-app",
+      "fill": "#a855f7",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-ai"
+      ],
+      "key": "mcp"
+    },
+    {
+      "kind": "text",
+      "x": 652.0,
+      "baseline": 957.0,
+      "text": "Splunk MCP Server",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "mcp"
+    },
+    {
+      "kind": "icon",
+      "x": 848.0,
+      "y": 939.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-bars",
+      "fill": "#a855f7",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-ai"
+      ],
+      "key": "launchpad"
+    },
+    {
+      "kind": "text",
+      "x": 882.0,
+      "baseline": 957.0,
+      "text": "Agent Launchpad",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "launchpad"
+    },
+    {
+      "kind": "icon",
+      "x": 1058.0,
+      "y": 939.0,
+      "w": 24.0,
+      "h": 24.0,
+      "symbol": "source-icon-eye",
+      "fill": "#a855f7",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "mini-icon",
+        "mini-icon-ai"
+      ],
+      "key": "canvas"
+    },
+    {
+      "kind": "text",
+      "x": 1092.0,
+      "baseline": 957.0,
+      "text": "AI Canvas in Cisco Cloud Control",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 10.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [
+        "mini-title"
+      ],
+      "key": "canvas"
+    },
+    {
+      "kind": "image",
+      "x": 655.0,
+      "y": 224.0,
+      "w": 145.0,
+      "h": 40.0,
+      "href": "Assets/Splunklogo.png",
+      "classes": [
+        "platform-container-logo"
+      ],
+      "key": null
+    },
+    {
+      "kind": "text",
+      "x": 815.0,
+      "baseline": 254.0,
+      "text": "Platform",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.9)",
+      "fontSize": 26.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "platform-container-label"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 412.0,
+      "y": 1066.0,
+      "w": 776.0,
+      "h": 120.0,
+      "rx": 22.0,
+      "fill": "#080f18",
+      "stroke": "#02c8ff",
+      "strokeWidth": 1.5,
+      "dash": null,
+      "classes": [
+        "cloud-control-card",
+        "node-card"
+      ],
+      "key": "cloud-control"
+    },
+    {
+      "kind": "image",
+      "x": 650.0,
+      "y": 1076.0,
+      "w": 300.0,
+      "h": 50.0,
+      "href": "Assets/cisco-cloud-control-logo.png",
+      "classes": [
+        "cloud-control-logo"
+      ],
+      "key": "cloud-control"
+    },
+    {
+      "kind": "icon",
+      "x": 650.0,
+      "y": 1144.0,
+      "w": 28.0,
+      "h": 28.0,
+      "symbol": "source-icon-device",
+      "fill": "#64e6ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "cloud-control-item-icon"
+      ],
+      "key": "cloud-control"
+    },
+    {
+      "kind": "text",
+      "x": 686.0,
+      "baseline": 1165.0,
+      "text": "Unified Controllers",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.82)",
+      "fontSize": 13.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "cloud-control"
+    },
+    {
+      "kind": "icon",
+      "x": 870.0,
+      "y": 1144.0,
+      "w": 28.0,
+      "h": 28.0,
+      "symbol": "source-icon-eye",
+      "fill": "#64e6ff",
+      "stroke": null,
+      "strokeWidth": null,
+      "classes": [
+        "cloud-control-item-icon"
+      ],
+      "key": "cloud-control"
+    },
+    {
+      "kind": "text",
+      "x": 906.0,
+      "baseline": 1165.0,
+      "text": "AI Canvas",
+      "anchor": "start",
+      "fill": "rgba(255,255,255,.82)",
+      "fontSize": 13.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "cloud-control"
+    },
+    {
+      "kind": "text",
+      "x": 42.0,
+      "baseline": 1214.0,
+      "text": "BUSINESS OUTCOMES",
+      "anchor": "start",
+      "fill": "#64e6ff",
+      "fontSize": 12.0,
+      "fontWeight": 700,
+      "transform": null,
+      "classes": [
+        "bottom-kicker",
+        "canvas-kicker"
+      ],
+      "key": null
+    },
+    {
+      "kind": "rect",
+      "x": 42.0,
+      "y": 1232.0,
+      "w": 238.0,
+      "h": 52.0,
+      "rx": 14.0,
+      "fill": "rgba(9,37,57,.96)",
+      "stroke": "#ff9000",
+      "strokeWidth": 2.0,
+      "dash": null,
+      "classes": [
+        "outcome-card"
+      ],
+      "key": "outcome-alerts"
+    },
+    {
+      "kind": "text",
+      "x": 161.0,
+      "baseline": 1263.0,
+      "text": "Alerts raised",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 13.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "outcome-alerts"
+    },
+    {
+      "kind": "rect",
+      "x": 296.0,
+      "y": 1232.0,
+      "w": 238.0,
+      "h": 52.0,
+      "rx": 14.0,
+      "fill": "rgba(9,37,57,.96)",
+      "stroke": "#ff007f",
+      "strokeWidth": 2.0,
+      "dash": null,
+      "classes": [
+        "outcome-card"
+      ],
+      "key": "outcome-dashboards"
+    },
+    {
+      "kind": "text",
+      "x": 415.0,
+      "baseline": 1263.0,
+      "text": "Dashboards",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 13.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "outcome-dashboards"
+    },
+    {
+      "kind": "rect",
+      "x": 550.0,
+      "y": 1232.0,
+      "w": 238.0,
+      "h": 52.0,
+      "rx": 14.0,
+      "fill": "rgba(9,37,57,.96)",
+      "stroke": "#02c8ff",
+      "strokeWidth": 2.0,
+      "dash": null,
+      "classes": [
+        "outcome-card"
+      ],
+      "key": "outcome-agents"
+    },
+    {
+      "kind": "text",
+      "x": 669.0,
+      "baseline": 1263.0,
+      "text": "AI agents act",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 13.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "outcome-agents"
+    },
+    {
+      "kind": "rect",
+      "x": 804.0,
+      "y": 1232.0,
+      "w": 238.0,
+      "h": 52.0,
+      "rx": 14.0,
+      "fill": "rgba(9,37,57,.96)",
+      "stroke": "#0a60ff",
+      "strokeWidth": 2.0,
+      "dash": null,
+      "classes": [
+        "outcome-card"
+      ],
+      "key": "outcome-tco"
+    },
+    {
+      "kind": "text",
+      "x": 923.0,
+      "baseline": 1263.0,
+      "text": "Lower TCO",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 13.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "outcome-tco"
+    },
+    {
+      "kind": "rect",
+      "x": 1058.0,
+      "y": 1232.0,
+      "w": 238.0,
+      "h": 52.0,
+      "rx": 14.0,
+      "fill": "rgba(9,37,57,.96)",
+      "stroke": "#12275c",
+      "strokeWidth": 2.0,
+      "dash": null,
+      "classes": [
+        "outcome-card"
+      ],
+      "key": "outcome-workloads"
+    },
+    {
+      "kind": "text",
+      "x": 1177.0,
+      "baseline": 1263.0,
+      "text": "BI / AI workloads",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 13.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "outcome-workloads"
+    },
+    {
+      "kind": "rect",
+      "x": 1312.0,
+      "y": 1232.0,
+      "w": 246.0,
+      "h": 52.0,
+      "rx": 14.0,
+      "fill": "rgba(9,37,57,.96)",
+      "stroke": "#ff9000",
+      "strokeWidth": 2.0,
+      "dash": null,
+      "classes": [
+        "outcome-card"
+      ],
+      "key": "outcome-reuse"
+    },
+    {
+      "kind": "text",
+      "x": 1435.0,
+      "baseline": 1263.0,
+      "text": "Governed reuse",
+      "anchor": "middle",
+      "fill": "rgba(255,255,255,.86)",
+      "fontSize": 13.0,
+      "fontWeight": 650,
+      "transform": null,
+      "classes": [],
+      "key": "outcome-reuse"
+    }
+  ]
+}

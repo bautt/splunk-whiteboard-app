@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cisco Data Fabric | Cisco + Splunk</title>
+  <link rel="stylesheet" href="foundation-pages.css">
+  <link rel="stylesheet" href="cdf-architecture.css?v=20260908b">
+  <script src="theme.js"></script>
+</head>
+<body class="architecture-body">
+  <a class="back" href="index.html" aria-label="Back to Cisco Data Fabric home">←</a>
+
+  <main class="page architecture-page">
+    <h1 class="hero-title">
+      <span class="accent">Cisco Data Fabric</span>
+      <span class="context">architecture</span>
+    </h1>
+    <p class="intro">Powered by the Splunk Platform to turn machine data into trusted agentic action.</p>
+
+    <div class="zoom-controls" role="group" aria-label="Architecture zoom controls">
+      <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+      <button id="zoom-reset" class="zoom-reset" type="button">Fit overview</button>
+      <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+      <span id="zoom-level" class="zoom-level" aria-live="polite">100%</span>
+    </div>
+
+    <section class="architecture-frame" aria-label="Cisco Data Fabric architecture">
+
+      <div class="architecture-workspace" id="architecture-workspace">
+        <svg id="architecture-canvas" viewBox="0 0 2040 1288" role="img" aria-labelledby="canvas-title canvas-description">
+          <title id="canvas-title">Cisco Data Fabric architecture</title>
+          <desc id="canvas-description">Customer data sources flow through data management and catalog into Machine Data Lake, Machine Data Analytics, and Federated Search, then into an AI and collaboration layer.</desc>
+          <defs>
+            <linearGradient id="fabric-gradient" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#ff9000"/>
+              <stop offset=".34" stop-color="#ff007f"/>
+              <stop offset=".68" stop-color="#02c8ff"/>
+              <stop offset="1" stop-color="#0a60ff"/>
+            </linearGradient>
+            <filter id="node-glow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="7" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="soft-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <linearGradient id="source-fade" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#02c8ff" stop-opacity=".95"/>
+              <stop offset=".4" stop-color="#02c8ff" stop-opacity=".7"/>
+              <stop offset=".78" stop-color="#02c8ff" stop-opacity=".35"/>
+              <stop offset="1" stop-color="#02c8ff" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="glass-sheen" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+              <stop offset=".5" stop-color="#fff" stop-opacity=".07"/>
+              <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+            </linearGradient>
+            <clipPath id="source-clip-edge" clipPathUnits="userSpaceOnUse"><rect x="42" y="0" width="284" height="162" rx="18"/></clipPath>
+            <clipPath id="source-clip-datacenter" clipPathUnits="userSpaceOnUse"><rect x="350" y="0" width="284" height="162" rx="18"/></clipPath>
+            <clipPath id="source-clip-cloud" clipPathUnits="userSpaceOnUse"><rect x="658" y="0" width="284" height="162" rx="18"/></clipPath>
+            <clipPath id="source-clip-saas" clipPathUnits="userSpaceOnUse"><rect x="966" y="0" width="284" height="162" rx="18"/></clipPath>
+            <clipPath id="source-clip-lakehouse" clipPathUnits="userSpaceOnUse"><rect x="1274" y="0" width="284" height="162" rx="18"/></clipPath>
+            <clipPath id="frame-clip-management" clipPathUnits="userSpaceOnUse"><rect x="92" y="254" width="1416" height="116" rx="20"/></clipPath>
+            <clipPath id="frame-clip-catalog" clipPathUnits="userSpaceOnUse"><rect x="92" y="416" width="1416" height="74" rx="18"/></clipPath>
+            <clipPath id="frame-clip-mdl" clipPathUnits="userSpaceOnUse"><rect x="80" y="536" width="400" height="254" rx="22"/></clipPath>
+            <clipPath id="frame-clip-platform" clipPathUnits="userSpaceOnUse"><rect x="540" y="536" width="520" height="254" rx="22"/></clipPath>
+            <clipPath id="frame-clip-federated" clipPathUnits="userSpaceOnUse"><rect x="1120" y="536" width="400" height="254" rx="22"/></clipPath>
+            <clipPath id="frame-clip-federated-destinations" clipPathUnits="userSpaceOnUse"><rect x="1620" y="536" width="400" height="254" rx="22"/></clipPath>
+            <clipPath id="frame-clip-ai" clipPathUnits="userSpaceOnUse"><rect x="92" y="838" width="1416" height="106" rx="20"/></clipPath>
+            <clipPath id="frame-clip-cloud-control" clipPathUnits="userSpaceOnUse"><rect x="412" y="1066" width="776" height="120" rx="22"/></clipPath>
+            <clipPath id="frame-clip-outcome-alerts" clipPathUnits="userSpaceOnUse"><rect x="42" y="1232" width="238" height="52" rx="14"/></clipPath>
+            <clipPath id="frame-clip-outcome-dashboards" clipPathUnits="userSpaceOnUse"><rect x="296" y="1232" width="238" height="52" rx="14"/></clipPath>
+            <clipPath id="frame-clip-outcome-agents" clipPathUnits="userSpaceOnUse"><rect x="550" y="1232" width="238" height="52" rx="14"/></clipPath>
+            <clipPath id="frame-clip-outcome-tco" clipPathUnits="userSpaceOnUse"><rect x="804" y="1232" width="238" height="52" rx="14"/></clipPath>
+            <clipPath id="frame-clip-outcome-workloads" clipPathUnits="userSpaceOnUse"><rect x="1058" y="1232" width="238" height="52" rx="14"/></clipPath>
+            <clipPath id="frame-clip-outcome-reuse" clipPathUnits="userSpaceOnUse"><rect x="1312" y="1232" width="246" height="52" rx="14"/></clipPath>
+            <symbol id="source-icon-bars" viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></symbol>
+            <symbol id="source-icon-shield" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></symbol>
+            <symbol id="source-icon-cloud" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></symbol>
+            <symbol id="source-icon-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none"/><path d="m15.3 15.3 5.2 5.2" fill="none"/></symbol>
+            <symbol id="source-icon-mdl-cloud-search" viewBox="0 0 24 24"><path d="M5.5 18.5h12a4 4 0 0 0 .6-7.95A6.5 6.5 0 0 0 5.1 8.9 4.8 4.8 0 0 0 5.5 18.5Z" fill="none"/><circle cx="11.2" cy="12.4" r="3.15" fill="none"/><path d="m13.5 14.7 2.8 2.8" fill="none"/></symbol>
+            <symbol id="source-icon-eye" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+            <symbol id="source-icon-device" viewBox="0 0 24 24"><path d="M17 1.01 7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/></symbol>
+            <symbol id="source-icon-app" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></symbol>
+            <symbol id="source-icon-user" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></symbol>
+            <symbol id="source-icon-mail" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></symbol>
+            <symbol id="source-icon-folder" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></symbol>
+            <symbol id="source-icon-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+            <symbol id="source-icon-catalog" viewBox="0 0 24 24"><path d="M4 6.5A3.5 3.5 0 0 1 7.5 3H20v18H7.5A3.5 3.5 0 0 1 4 17.5V6.5Z"/><path d="M4 7h16M8 11h7M8 15h9"/><path d="M4 17.5A3.5 3.5 0 0 1 7.5 14H20"/></symbol>
+            <symbol id="federated-logo-aws" viewBox="0 0 36 24"><text x="18" y="11" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="10" font-weight="700">aws</text><path d="M5 15c7 5 17 5 26 0" fill="none" stroke="#ff9900" stroke-width="2" stroke-linecap="round"/><path d="m25 14 5 1-4 3" fill="none" stroke="#ff9900" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+            <symbol id="federated-logo-s3" viewBox="0 0 24 24"><path d="M5 3h5l2 2v14l-2 2H5V3Z" fill="#ff9900"/><path d="M12 5h4l3 2v10l-3 2h-4V5Z" fill="#e05225"/><path d="M8 7h3M8 11h3M8 15h3" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity=".9"/></symbol>
+            <symbol id="federated-logo-azure" viewBox="0 0 24 24"><path d="M13 2 4 21h5l4-10 4 10h5L13 2Z" fill="#0089d6"/><path d="M10 16h6l-2-5-2 3-2-3-2 5Z" fill="#35b8f2"/></symbol>
+            <symbol id="federated-logo-google" viewBox="0 0 28 24"><path d="M14 4a7 7 0 0 1 6.6 4.6A5.8 5.8 0 0 1 21 20H7a5 5 0 0 1-.5-10A8 8 0 0 1 14 4Z" fill="none" stroke="#4285f4" stroke-width="3" stroke-linecap="round"/><path d="M5.7 10.1A8 8 0 0 1 14 4" fill="none" stroke="#34a853" stroke-width="3" stroke-linecap="round"/><path d="M20.6 8.6A5.8 5.8 0 0 1 21 20" fill="none" stroke="#fbbc05" stroke-width="3" stroke-linecap="round"/><path d="M7 20h14" fill="none" stroke="#ea4335" stroke-width="3" stroke-linecap="round"/></symbol>
+            <symbol id="federated-logo-snowflake" viewBox="0 0 24 24"><g fill="none" stroke="#29b5e8" stroke-width="1.6" stroke-linecap="round"><path d="M12 2v20M2 12h20M5 5l14 14M19 5 5 19"/><path d="m12 2-2 3m2-3 2 3m0 14-2 3m2-3 2 3M2 12l3-2m-3 2 3 2m14-2 3-2m-3 2 3 2M5 5l4 1m-4-1 1 4m13-4-4 1m4-1-1 4M5 19l4-1m-4 1 1-4m13 4-4-1m4 1-1-4"/></g></symbol>
+            <symbol id="federated-logo-databricks" viewBox="0 0 24 24"><g fill="#ff3621"><path d="m12 2 10 5-10 5L2 7l10-5Z"/><path d="m2 10 10 5 10-5v4l-10 5L2 14v-4Z"/><path d="m2 17 10 5 10-5v-4l-10 5-10-5v4Z"/></g></symbol>
+            <symbol id="federated-logo-delta" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Z" fill="#0f766e"/><path d="m12 9-4 8h8l-4-8Z" fill="#082b3f"/><path d="M5 19h14" fill="none" stroke="#54d6c8" stroke-width="1.5" stroke-linecap="round"/></symbol>
+            <symbol id="federated-logo-iceberg" viewBox="0 0 24 24"><path d="m12 3 9 18H3L12 3Z" fill="#6e56cf"/><path d="m12 3 3 6-3 3-3-3 3-6Z" fill="#a99bea"/><path d="m8 15 4-3 4 3-2 2h-4l-2-2Z" fill="#d3ccff"/></symbol>
+          </defs>
+
+          <g id="architecture-viewport">
+            <g class="cloud-control-connector" aria-hidden="true">
+              <rect class="source-connector" x="797.5" y="1020" width="5" height="46"/>
+              <circle class="source-data-pulse" cx="800" cy="1020" r="0"><animate attributeName="cy" values="1020;1066" dur="1.8s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" repeatCount="indefinite"/></circle>
+              <rect class="source-connector" x="809.5" y="1020" width="5" height="46"/>
+              <circle class="source-data-pulse" cx="812" cy="1066" r="0"><animate attributeName="cy" values="1066;1020" dur="1.8s" begin=".9s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".9s" repeatCount="indefinite"/></circle>
+            </g>
+            <rect class="platform-container" x="24" y="208" width="1552" height="812" rx="30" aria-hidden="true"/>
+            <g class="flow-lines" aria-hidden="true">
+            </g>
+            <g class="diagram-node source-node source-accent-orange" style="--source-accent:#ff9000" data-key="edge" tabindex="0" role="button" aria-label="Edge, Branch, and OT sources" transform="translate(0 -58)">
+              <rect class="node-card source-card" x="42" y="58" width="284" height="162" rx="18"/>
+              <g class="source-glass-reflection-wrap" clip-path="url(#source-clip-edge)" aria-hidden="true"><rect class="source-glass-reflection" x="-34" y="58" width="46" height="162"/></g>
+              <g class="source-icon source-icon-edge" transform="translate(83 68.4) scale(1.3)" aria-hidden="true"><path d="M12 3v5M6 8h12M6 8v5M18 8v5M12 8v13M4 13h4v6H4zM16 13h4v6h-4z"/></g>
+              <text class="node-title" x="117" y="91">Edge / Branch / OT</text>
+              <text class="node-subtitle" x="184" y="113" text-anchor="middle">Edge Processor + UF</text>
+              <use class="source-item-icon source-item-icon-orange" href="#source-icon-bars" x="72" y="142" width="16" height="16"/><text class="source-items" x="82" y="150">syslog</text><use class="source-item-icon source-item-icon-orange" href="#source-icon-device" x="164" y="142" width="16" height="16"/><text class="source-items" x="174" y="150">IoT / OT</text><use class="source-item-icon source-item-icon-orange" href="#source-icon-bars" x="256" y="142" width="16" height="16"/><text class="source-items" x="266" y="150">NetFlow</text>
+              <use class="source-item-icon source-item-icon-orange" href="#source-icon-shield" x="72" y="170" width="16" height="16"/><text class="source-items" x="82" y="178">firewall</text><use class="source-item-icon source-item-icon-orange" href="#source-icon-app" x="164" y="170" width="16" height="16"/><text class="source-items" x="174" y="178">POS</text><use class="source-item-icon source-item-icon-orange" href="#source-icon-eye" x="256" y="170" width="16" height="16"/><text class="source-items" x="266" y="178">sensors</text>
+            </g>
+
+            <g class="diagram-node source-node source-accent-magenta" style="--source-accent:#ff007f" data-key="datacenter" tabindex="0" role="button" aria-label="Private Data Center sources" transform="translate(0 -58)">
+              <rect class="node-card source-card" x="350" y="58" width="284" height="162" rx="18"/>
+              <g class="source-glass-reflection-wrap" clip-path="url(#source-clip-datacenter)" aria-hidden="true"><rect class="source-glass-reflection" x="274" y="58" width="46" height="162"/></g>
+              <g class="source-icon source-icon-private" transform="translate(387.4 68.4) scale(1.3)" aria-hidden="true"><rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="10" width="18" height="5" rx="1"/><rect x="3" y="17" width="18" height="5" rx="1"/><path d="M6 5.5h.1M6 12.5h.1M6 19.5h.1"/></g>
+              <text class="node-title" x="422.7" y="91">Private Data Center</text>
+              <text class="node-subtitle" x="492" y="113" text-anchor="middle">EP + HF + UF</text>
+              <use class="source-item-icon source-item-icon-pink" href="#source-icon-app" x="380" y="142" width="16" height="16"/><text class="source-items" x="390" y="150">apps</text><use class="source-item-icon source-item-icon-pink" href="#source-icon-device" x="472" y="142" width="16" height="16"/><text class="source-items" x="482" y="150">VMs</text><use class="source-item-icon source-item-icon-pink" href="#source-icon-bars" x="564" y="142" width="16" height="16"/><text class="source-items" x="574" y="150">DB</text>
+              <use class="source-item-icon source-item-icon-pink" href="#source-icon-shield" x="380" y="170" width="16" height="16"/><text class="source-items" x="390" y="178">K8s</text><use class="source-item-icon source-item-icon-pink" href="#source-icon-device" x="472" y="170" width="16" height="16"/><text class="source-items" x="482" y="178">mainframe</text><use class="source-item-icon source-item-icon-pink" href="#source-icon-bars" x="564" y="170" width="16" height="16"/><text class="source-items" x="574" y="178">network</text>
+            </g>
+
+            <g class="diagram-node source-node source-accent-cyan" style="--source-accent:#02c8ff" data-key="cloud" tabindex="0" role="button" aria-label="Public Cloud sources" transform="translate(0 -58)">
+              <rect class="node-card source-card" x="658" y="58" width="284" height="162" rx="18"/>
+              <g class="source-glass-reflection-wrap" clip-path="url(#source-clip-cloud)" aria-hidden="true"><rect class="source-glass-reflection" x="582" y="58" width="46" height="162"/></g>
+              <g class="source-icon source-icon-cloud" transform="translate(721.1 68.4) scale(1.3)" aria-hidden="true"><path d="M5 19h13a4 4 0 0 0 .6-7.95A6.5 6.5 0 0 0 6.1 9.4 4.8 4.8 0 0 0 5 19Z"/></g>
+              <text class="node-title" x="763.2" y="91">Public Cloud</text>
+              <text class="node-subtitle" x="800" y="113" text-anchor="middle">IP + HEC + add-ons</text>
+              <use class="source-item-icon source-item-icon-cyan" href="#source-icon-cloud" x="688" y="142" width="16" height="16"/><text class="source-items" x="698" y="150">AWS</text><use class="source-item-icon source-item-icon-cyan" href="#source-icon-cloud" x="780" y="142" width="16" height="16"/><text class="source-items" x="790" y="150">Azure</text><use class="source-item-icon source-item-icon-cyan" href="#source-icon-cloud" x="872" y="142" width="16" height="16"/><text class="source-items" x="882" y="150">GCP</text>
+              <use class="source-item-icon source-item-icon-cyan" href="#source-icon-cloud" x="688" y="170" width="16" height="16"/><text class="source-items" x="698" y="178">serverless</text><use class="source-item-icon source-item-icon-cyan" href="#source-icon-device" x="780" y="170" width="16" height="16"/><text class="source-items" x="790" y="178">containers</text><use class="source-item-icon source-item-icon-cyan" href="#source-icon-bars" x="872" y="170" width="16" height="16"/><text class="source-items" x="882" y="178">logs</text>
+            </g>
+
+            <g class="diagram-node source-node source-accent-blue" style="--source-accent:#0a60ff" data-key="saas" tabindex="0" role="button" aria-label="SaaS and Security sources" transform="translate(0 -58)">
+              <rect class="node-card source-card" x="966" y="58" width="284" height="162" rx="18"/>
+              <g class="source-glass-reflection-wrap" clip-path="url(#source-clip-saas)" aria-hidden="true"><rect class="source-glass-reflection" x="890" y="58" width="46" height="162"/></g>
+              <g class="source-icon source-icon-security" transform="translate(1023.8 68.4) scale(1.3)" aria-hidden="true"><path d="m12 2 8 3v6c0 5-3.3 8.4-8 11-4.7-2-8-5-8-10V5l8-3Z"/><path d="m8 12 2.6 2.6L16 9.2"/></g>
+              <text class="node-title" x="1055.2" y="91">SaaS / Security</text>
+              <text class="node-subtitle" x="1108" y="113" text-anchor="middle">APIs + connectors</text>
+              <use class="source-item-icon source-item-icon-blue" href="#source-icon-shield" x="996" y="142" width="16" height="16"/><text class="source-items" x="1006" y="150">EDR</text><use class="source-item-icon source-item-icon-blue" href="#source-icon-user" x="1088" y="142" width="16" height="16"/><text class="source-items" x="1098" y="150">IdP</text><use class="source-item-icon source-item-icon-blue" href="#source-icon-shield" x="1180" y="142" width="16" height="16"/><text class="source-items" x="1190" y="150">SASE</text>
+              <use class="source-item-icon source-item-icon-blue" href="#source-icon-mail" x="996" y="170" width="16" height="16"/><text class="source-items" x="1006" y="178">email</text><use class="source-item-icon source-item-icon-blue" href="#source-icon-app" x="1088" y="170" width="16" height="16"/><text class="source-items" x="1098" y="178">CI/CD</text><use class="source-item-icon source-item-icon-blue" href="#source-icon-folder" x="1180" y="170" width="16" height="16"/><text class="source-items" x="1190" y="178">tickets</text>
+            </g>
+
+            <g class="diagram-node source-node source-accent-navy" style="--source-accent:#12275c" data-key="lakehouse" tabindex="0" role="button" aria-label="Lakehouse and Archive sources" transform="translate(0 -58)">
+              <rect class="node-card source-card" x="1274" y="58" width="284" height="162" rx="18"/>
+              <g class="source-glass-reflection-wrap" clip-path="url(#source-clip-lakehouse)" aria-hidden="true"><rect class="source-glass-reflection" x="1198" y="58" width="46" height="162"/></g>
+              <g class="source-icon source-icon-lake" transform="translate(1307.9 70.7) scale(1.3)" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v11c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><ellipse cx="12" cy="16" rx="8" ry="3"/></g>
+              <text class="node-title" x="1341.9" y="91">Lakehouse / Archive</text>
+              <text class="node-subtitle" x="1416" y="113" text-anchor="middle">FS connections</text>
+              <use class="source-item-icon source-item-icon-green" href="#source-icon-folder" x="1304" y="142" width="16" height="16"/><text class="source-items" x="1314" y="150">S3</text><use class="source-item-icon source-item-icon-green" href="#source-icon-folder" x="1396" y="142" width="16" height="16"/><text class="source-items" x="1406" y="150">BLOB</text><use class="source-item-icon source-item-icon-green" href="#source-icon-folder" x="1488" y="142" width="16" height="16"/><text class="source-items" x="1498" y="150">ADLS</text>
+              <use class="source-item-icon source-item-icon-green" href="#source-icon-bars" x="1304" y="170" width="16" height="16"/><text class="source-items" x="1314" y="178">Snowflake</text><use class="source-item-icon source-item-icon-green" href="#source-icon-bars" x="1396" y="170" width="16" height="16"/><text class="source-items" x="1406" y="178">Delta</text><use class="source-item-icon source-item-icon-green" href="#source-icon-bars" x="1488" y="170" width="16" height="16"/><text class="source-items" x="1498" y="178">Iceberg</text>
+            </g>
+
+            <g class="diagram-node layer-band" data-key="management" tabindex="0" role="button" aria-label="Data Management layer" transform="translate(0 30)">
+              <rect class="band-card band-management" x="92" y="254" width="1416" height="116" rx="20"/>
+              <g class="frame-reflection-wrap" clip-path="url(#frame-clip-management)" aria-hidden="true"><rect class="frame-reflection" x="-36" y="254" width="54" height="116"/></g>
+              <text class="band-title" x="800" y="286" text-anchor="middle">Data Management</text>
+              <text class="band-subtitle" x="800" y="309" text-anchor="middle">collect · filter · mask · transform · route · logs-to-metrics</text>
+            </g>
+            <g class="layer-catalog-connector" aria-hidden="true" transform="translate(0 30)">
+              <rect class="source-connector" x="797.5" y="370" width="5" height="46"/>
+              <circle class="source-data-pulse" cx="800" cy="370" r="0"><animate attributeName="cy" values="370;416" dur="1.8s" begin=".45s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".45s" repeatCount="indefinite"/></circle>
+            </g>
+            <g class="source-connectors" aria-hidden="true">
+              <rect class="source-connector" x="181.5" y="162" width="5" height="120"/>
+              <rect class="source-connector" x="489.5" y="162" width="5" height="120"/>
+              <rect class="source-connector" x="797.5" y="162" width="5" height="120"/>
+              <rect class="source-connector" x="1105.5" y="162" width="5" height="120"/>
+              <rect class="source-connector" x="1413.5" y="162" width="5" height="120"/>
+              <circle class="source-data-pulse" cx="184" cy="162" r="0"><animate attributeName="cy" values="162;282" dur="1.8s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" repeatCount="indefinite"/></circle>
+              <circle class="source-data-pulse" cx="492" cy="162" r="0"><animate attributeName="cy" values="162;282" dur="1.8s" begin=".3s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".3s" repeatCount="indefinite"/></circle>
+              <circle class="source-data-pulse" cx="800" cy="162" r="0"><animate attributeName="cy" values="162;282" dur="1.8s" begin=".6s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".6s" repeatCount="indefinite"/></circle>
+              <circle class="source-data-pulse" cx="1108" cy="162" r="0"><animate attributeName="cy" values="162;282" dur="1.8s" begin=".9s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".9s" repeatCount="indefinite"/></circle>
+              <circle class="source-data-pulse" cx="1416" cy="162" r="0"><animate attributeName="cy" values="162;282" dur="1.8s" begin="1.2s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin="1.2s" repeatCount="indefinite"/></circle>
+            </g>
+
+            <g class="platform-content-shift" transform="translate(0 30)">
+            <g class="diagram-node mini-node" data-key="as" aria-label="Auto-Schematization Navattic demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-management" href="#source-icon-bars" x="398" y="326" width="22" height="22"/>
+              <text class="mini-title" x="430" y="342">Auto-Schematization</text>
+            </g>
+            <g class="diagram-node mini-node" data-key="go" aria-label="Guided Onboarding Navattic demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-management" href="#source-icon-user" x="584" y="326" width="22" height="22"/>
+              <text class="mini-title" x="616" y="342">Guided Onboarding</text>
+            </g>
+            <g class="diagram-node mini-node" data-key="shp" aria-label="Self-Healing Pipelines Navattic demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-management" href="#source-icon-shield" x="770" y="326" width="22" height="22"/>
+              <text class="mini-title" x="802" y="342">Self-Healing Pipelines</text>
+            </g>
+            <g class="diagram-node mini-node" data-key="ep" aria-label="Edge Processor demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-management" href="#source-icon-device" x="976" y="326" width="22" height="22"/>
+              <text class="mini-title" x="1008" y="342">Edge Processor</text>
+            </g>
+            <g class="diagram-node mini-node" data-key="ip" aria-label="Ingest Processor demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-management" href="#source-icon-bars" x="1156" y="326" width="22" height="22"/>
+              <text class="mini-title" x="1188" y="342">Ingest Processor</text>
+            </g>
+
+            <g class="diagram-node catalog-node" data-key="catalog" aria-label="Enterprise Catalog demo" tabindex="0" role="button">
+              <rect class="node-card catalog-card" x="92" y="416" width="1416" height="74" rx="18"/>
+              <g class="frame-reflection-wrap" clip-path="url(#frame-clip-catalog)" aria-hidden="true"><rect class="frame-reflection" x="64" y="416" width="54" height="74"/></g>
+              <use class="catalog-icon" href="#source-icon-catalog" x="740" y="437" width="20" height="20"/>
+              <text class="node-title" x="800" y="452" text-anchor="middle">Catalog</text>
+              <text class="node-subtitle" x="800" y="472" text-anchor="middle">single, RBAC-aware inventory: datasets · fields · lineage · retention · lifecycle</text>
+            </g>
+
+            <g class="catalog-target-connectors" aria-hidden="true">
+              <rect class="source-connector" x="277.5" y="490" width="5" height="46"/>
+              <circle class="source-data-pulse" cx="280" cy="490" r="0"><animate attributeName="cy" values="490;536" dur="1.8s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" repeatCount="indefinite"/></circle>
+              <rect class="source-connector splunk-path-connector" x="797.5" y="490" width="5" height="46"/>
+              <circle class="source-data-pulse splunk-path-pulse" cx="800" cy="490" r="0"><animate attributeName="cy" values="490;536" dur="1.8s" begin=".3s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".3s" repeatCount="indefinite"/></circle>
+              <rect class="source-connector federated-connector" x="1317.5" y="490" width="5" height="46"/>
+              <circle class="source-data-pulse" cx="1320" cy="490" r="0"><animate attributeName="cy" values="490;536" dur="1.8s" begin=".6s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".6s" repeatCount="indefinite"/></circle>
+            </g>
+
+            <g class="promotion-connectors" aria-hidden="true">
+              <text class="promotion-label splunk-path-label" x="510" y="652" text-anchor="middle">Promote</text>
+              <rect class="source-connector splunk-path-connector" x="480" y="662.75" width="60" height="5"/>
+              <circle class="source-data-pulse splunk-path-pulse" cx="480" cy="665.25" r="0"><animate attributeName="cx" values="480;540" dur="1.8s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" repeatCount="indefinite"/></circle>
+              <text class="promotion-label splunk-path-label" x="1090" y="652" text-anchor="middle">SPL2</text>
+              <rect class="source-connector splunk-path-connector" x="1060" y="662.75" width="60" height="5"/>
+              <circle class="source-data-pulse splunk-path-pulse" cx="1120" cy="665.25" r="0"><animate attributeName="cx" values="1120;1060" dur="1.8s" begin=".45s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".45s" repeatCount="indefinite"/></circle>
+            </g>
+
+            <g class="platform-ai-connector" aria-hidden="true">
+              <rect class="source-connector" x="797.5" y="790" width="5" height="48"/>
+              <circle class="source-data-pulse" cx="800" cy="790" r="0"><animate attributeName="cy" values="790;838" dur="1.8s" begin=".45s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".45s" repeatCount="indefinite"/></circle>
+              <rect class="source-connector" x="809.5" y="790" width="5" height="48"/>
+              <circle class="source-data-pulse" cx="812" cy="838" r="0"><animate attributeName="cy" values="838;790" dur="1.8s" begin="1.1s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin="1.1s" repeatCount="indefinite"/></circle>
+            </g>
+
+            <g class="diagram-node main-node" data-key="mdl" aria-label="Machine Data Lake demo" tabindex="0" role="button">
+              <rect class="node-card main-card mdl-card" x="80" y="536" width="400" height="254" rx="22"/>
+              <g class="frame-reflection-wrap" clip-path="url(#frame-clip-mdl)" aria-hidden="true"><rect class="frame-reflection" x="2" y="536" width="54" height="254"/></g>
+              <text class="node-title main-title" x="280" y="575" text-anchor="middle">Machine Data Lake</text>
+              <text class="node-subtitle" x="280" y="597" text-anchor="middle">Splunk-managed raw storage → Splunk Index or Analytics Tables</text>
+              <image class="mdl-icon" href="Assets/datalakeicon.png" x="239.5" y="618.5" width="81" height="81" preserveAspectRatio="xMidYMid meet" aria-label="Machine Data Lake icon"/>
+              <g class="mdl-details" aria-label="Machine Data Lake capabilities">
+                <use class="mdl-detail-icon mdl-detail-icon-cyan" href="#source-icon-eye" x="125" y="721" width="24" height="24"/><text x="157" y="737">MDL Raw Storage</text>
+                <use class="mdl-detail-icon mdl-detail-icon-cyan" href="#source-icon-folder" x="330" y="721" width="24" height="24"/><text x="362" y="737">retention</text>
+                <use class="mdl-detail-icon mdl-detail-icon-cyan" href="#source-icon-bars" x="125" y="753" width="24" height="24"/><text x="157" y="769">MDL Analytics Tables</text>
+                <use class="mdl-detail-icon mdl-detail-icon-cyan" href="#source-icon-user" x="330" y="753" width="24" height="24"/><text x="362" y="769">Opensharing</text>
+              </g>
+            </g>
+
+            <g class="diagram-node main-node" data-key="platform" aria-label="Machine Data Analytics demo" tabindex="0" role="button">
+              <rect class="node-card main-card platform-card" x="540" y="536" width="520" height="254" rx="22"/>
+              <g class="frame-reflection-wrap" clip-path="url(#frame-clip-platform)" aria-hidden="true"><rect class="frame-reflection" x="462" y="536" width="54" height="254"/></g>
+              <text class="node-title main-title platform-name" x="800" y="575" text-anchor="middle">Machine Data Analytics</text>
+              <text class="node-subtitle accent-detail platform-subtitle" x="800" y="597" text-anchor="middle">promoted hot path for repeated high-performance searches</text>
+              <g class="platform-items">
+                <use class="platform-item-icon platform-item-indexes" href="#source-icon-bars" x="593" y="622" width="54" height="54"/><text x="620" y="700" text-anchor="middle">Splunk Indexes</text>
+                <use class="platform-item-icon platform-item-search" href="#source-icon-search" x="723" y="622" width="54" height="54"/><text x="750" y="700" text-anchor="middle">Search</text>
+                <use class="platform-item-icon platform-item-dashboards" href="#source-icon-app" x="843" y="622" width="54" height="54"/><text x="870" y="700" text-anchor="middle">Dashboards</text>
+                <use class="platform-item-icon platform-item-alerts" href="#source-icon-shield" x="963" y="622" width="54" height="54"/><text x="990" y="700" text-anchor="middle">Alerts</text>
+              </g>
+            </g>
+
+            <g class="diagram-node main-node" data-key="federated" aria-label="Federated Search demo" tabindex="0" role="button">
+              <rect class="node-card main-card federated-card" x="1120" y="536" width="400" height="254" rx="22"/>
+              <g class="frame-reflection-wrap" clip-path="url(#frame-clip-federated)" aria-hidden="true"><rect class="frame-reflection" x="1042" y="536" width="54" height="254"/></g>
+              <text class="node-title main-title" x="1320" y="575" text-anchor="middle">Federated Search</text>
+              <text class="node-subtitle" x="1320" y="597" text-anchor="middle">SPL2 over external data at rest</text>
+              <image class="federated-icon federated-cloud-search" href="Assets/magicon.png" x="1279.5" y="618.5" width="81" height="81" preserveAspectRatio="xMidYMid meet" aria-label="Federated Search icon"/>
+              <g class="mdl-details federated-details" aria-label="Federated Search capabilities">
+                <use class="mdl-detail-icon mdl-detail-icon-cyan" href="#source-icon-bars" x="1165" y="721" width="24" height="24"/><text x="1197" y="737">SPL2 queries</text>
+                <use class="mdl-detail-icon mdl-detail-icon-cyan" href="#source-icon-eye" x="1370" y="721" width="24" height="24"/><text x="1402" y="737">query in place</text>
+                <use class="mdl-detail-icon mdl-detail-icon-cyan" href="#source-icon-database" x="1165" y="753" width="24" height="24"/><text x="1197" y="769">external sources</text>
+                <use class="mdl-detail-icon mdl-detail-icon-cyan" href="#source-icon-shield" x="1370" y="753" width="24" height="24"/><text x="1402" y="769">no duplication</text>
+              </g>
+            </g>
+
+            <g class="diagram-node federated-destinations" data-key="edl" tabindex="0" role="button" aria-label="External Data Lakes destinations">
+              <rect class="node-card federated-destinations-card" x="1620" y="536" width="400" height="254" rx="22"/>
+              <g class="frame-reflection-wrap" clip-path="url(#frame-clip-federated-destinations)" aria-hidden="true"><rect class="frame-reflection" x="1542" y="536" width="54" height="254"/></g>
+              <text class="node-title federated-destinations-title" x="1820" y="575" text-anchor="middle">External Data Lakes</text>
+              <text class="node-subtitle" x="1820" y="597" text-anchor="middle">Federated Search supported</text>
+              <g class="federated-source federated-source-s3"><image class="federated-source-logo s3-logo-image" href="Assets/s3-logo.png" x="1654" y="646" width="32" height="32" preserveAspectRatio="xMidYMid meet" aria-label="Amazon S3 logo"/><text x="1694" y="668">Amazon S3</text></g>
+              <g class="federated-source federated-source-azure"><image class="federated-source-logo azure-logo-image" href="Assets/azure-logo.png" x="1854" y="646" width="32" height="32" preserveAspectRatio="xMidYMid meet" aria-label="Azure logo"/><text x="1892" y="668">Azure Data Lake</text></g>
+              <g class="federated-source federated-source-snowflake"><image class="federated-source-logo snowflake-logo-image" href="Assets/snowflake-logo.png" x="1654" y="696" width="32" height="32" preserveAspectRatio="xMidYMid meet" aria-label="Snowflake logo"/><text x="1694" y="718">Snowflake</text></g>
+              <g class="federated-source federated-source-databricks"><image class="federated-source-logo databricks-logo-image" href="Assets/databricks-logo.png" x="1854" y="696" width="32" height="32" preserveAspectRatio="xMidYMid meet" aria-label="Databricks logo"/><text x="1892" y="718">Databricks</text></g>
+            </g>
+            <g class="federated-destinations-connector" aria-hidden="true">
+              <rect class="source-connector federated-connector" x="1520" y="660.5" width="100" height="5"/>
+              <circle class="source-data-pulse" cx="1520" cy="663" r="0"><animate attributeName="cx" values="1520;1620" dur="1.8s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" repeatCount="indefinite"/></circle>
+              <rect class="source-connector federated-connector" x="1520" y="670.5" width="100" height="5"/>
+              <circle class="source-data-pulse" cx="1620" cy="673" r="0"><animate attributeName="cx" values="1620;1520" dur="1.8s" begin=".9s" repeatCount="indefinite"/><animate attributeName="r" values="0;3.5;3.5;0" keyTimes="0;.14;.78;1" dur="1.8s" begin=".9s" repeatCount="indefinite"/></circle>
+            </g>
+
+            <g class="diagram-node layer-band" data-key="ai" tabindex="0" role="button" aria-label="AI and Collaboration layer">
+              <rect class="band-card band-ai" x="92" y="838" width="1416" height="106" rx="20"/>
+              <g class="frame-reflection-wrap" clip-path="url(#frame-clip-ai)" aria-hidden="true"><rect class="frame-reflection" x="64" y="838" width="54" height="106"/></g>
+              <text class="band-title" x="800" y="870" text-anchor="middle">AI and Collaboration Layer</text>
+              <text class="band-subtitle" x="800" y="892" text-anchor="middle">humans and agents work from governed fabric context</text>
+            </g>
+            <g class="diagram-node mini-node ai-node" data-key="assistant" aria-label="Splunk AI Assistant demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-ai" href="#source-icon-user" x="388" y="909" width="24" height="24"/><text class="mini-title" x="422" y="927">Splunk AI Assistant</text>
+            </g>
+            <g class="diagram-node mini-node ai-node" data-key="mcp" aria-label="Splunk MCP Server demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-ai" href="#source-icon-app" x="618" y="909" width="24" height="24"/><text class="mini-title" x="652" y="927">Splunk MCP Server</text>
+            </g>
+            <g class="diagram-node mini-node ai-node" data-key="launchpad" aria-label="Agent Launchpad demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-ai" href="#source-icon-bars" x="848" y="909" width="24" height="24"/><text class="mini-title" x="882" y="927">Agent Launchpad</text>
+            </g>
+            <g class="diagram-node mini-node ai-node" data-key="canvas" aria-label="AI Canvas in Cisco Cloud Control demo" tabindex="0" role="button">
+              <use class="mini-icon mini-icon-ai" href="#source-icon-eye" x="1058" y="909" width="24" height="24"/><text class="mini-title" x="1092" y="927">AI Canvas in Cisco Cloud Control</text>
+            </g>
+            </g>
+
+            <image class="platform-container-logo" href="Assets/Splunklogo.png" x="655" y="224" width="145" height="40" preserveAspectRatio="xMidYMid meet" aria-label="Splunk logo"/>
+            <text class="platform-container-label" x="815" y="254">Platform</text>
+            <g class="diagram-node cloud-control-node" data-key="cloud-control" tabindex="0" role="button" aria-label="Cisco Cloud Control demo">
+              <rect class="node-card cloud-control-card" x="412" y="1066" width="776" height="120" rx="22"/>
+              <g class="frame-reflection-wrap" clip-path="url(#frame-clip-cloud-control)" aria-hidden="true"><rect class="frame-reflection" x="334" y="1066" width="54" height="120"/></g>
+              <image class="cloud-control-logo" href="Assets/cisco-cloud-control-logo.png" x="650" y="1076" width="300" height="50" preserveAspectRatio="xMidYMin meet" aria-label="Cisco Cloud Control logo"/>
+              <g class="cloud-control-items" aria-label="Cisco Cloud Control capabilities">
+                <use class="cloud-control-item-icon" href="#source-icon-device" x="650" y="1144" width="28" height="28"/><text x="686" y="1165">Unified Controllers</text>
+                <use class="cloud-control-item-icon" href="#source-icon-eye" x="870" y="1144" width="28" height="28"/><text x="906" y="1165">AI Canvas</text>
+              </g>
+            </g>
+            <text class="canvas-kicker bottom-kicker" x="42" y="1214">BUSINESS OUTCOMES</text>
+            <g class="outcome-row">
+              <g class="diagram-node outcome-node outcome-alerts" data-key="outcome-alerts" tabindex="0" role="button" aria-label="Alerts raised business outcome"><rect class="outcome-card" x="42" y="1232" width="238" height="52" rx="14"/><g class="frame-reflection-wrap" clip-path="url(#frame-clip-outcome-alerts)" aria-hidden="true"><rect class="frame-reflection" x="-36" y="1232" width="54" height="52"/></g><text x="161" y="1263" text-anchor="middle">Alerts raised</text></g>
+              <g class="diagram-node outcome-node outcome-dashboards" data-key="outcome-dashboards" tabindex="0" role="button" aria-label="Dashboards business outcome"><rect class="outcome-card" x="296" y="1232" width="238" height="52" rx="14"/><g class="frame-reflection-wrap" clip-path="url(#frame-clip-outcome-dashboards)" aria-hidden="true"><rect class="frame-reflection" x="218" y="1232" width="54" height="52"/></g><text x="415" y="1263" text-anchor="middle">Dashboards</text></g>
+              <g class="diagram-node outcome-node outcome-agents" data-key="outcome-agents" tabindex="0" role="button" aria-label="AI agents act business outcome"><rect class="outcome-card" x="550" y="1232" width="238" height="52" rx="14"/><g class="frame-reflection-wrap" clip-path="url(#frame-clip-outcome-agents)" aria-hidden="true"><rect class="frame-reflection" x="472" y="1232" width="54" height="52"/></g><text x="669" y="1263" text-anchor="middle">AI agents act</text></g>
+              <g class="diagram-node outcome-node outcome-tco" data-key="outcome-tco" tabindex="0" role="button" aria-label="Lower TCO business outcome"><rect class="outcome-card" x="804" y="1232" width="238" height="52" rx="14"/><g class="frame-reflection-wrap" clip-path="url(#frame-clip-outcome-tco)" aria-hidden="true"><rect class="frame-reflection" x="726" y="1232" width="54" height="52"/></g><text x="923" y="1263" text-anchor="middle">Lower TCO</text></g>
+              <g class="diagram-node outcome-node outcome-workloads" data-key="outcome-workloads" tabindex="0" role="button" aria-label="BI and AI workloads business outcome"><rect class="outcome-card" x="1058" y="1232" width="238" height="52" rx="14"/><g class="frame-reflection-wrap" clip-path="url(#frame-clip-outcome-workloads)" aria-hidden="true"><rect class="frame-reflection" x="980" y="1232" width="54" height="52"/></g><text x="1177" y="1263" text-anchor="middle">BI / AI workloads</text></g>
+              <g class="diagram-node outcome-node outcome-reuse" data-key="outcome-reuse" tabindex="0" role="button" aria-label="Governed reuse business outcome"><rect class="outcome-card" x="1312" y="1232" width="246" height="52" rx="14"/><g class="frame-reflection-wrap" clip-path="url(#frame-clip-outcome-reuse)" aria-hidden="true"><rect class="frame-reflection" x="1234" y="1232" width="54" height="52"/></g><text x="1435" y="1263" text-anchor="middle">Governed reuse</text></g>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+    </section>
+
+    <aside class="detail-panel" id="detail-panel" aria-live="polite" aria-labelledby="detail-title">
+      <div class="detail-copy">
+        <p class="detail-layer" id="detail-layer">Select a component</p>
+        <h2 id="detail-title">Explore the architecture</h2>
+        <p id="detail-description">Zoom into the canvas and select a component to see how it fits into the fabric.</p>
+      </div>
+      <a id="detail-link" class="detail-link" href="#" target="_blank" rel="noopener" hidden>Open demo</a>
+    </aside>
+  </main>
+
+  <script src="cdf-architecture.js"></script>
+  <script src="Assets/branding-toggle.js?v=metal-glass-1"></script>
+</body>
+</html>

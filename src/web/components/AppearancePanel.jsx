@@ -12,6 +12,7 @@ import {
     resolveAppearancePatch,
     resolveDisplayBackgroundColor,
 } from '../lib/canvasAppearance';
+import { BRAND_COLOR_GROUPS, isDarkBrandColor } from '../lib/brandColors';
 
 const THEME_OPTIONS = [
     { value: EXCALIDRAW_THEME.LIGHT, label: 'Light' },
@@ -182,6 +183,40 @@ export default function AppearancePanel({ canvasAppState, onAppearanceChange }) 
                 </div>
             </div>
 
+            <div>
+                <div style={sectionLabel}>Splunk brand colors</div>
+                {BRAND_COLOR_GROUPS.map((group) => (
+                    <div key={group.id} style={{ marginBottom: 8 }}>
+                        <div style={groupLabel}>{group.label}</div>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                            {group.colors.map((c) => (
+                                <button
+                                    key={c.id}
+                                    type="button"
+                                    title={`${c.label} (${c.hex})`}
+                                    onClick={() =>
+                                        apply({
+                                            displayBackgroundColor: c.hex,
+                                            theme: isDarkBrandColor(c.hex)
+                                                ? EXCALIDRAW_THEME.DARK
+                                                : EXCALIDRAW_THEME.LIGHT,
+                                        })
+                                    }
+                                    style={{
+                                        ...brandSwatchBtn,
+                                        background: c.hex,
+                                        outline:
+                                            normalizeHexColor(displayBg) === normalizeHexColor(c.hex)
+                                                ? '2px solid #5a4fcf'
+                                                : '1px solid var(--gray60, #c3cbd4)',
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
             <Button
                 size="small"
                 appearance="secondary"
@@ -236,6 +271,22 @@ const swatchLabel = {
     background: 'rgba(255,255,255,0.85)',
     color: '#1b1b1b',
     lineHeight: 1.2,
+};
+
+const groupLabel = {
+    fontSize: 10,
+    fontWeight: 600,
+    opacity: 0.5,
+    marginBottom: 4,
+};
+
+const brandSwatchBtn = {
+    all: 'unset',
+    cursor: 'pointer',
+    width: 26,
+    height: 26,
+    borderRadius: '50%',
+    flexShrink: 0,
 };
 
 function toColorInput(hex) {

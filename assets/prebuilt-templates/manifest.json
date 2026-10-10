@@ -18,6 +18,12 @@
     "file": "data-fabric-mdl.whiteboard.json"
   },
   {
+    "id": "cisco-data-fabric-portal",
+    "label": "Cisco Data Fabric — Architecture (Portal)",
+    "description": "Full Cisco Data Fabric architecture transcribed 1:1 from the CDF Portal, with a 14-step build order and per-node detail copy.",
+    "file": "cisco-data-fabric-portal.whiteboard.json"
+  },
+  {
     "id": "sva-c3c13-shc-single-site",
     "label": "SVA C3/C13 — SHC Single Site",
     "description": "Splunk Validated Architecture: distributed clustered deployment with Search Head Cluster (single site).",

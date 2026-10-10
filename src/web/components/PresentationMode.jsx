@@ -148,16 +148,23 @@ export default function PresentationMode({ excalidrawAPI, onExit, suppressSaveRe
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [go]);
 
-    // Fullscreen on mount.
-    useEffect(() => {
-        const el = document.documentElement;
-        if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
-        return () => {
-            if (document.fullscreenElement && document.exitFullscreen) {
-                document.exitFullscreen().catch(() => {});
+    // Fullscreen is owned by CanvasPage: it fullscreens the canvas container,
+    // which must be requested from the Present click to keep user activation.
+
+    // Restore the board on *every* exit path. Leaving fullscreen through the
+    // browser (Esc, F11) unmounts this component without ever reaching
+    // handleExit, which would otherwise strand the scene mid-reveal.
+    const apiForUnmountRef = useRef(excalidrawAPI);
+    apiForUnmountRef.current = excalidrawAPI;
+    useEffect(
+        () => () => {
+            const api = apiForUnmountRef.current;
+            if (api && snapshotRef.current) {
+                api.updateScene({ elements: restoreSnapshot(snapshotRef.current) });
             }
-        };
-    }, []);
+        },
+        []
+    );
 
     // Suppress autosave for the whole presentation lifetime (reveal mutates the
     // live scene; we don't want those transient opacity changes persisted).

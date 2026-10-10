@@ -12,6 +12,7 @@ import { sanitizeElementsForPersistence } from './build';
 import plattformWbDark from '../../../assets/prebuilt-templates/plattform-wb-dark.whiteboard.json';
 import dataFabric from '../../../assets/prebuilt-templates/data-fabric.whiteboard.json';
 import dataFabricMdl from '../../../assets/prebuilt-templates/data-fabric-mdl.whiteboard.json';
+import dataFabricPortal from '../../../assets/prebuilt-templates/cisco-data-fabric-portal.whiteboard.json';
 import svaC3c13ShcSingleSite from '../../../assets/prebuilt-templates/sva-c3c13-shc-single-site.whiteboard.json';
 import svaC1c11SingleSite from '../../../assets/prebuilt-templates/sva-c1c11-single-site.whiteboard.json';
 
@@ -53,6 +54,21 @@ export const EXAMPLE_BOARDS = [
     }),
     fromBundle(dataFabricMdl, {
         appState: { theme: 'dark', displayBackgroundColor: '#1e1e1e' },
+    }),
+    // Transcribed 1:1 from the CDF Portal SVG. Its colours are the portal's own
+    // literal values, so it must render on the LIGHT theme — the dark theme is
+    // a canvas-wide invert filter that would wreck them. The near-black canvas
+    // supplies the dark look instead.
+    fromBundle(dataFabricPortal, {
+        id: 'cisco-data-fabric-portal',
+        description:
+            'Full Cisco Data Fabric architecture from the CDF Portal, with a 14-step build order '
+            + 'and detail copy on every node.',
+        appState: {
+            theme: 'light',
+            displayBackgroundColor: '#040e18',
+            viewBackgroundColor: '#040e18',
+        },
     }),
     fromBundle(svaC3c13ShcSingleSite, {
         appState: {
